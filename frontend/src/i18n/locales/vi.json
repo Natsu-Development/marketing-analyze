@@ -1,0 +1,144 @@
+{
+  "app": {
+    "title": "Quản Lý Quảng Cáo"
+  },
+  "navigation": {
+    "dashboard": "Bảng Điều Khiển",
+    "adAccounts": "Tài Khoản Quảng Cáo",
+    "recommendations": "Đề Xuất"
+  },
+  "home": {
+    "title": "Các Bộ Quảng Cáo Đã Scale",
+    "subtitle": "Theo dõi các bộ quảng cáo sử dụng ngân sách scale với dữ liệu hiệu suất",
+    "activeScaling": "Đang Scale",
+    "scaleBudgetUsed": "Ngân Sách Scale Đã Dùng",
+    "stoppedScaling": "Đã Dừng Scale",
+    "activeAdSets": "Các Bộ Quảng Cáo Hoạt Động",
+    "activeAdSetsSubtitle": "Các bộ quảng cáo hiện đang sử dụng ngân sách scale",
+    "scaledAt": "Scale Lúc",
+    "scaleSpend": "Chi Phí Scale",
+    "scalePercent": "% Scale",
+    "stoppedAt": "Dừng Lúc",
+    "roas": "ROAS",
+    "viewSettings": "Xem Cài Đặt",
+    "status": {
+      "active": "hoạt động",
+      "paused": "tạm dừng",
+      "stopped": "đã dừng"
+    }
+  },
+  "sync": {
+    "title": "Tài Khoản Quảng Cáo",
+    "subtitle": "Quản lý tài khoản quảng cáo và cài đặt đồng bộ",
+    "platformSync": "Đồng Bộ {{platform}}",
+    "turnOnOffSync": "Bật/tắt đồng bộ cho tất cả tài khoản {{platform}}",
+    "adAccounts": "Tài Khoản Quảng Cáo",
+    "addAccount": "Thêm Tài Khoản",
+    "settings": "Cài Đặt",
+    "spendLimit": "Giới Hạn Chi Tiêu",
+    "timeRange": "Khoảng Thời Gian",
+    "lastSync": "Đồng Bộ Lần Cuối",
+    "daily": "hàng ngày",
+    "addMorePlatforms": "Thêm Nền Tảng",
+    "addMorePlatformsSubtitle": "Kết nối TikTok, Google Ads, LinkedIn và nhiều hơn",
+    "connectPlatform": "Kết Nối Nền Tảng",
+    "status": {
+      "active": "hoạt động",
+      "paused": "tạm dừng",
+      "error": "lỗi"
+    }
+  },
+  "accountConfig": {
+    "title": "Cài Đặt Tài Khoản",
+    "backToAdAccounts": "Quay Lại Tài Khoản Quảng Cáo",
+    "notFound": "Không tìm thấy tài khoản",
+    "notFoundMessage": "Tài khoản quảng cáo bạn đang tìm không tồn tại.",
+    "scaleSettings": "Cài Đặt Scale",
+    "scaleSettingsSubtitle": "Đặt phần trăm cho việc scale chi tiêu",
+    "scalePercent": "Phần Trăm Scale",
+    "scalePercentHelp": "Phần trăm ngân sách cho scale",
+    "performanceTargets": "Mục Tiêu Hiệu Suất",
+    "performanceTargetsSubtitle": "Đặt giá trị mục tiêu cho các chỉ số chính",
+    "roasLabel": "ROAS (Lợi Nhuận Trên Chi Phí Quảng Cáo)",
+    "roasHelp": "Tỷ lệ lợi nhuận mục tiêu",
+    "costPerEngagement": "Chi Phí / Tổng Ib & Comment",
+    "costPerEngagementHelp": "Chi phí mỗi tương tác",
+    "cpcLabel": "CPC (Chi Phí Mỗi Click)",
+    "cpcHelp": "Chi phí mỗi click vào link",
+    "cpmLabel": "CPM (Chi Phí Mỗi 1000 Lượt Hiển Thị)",
+    "cpmHelp": "Chi phí mỗi 1K lượt hiển thị",
+    "ctrAllLabel": "CTR - Tất Cả Click",
+    "ctrAllHelp": "Tỷ lệ click tất cả",
+    "ctrLinkLabel": "CTR - Click Link",
+    "ctrLinkHelp": "Tỷ lệ click link",
+    "costPerPurchaseLabel": "Chi Phí Mỗi Giao Dịch",
+    "costPerPurchaseHelp": "Chi phí mỗi chuyển đổi",
+    "notes": "Ghi Chú",
+    "notesSubtitle": "Thêm ghi chú và hướng dẫn đặc biệt",
+    "notesPlaceholder": "Thêm ghi chú hoặc hướng dẫn đặc biệt cho tài khoản này...",
+    "notesHelp": "Thêm ghi chú hoặc quy tắc đặc biệt cho tài khoản này",
+    "cancel": "Hủy",
+    "saveSettings": "Lưu Cài Đặt",
+    "status": {
+      "active": "hoạt động",
+      "paused": "tạm dừng",
+      "error": "lỗi"
+    }
+  },
+  "settings": {
+    "title": "Cài Đặt Toàn Cục",
+    "subtitle": "Cấu hình cài đặt ứng dụng toàn cục và tham số API",
+    "environment": "Môi Trường",
+    "region": "Khu Vực",
+    "apiEndpoint": "API Endpoint",
+    "apiTimeout": "Thời Gian Chờ API (giây)",
+    "maxRetries": "Số Lần Thử Lại Tối Đa",
+    "saveChanges": "Lưu Thay Đổi",
+    "environments": {
+      "development": "Phát Triển",
+      "staging": "Staging",
+      "production": "Production"
+    },
+    "regions": {
+      "usEast": "Mỹ Đông (N. Virginia)",
+      "usWest": "Mỹ Tây (Oregon)",
+      "euWest": "EU (Ireland)",
+      "apSoutheast": "Châu Á Thái Bình Dương (Singapore)"
+    }
+  },
+  "suggestions": {
+    "title": "Đề Xuất",
+    "subtitle": "Xem xét và phê duyệt các đề xuất tối ưu hóa",
+    "pending": "Đang Chờ",
+    "noPendingSuggestions": "Hiện không có đề xuất nào đang chờ xử lý",
+    "impact": "tác động",
+    "adAccount": "Tài Khoản Quảng Cáo",
+    "campaign": "Chiến Dịch",
+    "adSet": "Bộ Quảng Cáo",
+    "currentABO": "ABO Hiện Tại:",
+    "scalePercent": "Phần Trăm Scale:",
+    "reject": "Từ Chối",
+    "approve": "Phê Duyệt",
+    "recentlyReviewed": "Đã Xem Xét Gần Đây",
+    "impactLevels": {
+      "high": "cao",
+      "medium": "trung bình",
+      "low": "thấp"
+    },
+    "status": {
+      "approved": "đã phê duyệt",
+      "rejected": "đã từ chối"
+    }
+  },
+  "common": {
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "edit": "Chỉnh Sửa",
+    "delete": "Xóa",
+    "confirm": "Xác Nhận",
+    "back": "Quay Lại",
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành Công"
+  }
+}

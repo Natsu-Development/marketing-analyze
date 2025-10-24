@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Production
+dist
+build
+.next
+out
+
+# Generated files
+*.lock
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+
+# Environment
+.env
+.env.local
+.env.production
+.env.development
+
+# Public assets
+public
+

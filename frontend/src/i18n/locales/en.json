@@ -1,0 +1,144 @@
+{
+  "app": {
+    "title": "Ad Manager"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "adAccounts": "Ad Accounts",
+    "recommendations": "Recommendations"
+  },
+  "home": {
+    "title": "Scaled Ad Sets",
+    "subtitle": "Track ad sets using scale budget with performance data",
+    "activeScaling": "Active Scaling",
+    "scaleBudgetUsed": "Scale Budget Used",
+    "stoppedScaling": "Stopped Scaling",
+    "activeAdSets": "Active Ad Sets",
+    "activeAdSetsSubtitle": "Ad sets currently using scale budget",
+    "scaledAt": "Scaled At",
+    "scaleSpend": "Scale Spend",
+    "scalePercent": "Scale %",
+    "stoppedAt": "Stopped At",
+    "roas": "ROAS",
+    "viewSettings": "View Settings",
+    "status": {
+      "active": "active",
+      "paused": "paused",
+      "stopped": "stopped"
+    }
+  },
+  "sync": {
+    "title": "Ad Accounts",
+    "subtitle": "Manage your advertising accounts and sync settings",
+    "platformSync": "{{platform}} Sync",
+    "turnOnOffSync": "Turn on/off sync for all {{platform}} accounts",
+    "adAccounts": "Ad Accounts",
+    "addAccount": "Add Account",
+    "settings": "Settings",
+    "spendLimit": "Spend Limit",
+    "timeRange": "Time Range",
+    "lastSync": "Last Sync",
+    "daily": "daily",
+    "addMorePlatforms": "Add More Platforms",
+    "addMorePlatformsSubtitle": "Connect TikTok, Google Ads, LinkedIn and more",
+    "connectPlatform": "Connect Platform",
+    "status": {
+      "active": "active",
+      "paused": "paused",
+      "error": "error"
+    }
+  },
+  "accountConfig": {
+    "title": "Account Settings",
+    "backToAdAccounts": "Back to Ad Accounts",
+    "notFound": "Account not found",
+    "notFoundMessage": "The ad account you're looking for doesn't exist.",
+    "scaleSettings": "Scale Settings",
+    "scaleSettingsSubtitle": "Set the percentage for scaling spend",
+    "scalePercent": "Scale Percent",
+    "scalePercentHelp": "Budget percentage for scaling",
+    "performanceTargets": "Performance Targets",
+    "performanceTargetsSubtitle": "Set target values for key metrics",
+    "roasLabel": "ROAS (Return on Ad Spend)",
+    "roasHelp": "Target return ratio",
+    "costPerEngagement": "Cost / Total IB & Comment",
+    "costPerEngagementHelp": "Cost per engagement",
+    "cpcLabel": "CPC (Cost Per Click)",
+    "cpcHelp": "Cost per click on link",
+    "cpmLabel": "CPM (Cost per 1000 Impressions)",
+    "cpmHelp": "Cost per 1K impressions",
+    "ctrAllLabel": "CTR - All Clicks",
+    "ctrAllHelp": "All click rate",
+    "ctrLinkLabel": "CTR - Link Clicks",
+    "ctrLinkHelp": "Link click rate",
+    "costPerPurchaseLabel": "Cost Per Purchase",
+    "costPerPurchaseHelp": "Cost per conversion",
+    "notes": "Notes",
+    "notesSubtitle": "Add notes and special instructions",
+    "notesPlaceholder": "Add any notes or special instructions for this account...",
+    "notesHelp": "Add notes or special rules for this account",
+    "cancel": "Cancel",
+    "saveSettings": "Save Settings",
+    "status": {
+      "active": "active",
+      "paused": "paused",
+      "error": "error"
+    }
+  },
+  "settings": {
+    "title": "Global Settings",
+    "subtitle": "Configure global application settings and API parameters",
+    "environment": "Environment",
+    "region": "Region",
+    "apiEndpoint": "API Endpoint",
+    "apiTimeout": "API Timeout (seconds)",
+    "maxRetries": "Max Retries",
+    "saveChanges": "Save Changes",
+    "environments": {
+      "development": "Development",
+      "staging": "Staging",
+      "production": "Production"
+    },
+    "regions": {
+      "usEast": "US East (N. Virginia)",
+      "usWest": "US West (Oregon)",
+      "euWest": "EU (Ireland)",
+      "apSoutheast": "Asia Pacific (Singapore)"
+    }
+  },
+  "suggestions": {
+    "title": "Recommendations",
+    "subtitle": "Review and approve optimization suggestions",
+    "pending": "Pending",
+    "noPendingSuggestions": "No pending suggestions at the moment",
+    "impact": "impact",
+    "adAccount": "Ad Account",
+    "campaign": "Campaign",
+    "adSet": "Ad Set",
+    "currentABO": "Current ABO:",
+    "scalePercent": "Scale Percent:",
+    "reject": "Reject",
+    "approve": "Approve",
+    "recentlyReviewed": "Recently Reviewed",
+    "impactLevels": {
+      "high": "high",
+      "medium": "medium",
+      "low": "low"
+    },
+    "status": {
+      "approved": "approved",
+      "rejected": "rejected"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  }
+}

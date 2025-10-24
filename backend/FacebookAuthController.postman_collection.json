@@ -1,0 +1,595 @@
+{
+  "info": {
+    "_postman_id": "facebook-auth-controller-collection",
+    "name": "Facebook Auth Controller API",
+    "description": "Complete Postman collection for Facebook Authentication Controller endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "facebook-auth-api"
+  },
+  "item": [
+    {
+      "name": "Session Management",
+      "item": [
+        {
+          "name": "Connect Facebook Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"connect\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "session"]
+            },
+            "description": "Initiates Facebook OAuth connection flow. Returns redirect URL and state parameter for OAuth flow."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"connect\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/session",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "session"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"redirectUrl\": \"https://www.facebook.com/v18.0/dialog/oauth?client_id=123456789&redirect_uri=http://localhost:3001/api/v1/auth/facebook/callback&scope=ads_read,ads_management&state=abc123&response_type=code\",\n  \"state\": \"abc123\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Disconnect Facebook Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"disconnect\",\n  \"fbUserId\": \"123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "session"]
+            },
+            "description": "Disconnects Facebook account for the specified user."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"disconnect\",\n  \"fbUserId\": \"123456789\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/session",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "session"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Facebook account disconnected successfully\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Endpoints for managing Facebook account connections"
+    },
+    {
+      "name": "OAuth Flow",
+      "item": [
+        {
+          "name": "OAuth Callback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/callback?code=AQB123456789&state=abc123",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "callback"],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "AQB123456789",
+                  "description": "Authorization code from Facebook"
+                },
+                {
+                  "key": "state",
+                  "value": "abc123",
+                  "description": "State parameter for CSRF protection"
+                }
+              ]
+            },
+            "description": "Handles OAuth callback from Facebook. This endpoint redirects to frontend with success/error status."
+          },
+          "response": [
+            {
+              "name": "Success Redirect",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/callback?code=AQB123456789&state=abc123",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "callback"],
+                  "query": [
+                    {
+                      "key": "code",
+                      "value": "AQB123456789"
+                    },
+                    {
+                      "key": "state",
+                      "value": "abc123"
+                    }
+                  ]
+                }
+              },
+              "status": "Found",
+              "code": 302,
+              "_postman_previewlanguage": "html",
+              "header": [
+                {
+                  "key": "Location",
+                  "value": "http://localhost:5173/sync?auth=facebook&status=success"
+                }
+              ],
+              "cookie": [],
+              "body": ""
+            }
+          ]
+        }
+      ],
+      "description": "OAuth callback handling"
+    },
+    {
+      "name": "Status & Token",
+      "item": [
+        {
+          "name": "Get Connection Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/status?fbUserId=123456789",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "status"],
+              "query": [
+                {
+                  "key": "fbUserId",
+                  "value": "123456789",
+                  "description": "Facebook User ID"
+                }
+              ]
+            },
+            "description": "Returns the current connection status for a Facebook user."
+          },
+          "response": [
+            {
+              "name": "Connected Status",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/status?fbUserId=123456789",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "status"],
+                  "query": [
+                    {
+                      "key": "fbUserId",
+                      "value": "123456789"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"status\": \"CONNECTED\",\n  \"fbUserId\": \"123456789\",\n  \"expiresAt\": \"2024-01-15T10:30:00.000Z\",\n  \"needsRefresh\": false,\n  \"adAccountsCount\": 3\n}"
+            },
+            {
+              "name": "No Connection",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/status?fbUserId=123456789",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "status"],
+                  "query": [
+                    {
+                      "key": "fbUserId",
+                      "value": "123456789"
+                    }
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"NO_CONNECTION\",\n  \"message\": \"No active Facebook connection found for this user\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Valid Access Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/token?fbUserId=123456789",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "token"],
+              "query": [
+                {
+                  "key": "fbUserId",
+                  "value": "123456789",
+                  "description": "Facebook User ID"
+                }
+              ]
+            },
+            "description": "Returns a valid access token for the Facebook user. Automatically refreshes if needed."
+          },
+          "response": [
+            {
+              "name": "Valid Token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/token?fbUserId=123456789",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "token"],
+                  "query": [
+                    {
+                      "key": "fbUserId",
+                      "value": "123456789"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"accessToken\": \"EAABwzLixnjYBO123456789\",\n  \"expiresAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Needs Reconnect",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/token?fbUserId=123456789",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "token"],
+                  "query": [
+                    {
+                      "key": "fbUserId",
+                      "value": "123456789"
+                    }
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"NEEDS_RECONNECT\",\n  \"message\": \"Token refresh failed. User needs to reconnect their Facebook account.\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Status checking and token retrieval endpoints"
+    },
+    {
+      "name": "Ad Account Management",
+      "item": [
+        {
+          "name": "Refresh Ad Accounts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/123456789/refresh-ad-accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "123456789", "refresh-ad-accounts"]
+            },
+            "description": "Refreshes the ad accounts list for a Facebook user."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/123456789/refresh-ad-accounts",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "123456789", "refresh-ad-accounts"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Ad accounts refreshed successfully\",\n  \"adAccountsCount\": 3,\n  \"connection\": {\n    \"fbUserId\": \"123456789\",\n    \"status\": \"CONNECTED\",\n    \"adAccounts\": [\n      {\n        \"id\": \"act_123456789\",\n        \"name\": \"My Ad Account\",\n        \"isActive\": true\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Ad Account Active Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/123456789/ad-accounts/act_123456789/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "123456789", "ad-accounts", "act_123456789", "active"]
+            },
+            "description": "Updates the active status of a specific ad account."
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/123456789/ad-accounts/act_123456789/active",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "123456789", "ad-accounts", "act_123456789", "active"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Ad account activated successfully\",\n  \"connection\": {\n    \"fbUserId\": \"123456789\",\n    \"status\": \"CONNECTED\",\n    \"adAccounts\": [\n      {\n        \"id\": \"act_123456789\",\n        \"name\": \"My Ad Account\",\n        \"isActive\": true\n      }\n    ]\n  }\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Ad account management endpoints"
+    },
+    {
+      "name": "Error Examples",
+      "item": [
+        {
+          "name": "Validation Error",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"invalid_action\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "session"]
+            },
+            "description": "Example of validation error when invalid action is provided."
+          },
+          "response": [
+            {
+              "name": "Validation Error Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"invalid_action\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/session",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "session"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"VALIDATION_ERROR\",\n  \"details\": [\n    {\n      \"code\": \"invalid_enum_value\",\n      \"expected\": [\"connect\", \"disconnect\"],\n      \"received\": \"invalid_action\",\n      \"path\": [\"action\"],\n      \"message\": \"Invalid enum value. Expected 'connect' | 'disconnect', received 'invalid_action'\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Missing fbUserId Error",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "status"]
+            },
+            "description": "Example of error when fbUserId parameter is missing."
+          },
+          "response": [
+            {
+              "name": "Missing Parameter Error",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "status"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": false,\n  \"error\": \"FB_USER_ID_REQUIRED\",\n  \"message\": \"Facebook User ID is required\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Common error scenarios and responses"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string",
+      "description": "Base URL for the API server"
+    }
+  ]
+}
