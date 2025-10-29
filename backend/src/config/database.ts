@@ -4,7 +4,7 @@
  */
 
 import mongoose from 'mongoose'
-import { logger } from '../infrastructure/logger'
+import { logger } from '../infrastructure/shared/logger'
 
 mongoose.set('strictQuery', false)
 

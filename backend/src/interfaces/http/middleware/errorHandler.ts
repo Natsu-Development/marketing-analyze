@@ -5,8 +5,8 @@
 
 import { Request, Response, NextFunction } from 'express'
 import { ZodError } from 'zod'
-import { logger } from '../../../infrastructure/logger'
-import { DomainException } from '../../../domain/DomainException'
+import { logger } from '../../../infrastructure/shared/logger'
+import { DomainException } from '../../../domain/exceptions/DomainException'
 
 const httpStatusMap: Record<string, number> = {
     VALIDATION_ERROR: 400,

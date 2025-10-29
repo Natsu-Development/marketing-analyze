@@ -28,5 +28,5 @@ facebookAuthRoutes.get('/status', facebookAuthController.getStatus)
 facebookAuthRoutes.get('/token', facebookAuthController.getToken)
 
 // Ad Account Management
-facebookAuthRoutes.post('/:userId/refresh-ad-accounts', facebookAuthController.refreshAdAccounts)
-facebookAuthRoutes.put('/:userId/ad-accounts/:adAccountId/active', facebookAuthController.updateAdAccountActive)
+facebookAuthRoutes.post('/:accountId/refresh-ad-accounts', facebookAuthController.refreshAdAccounts)
+facebookAuthRoutes.put('/:accountId/ad-accounts/:adAccountId/active', facebookAuthController.updateAdAccountActive)

@@ -3,8 +3,8 @@
  * Simplified functional approach - plain objects + pure functions
  */
 
-import { FacebookConnection, fbConnection, ConnectionStatus } from '../../domain/Connection'
-import { facebookConnectionRepository as repo } from '../../infrastructure/mongo-db/ConnectionRepository'
+import { Account, AccountStatus, AccountDomain } from '../../domain'
+import { accountRepository as repo } from '../../config/dependencies'
 import { facebookOAuthClient } from '../../config/dependencies'
 
 const REQUIRED_SCOPES = ['ads_read', 'ads_management', 'public_profile']
@@ -35,9 +35,9 @@ export async function initiateConnection(_request: InitiateConnectionRequest): P
     }
 }
 
-// Disconnect Connection
+// Disconnect Account
 export interface DisconnectRequest {
-    fbUserId: string
+    accountId: string
 }
 
 export interface DisconnectResponse {
@@ -48,14 +48,14 @@ export interface DisconnectResponse {
 
 export async function disconnect(request: DisconnectRequest): Promise<DisconnectResponse> {
     try {
-        const connection = await repo.findByFbUserId(request.fbUserId)
-        if (!connection) {
+        const account = await repo.findByAccountId(request.accountId)
+        if (!account) {
             return { success: false, error: 'NO_CONNECTION' }
         }
 
         // Use functional approach to mark as disconnected
-        const disconnectedConnection = fbConnection.disconnect(connection)
-        await repo.save(disconnectedConnection)
+        const disconnectedAccount = AccountDomain.disconnectAccount(account)
+        await repo.save(disconnectedAccount)
 
         return { success: true, message: 'Facebook account disconnected successfully' }
     } catch (error) {
@@ -64,15 +64,15 @@ export async function disconnect(request: DisconnectRequest): Promise<Disconnect
     }
 }
 
-// Get Connection Status
+// Get Account Status
 export interface GetStatusRequest {
-    fbUserId: string
+    accountId: string
 }
 
 export interface GetStatusResponse {
     success: boolean
     status?: string
-    fbUserId?: string
+    accountId?: string
     expiresAt?: Date
     needsRefresh?: boolean
     adAccountsCount?: number
@@ -81,18 +81,18 @@ export interface GetStatusResponse {
 
 export async function getStatus(request: GetStatusRequest): Promise<GetStatusResponse> {
     try {
-        const connection = await repo.findByFbUserId(request.fbUserId)
-        if (!connection) {
+        const account = await repo.findByAccountId(request.accountId)
+        if (!account) {
             return { success: false, error: 'NO_CONNECTION' }
         }
 
         return {
             success: true,
-            status: connection.status.toUpperCase(),
-            fbUserId: connection.fbUserId,
-            expiresAt: connection.expiresAt,
-            needsRefresh: fbConnection.needsRefresh(connection),
-            adAccountsCount: connection.adAccounts?.length || 0,
+            status: account.status.toUpperCase(),
+            accountId: account.accountId,
+            expiresAt: account.expiresAt,
+            needsRefresh: AccountDomain.doesAccountNeedRefresh(account),
+            adAccountsCount: account.adAccounts?.length || 0,
         }
     } catch (error) {
         const err = error as Error
@@ -102,7 +102,7 @@ export async function getStatus(request: GetStatusRequest): Promise<GetStatusRes
 
 // Get Valid Token
 export interface GetTokenRequest {
-    fbUserId: string
+    accountId: string
 }
 
 export interface GetTokenResponse {
@@ -114,31 +114,31 @@ export interface GetTokenResponse {
 
 export async function getToken(request: GetTokenRequest): Promise<GetTokenResponse> {
     try {
-        let connection = await repo.findByFbUserId(request.fbUserId)
-        if (!connection) {
+        let account = await repo.findByAccountId(request.accountId)
+        if (!account) {
             return { success: false, error: 'NO_CONNECTION' }
         }
 
         // If expired, fail
-        if (fbConnection.isExpired(connection)) {
-            const needsReconnectConnection = fbConnection.markAsNeedsReconnect(connection, 'TOKEN_EXPIRED')
-            await repo.save(needsReconnectConnection)
+        if (AccountDomain.isAccountExpired(account)) {
+            const needsReconnectAccount = AccountDomain.markAccountAsNeedsReconnect(account, 'TOKEN_EXPIRED')
+            await repo.save(needsReconnectAccount)
             return { success: false, error: 'NEEDS_RECONNECT' }
         }
 
         // If needs refresh, try to refresh
-        if (fbConnection.needsRefresh(connection)) {
-            const refreshResult = await refreshToken({ fbUserId: request.fbUserId })
+        if (AccountDomain.doesAccountNeedRefresh(account)) {
+            const refreshResult = await refreshToken({ accountId: request.accountId })
             if (!refreshResult.success) {
                 return { success: false, error: 'NEEDS_RECONNECT' }
             }
-            connection = refreshResult.connection!
+            account = refreshResult.account!
         }
 
         return {
             success: true,
-            accessToken: connection.accessToken,
-            expiresAt: connection.expiresAt,
+            accessToken: account.accessToken,
+            expiresAt: account.expiresAt,
         }
     } catch (error) {
         const err = error as Error
@@ -148,26 +148,26 @@ export async function getToken(request: GetTokenRequest): Promise<GetTokenRespon
 
 // Refresh Ad Accounts
 export interface RefreshAdAccountsRequest {
-    fbUserId: string
+    accountId: string
 }
 
 export interface RefreshAdAccountsResponse {
     success: boolean
     message?: string
     adAccountsCount?: number
-    connection?: FacebookConnection
+    account?: Account
     error?: string
 }
 
 export async function refreshAdAccounts(request: RefreshAdAccountsRequest): Promise<RefreshAdAccountsResponse> {
     try {
-        const connection = await repo.findByFbUserId(request.fbUserId)
-        if (!connection) {
+        const account = await repo.findByAccountId(request.accountId)
+        if (!account) {
             return { success: false, error: 'NO_CONNECTION' }
         }
 
         // Get fresh token
-        const tokenResult = await getToken({ fbUserId: request.fbUserId })
+        const tokenResult = await getToken({ accountId: request.accountId })
         if (!tokenResult.success) {
             return { success: false, error: tokenResult.error }
         }
@@ -176,15 +176,15 @@ export async function refreshAdAccounts(request: RefreshAdAccountsRequest): Prom
         const adAccountsResponse = await facebookOAuthClient.getAdAccounts(tokenResult.accessToken!)
         const adAccounts = adAccountsResponse.adAccounts
 
-        // Update connection with new ad accounts
-        const updatedConnection = fbConnection.updateAdAccounts(connection, adAccounts)
-        const savedConnection = await repo.save(updatedConnection)
+        // Update account with new ad accounts
+        const updatedAccount = AccountDomain.updateAccountAdAccounts(account, adAccounts)
+        const savedAccount = await repo.save(updatedAccount)
 
         return {
             success: true,
             message: 'Ad accounts refreshed successfully',
             adAccountsCount: adAccounts.length,
-            connection: savedConnection,
+            account: savedAccount,
         }
     } catch (error) {
         const err = error as Error
@@ -194,29 +194,29 @@ export async function refreshAdAccounts(request: RefreshAdAccountsRequest): Prom
 
 // Set Ad Account Active Status
 export interface SetAdAccountActiveRequest {
-    fbUserId: string
+    accountId: string
     adAccountId: string
     isActive: boolean
 }
 
 export interface SetAdAccountActiveResponse {
     success: boolean
-    connection?: FacebookConnection
+    account?: Account
     error?: string
 }
 
 export async function setAdAccountActive(request: SetAdAccountActiveRequest): Promise<SetAdAccountActiveResponse> {
     try {
-        const connection = await repo.findByFbUserId(request.fbUserId)
-        if (!connection) {
+        const account = await repo.findByAccountId(request.accountId)
+        if (!account) {
             return { success: false, error: 'NO_CONNECTION' }
         }
 
         // Use functional approach - no methods on objects, just functions
-        const updatedConnection = fbConnection.setAdAccountActive(connection, request.adAccountId, request.isActive)
+        const updatedAccount = AccountDomain.setAdAccountActiveStatus(account, request.adAccountId, request.isActive)
 
-        const savedConnection = await repo.save(updatedConnection)
-        return { success: true, connection: savedConnection }
+        const savedAccount = await repo.save(updatedAccount)
+        return { success: true, account: savedAccount }
     } catch (error) {
         const err = error as Error
         return { success: false, error: err.message || 'INTERNAL_ERROR' }
@@ -232,7 +232,7 @@ export interface HandleCallbackRequest {
 
 export interface HandleCallbackResponse {
     success: boolean
-    connection?: FacebookConnection
+    account?: Account
     error?: string
 }
 
@@ -265,19 +265,19 @@ export async function handleCallback(request: HandleCallbackRequest): Promise<Ha
             console.warn('Failed to fetch ad accounts, continuing without them:', error)
         }
 
-        // Create connection using functional approach - no factory pattern!
-        const connection = fbConnection.create({
-            fbUserId: debugInfo.userId,
+        // Create account using functional approach - no factory pattern!
+        const account = AccountDomain.createAccount({
+            accountId: debugInfo.userId,
             accessToken: longLivedToken.accessToken,
             scopes: debugInfo.scopes,
-            status: ConnectionStatus.CONNECTED,
+            status: AccountStatus.CONNECTED,
             connectedAt: new Date(),
             expiresAt: new Date(Date.now() + longLivedToken.expiresIn * 1000),
             adAccounts,
         })
 
-        const savedConnection = await repo.save(connection)
-        return { success: true, connection: savedConnection }
+        const savedAccount = await repo.save(account)
+        return { success: true, account: savedAccount }
     } catch (error) {
         const err = error as Error
         return { success: false, error: err.message || 'UNKNOWN_ERROR' }
@@ -286,47 +286,61 @@ export async function handleCallback(request: HandleCallbackRequest): Promise<Ha
 
 // Refresh Token
 export interface RefreshTokenRequest {
-    fbUserId: string
+    accountId: string
 }
 
 export interface RefreshTokenResponse {
     success: boolean
-    connection?: FacebookConnection
+    account?: Account
     error?: string
 }
 
 export async function refreshToken(request: RefreshTokenRequest): Promise<RefreshTokenResponse> {
     try {
-        const connection = await repo.findByFbUserId(request.fbUserId)
-        if (!connection) {
+        const account = await repo.findByAccountId(request.accountId)
+        if (!account) {
             return { success: false, error: 'NO_CONNECTION' }
         }
 
         // Check if needs refresh using functional approach
-        if (!fbConnection.needsRefresh(connection)) {
-            return { success: true, connection }
+        if (!AccountDomain.doesAccountNeedRefresh(account)) {
+            return { success: true, account }
         }
 
         try {
-            const longLivedToken = await facebookOAuthClient.exchangeLongLivedToken(connection.accessToken)
+            const longLivedToken = await facebookOAuthClient.exchangeLongLivedToken(account.accessToken)
 
             // Update tokens using functional approach
-            const updatedConnection = fbConnection.updateTokens(
-                connection,
+            const updatedAccount = AccountDomain.updateAccountTokens(
+                account,
                 longLivedToken.accessToken,
                 new Date(Date.now() + longLivedToken.expiresIn * 1000)
             )
 
-            const savedConnection = await repo.save(updatedConnection)
-            return { success: true, connection: savedConnection }
+            const savedAccount = await repo.save(updatedAccount)
+            return { success: true, account: savedAccount }
         } catch (error) {
             // Mark as needs reconnect using functional approach
-            const needsReconnectConnection = fbConnection.markAsNeedsReconnect(connection, 'REFRESH_FAILED')
-            await repo.save(needsReconnectConnection)
+            const needsReconnectAccount = AccountDomain.markAccountAsNeedsReconnect(account, 'REFRESH_FAILED')
+            await repo.save(needsReconnectAccount)
             return { success: false, error: 'REFRESH_FAILED' }
         }
     } catch (error) {
         const err = error as Error
         return { success: false, error: err.message || 'INTERNAL_ERROR' }
     }
+}
+
+/**
+ * Facebook Auth Use Case - Grouped collection of all Facebook authentication functions
+ */
+export const FbAuthUseCase = {
+    initiateConnection,
+    disconnect,
+    getStatus,
+    getToken,
+    refreshAdAccounts,
+    setAdAccountActive,
+    handleCallback,
+    refreshToken,
 }

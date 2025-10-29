@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 export const SessionActionSchema = z.object({
     action: z.enum(['connect', 'disconnect']),
-    fbUserId: z.string().min(1).optional(),
+    accountId: z.string().min(1).optional(),
 })
 
 export const CallbackQuerySchema = z.object({
@@ -15,6 +15,6 @@ export const CallbackQuerySchema = z.object({
     state: z.string().min(1),
 })
 
-export const FbUserIdQuerySchema = z.object({
-    fbUserId: z.string().min(1),
+export const AccountIdQuerySchema = z.object({
+    accountId: z.string().min(1),
 })

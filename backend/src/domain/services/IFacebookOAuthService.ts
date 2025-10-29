@@ -1,6 +1,6 @@
 /**
- * Domain Service Interface: IFacebookOAuthClient
- * Defines contract for interacting with Facebook OAuth API
+ * Domain Service Interface: IFacebookOAuthService
+ * Defines contract for Facebook OAuth operations
  */
 
 export interface OAuthTokenResponse {
@@ -18,15 +18,12 @@ export interface DebugTokenResponse {
     expiresAt: Date
 }
 
-export interface FacebookAdAccount {
-    name: string
-    status: number
-    currency: string
-    timezone: string
-    spendCap?: string
-    adAccountId: string
-    isActive?: boolean
+export interface AuthUrlResponse {
+    url: string
+    state: string
 }
+
+import { FacebookAdAccount } from '../types/FacebookAdAccount'
 
 export interface AdAccountsResponse {
     adAccounts: FacebookAdAccount[]
@@ -39,34 +36,10 @@ export interface AdAccountsResponse {
     }
 }
 
-export interface AuthUrlResponse {
-    url: string
-    state: string
-}
-
-export interface IFacebookOAuthClient {
-    /**
-     * Generate OAuth authorization URL
-     */
+export interface IFacebookOAuthService {
     generateAuthUrl(): Promise<AuthUrlResponse>
-
-    /**
-     * Exchange authorization code for access token
-     */
     exchangeCode(code: string): Promise<OAuthTokenResponse>
-
-    /**
-     * Exchange short-lived token for long-lived token
-     */
     exchangeLongLivedToken(shortLivedToken: string): Promise<OAuthTokenResponse>
-
-    /**
-     * Debug and validate a token
-     */
     debugToken(accessToken: string): Promise<DebugTokenResponse>
-
-    /**
-     * Get ad accounts for the authenticated user
-     */
     getAdAccounts(accessToken: string): Promise<AdAccountsResponse>
 }

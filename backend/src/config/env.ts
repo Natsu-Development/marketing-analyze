@@ -41,6 +41,9 @@ const EnvSchema = z.object({
 
     // Logging
     LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
+
+    // Cron
+    AD_INSIGHTS_CRON_SCHEDULE: z.string().default('0 2 * * *'),
 })
 
 function validateEnv() {
@@ -93,5 +96,8 @@ export const appConfig = {
     },
     logging: {
         level: env.LOG_LEVEL,
+    },
+    cron: {
+        adInsightsSchedule: env.AD_INSIGHTS_CRON_SCHEDULE,
     },
 }

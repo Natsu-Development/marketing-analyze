@@ -6,7 +6,7 @@
 
 import { Request, Response } from 'express'
 import { z } from 'zod'
-import * as facebookAuth from '../../../application/use-cases/facebookAuth'
+import { FbAuthUseCase } from '../../../application/use-cases/facebookAuth'
 import {
     jsonSuccess,
     jsonError,
@@ -30,7 +30,7 @@ export async function handleSession(req: Request, res: Response): Promise<void> 
         const body = SessionActionSchema.parse(req.body)
 
         if (body.action === 'connect') {
-            const result = await facebookAuth.initiateConnection({})
+            const result = await FbAuthUseCase.initiateConnection({})
             if (!result.success) {
                 return jsonError(res, result.error || 'FAILED_TO_GENERATE_AUTH_URL', 500)
             }
@@ -40,11 +40,11 @@ export async function handleSession(req: Request, res: Response): Promise<void> 
             })
         }
 
-        if (!body.fbUserId) {
-            return jsonError(res, 'FB_USER_ID_REQUIRED', 400)
+        if (!body.accountId) {
+            return jsonError(res, 'ACCOUNT_ID_REQUIRED', 400)
         }
 
-        const result = await facebookAuth.disconnect({ fbUserId: body.fbUserId })
+        const result = await FbAuthUseCase.disconnect({ accountId: body.accountId })
         if (!result.success) {
             return jsonError(res, result.error || 'DISCONNECT_FAILED', 400)
         }
@@ -65,7 +65,7 @@ export async function handleCallback(req: Request, res: Response): Promise<void>
     try {
         const { code, state } = CallbackQuerySchema.parse(req.query)
 
-        const result = await facebookAuth.handleCallback({
+        const result = await FbAuthUseCase.handleCallback({
             code,
             state,
         })
@@ -86,13 +86,13 @@ export async function handleCallback(req: Request, res: Response): Promise<void>
  */
 export async function getStatus(req: Request, res: Response): Promise<void> {
     try {
-        const fbUserId = req.query.fbUserId as string
+        const accountId = req.query.accountId as string
 
-        if (!fbUserId) {
-            return jsonError(res, 'FB_USER_ID_REQUIRED', 400)
+        if (!accountId) {
+            return jsonError(res, 'ACCOUNT_ID_REQUIRED', 400)
         }
 
-        const result = await facebookAuth.getStatus({ fbUserId })
+        const result = await FbAuthUseCase.getStatus({ accountId })
         if (!result.success) {
             const statusCode = result.error === 'NO_CONNECTION' ? 404 : 500
             return jsonError(res, result.error || 'STATUS_ERROR', statusCode)
@@ -100,7 +100,7 @@ export async function getStatus(req: Request, res: Response): Promise<void> {
 
         return jsonSuccess(res, {
             status: result.status,
-            fbUserId: result.fbUserId,
+            accountId: result.accountId,
             expiresAt: result.expiresAt,
             needsRefresh: result.needsRefresh,
             adAccountsCount: result.adAccountsCount,
@@ -116,13 +116,13 @@ export async function getStatus(req: Request, res: Response): Promise<void> {
  */
 export async function getToken(req: Request, res: Response): Promise<void> {
     try {
-        const fbUserId = req.query.fbUserId as string
+        const accountId = req.query.accountId as string
 
-        if (!fbUserId) {
-            return jsonError(res, 'FB_USER_ID_REQUIRED', 400)
+        if (!accountId) {
+            return jsonError(res, 'ACCOUNT_ID_REQUIRED', 400)
         }
 
-        const result = await facebookAuth.getToken({ fbUserId })
+        const result = await FbAuthUseCase.getToken({ accountId })
 
         if (!result.success) {
             const statusCode = result.error === 'NO_CONNECTION' ? 404 : 400
@@ -139,18 +139,18 @@ export async function getToken(req: Request, res: Response): Promise<void> {
 }
 
 /**
- * POST /api/auth/facebook/:userId/refresh-ad-accounts
+ * POST /api/auth/facebook/:accountId/refresh-ad-accounts
  * Refreshes ad accounts for a user
  */
 export async function refreshAdAccounts(req: Request, res: Response): Promise<void> {
     try {
-        const fbUserId = req.params.userId
+        const accountId = req.params.accountId
 
-        if (!fbUserId) {
-            return jsonError(res, 'FB_USER_ID_REQUIRED', 400)
+        if (!accountId) {
+            return jsonError(res, 'ACCOUNT_ID_REQUIRED', 400)
         }
 
-        const result = await facebookAuth.refreshAdAccounts({ fbUserId })
+        const result = await FbAuthUseCase.refreshAdAccounts({ accountId })
 
         if (!result.success) {
             const statusCode = result.error === 'NO_CONNECTION' ? 404 : 422
@@ -160,7 +160,7 @@ export async function refreshAdAccounts(req: Request, res: Response): Promise<vo
         return jsonSuccess(res, {
             message: 'Ad accounts refreshed successfully',
             adAccountsCount: result.adAccountsCount,
-            connection: result.connection,
+            account: result.account,
         })
     } catch (error: any) {
         return handleInternalError(res, error)
@@ -168,17 +168,17 @@ export async function refreshAdAccounts(req: Request, res: Response): Promise<vo
 }
 
 /**
- * PUT /api/auth/facebook/:userId/ad-accounts/:adAccountId/active
+ * PUT /api/auth/facebook/:accountId/ad-accounts/:adAccountId/active
  * Updates the active status of a specific ad account
  */
 export async function updateAdAccountActive(req: Request, res: Response): Promise<void> {
     try {
-        const fbUserId = req.params.userId
+        const accountId = req.params.accountId
         const adAccountId = req.params.adAccountId
         const { isActive } = req.body
 
-        if (!fbUserId) {
-            return jsonError(res, 'FB_USER_ID_REQUIRED', 400)
+        if (!accountId) {
+            return jsonError(res, 'ACCOUNT_ID_REQUIRED', 400)
         }
 
         if (!adAccountId) {
@@ -189,8 +189,8 @@ export async function updateAdAccountActive(req: Request, res: Response): Promis
             return jsonError(res, 'IS_ACTIVE_REQUIRED', 400)
         }
 
-        const result = await facebookAuth.setAdAccountActive({
-            fbUserId,
+        const result = await FbAuthUseCase.setAdAccountActive({
+            accountId,
             adAccountId,
             isActive,
         })
@@ -205,7 +205,7 @@ export async function updateAdAccountActive(req: Request, res: Response): Promis
 
         return jsonSuccess(res, {
             message: `Ad account ${isActive ? 'activated' : 'deactivated'} successfully`,
-            connection: result.connection,
+            account: result.account,
         })
     } catch (error: any) {
         return handleInternalError(res, error)

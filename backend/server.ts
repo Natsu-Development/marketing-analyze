@@ -6,7 +6,8 @@
 import { createApp } from './src/app'
 import { appConfig } from './src/config/env'
 import { connectDatabase } from './src/config/database'
-import { logger } from './src/infrastructure/logger'
+import { logger } from './src/infrastructure/shared/logger'
+import { startAllCronJobs, stopAllCronJobs } from './src/application/services/cronScheduler'
 
 async function bootstrap() {
     try {
@@ -14,6 +15,9 @@ async function bootstrap() {
 
         // Connect to database
         await connectDatabase(appConfig.database.uri)
+
+        // Start cron jobs
+        startAllCronJobs()
 
         // Create Express app
         const app = createApp()
@@ -32,6 +36,9 @@ async function bootstrap() {
             // Stop accepting new connections
             server.close(async () => {
                 logger.info('HTTP server closed')
+
+                // Stop all cron jobs
+                stopAllCronJobs()
 
                 // Close database connection
                 const mongoose = await import('mongoose')

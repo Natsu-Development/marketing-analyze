@@ -4,7 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express'
-import { logger } from '../../../infrastructure/logger'
+import { logger } from '../../../infrastructure/shared/logger'
 
 export function requestLogger(req: Request, res: Response, next: NextFunction): void {
     const start = Date.now()

@@ -6,14 +6,14 @@
 
 import axios, { AxiosInstance } from 'axios'
 import {
-    IFacebookOAuthClient,
+    IFacebookOAuthService,
     OAuthTokenResponse,
     DebugTokenResponse,
     AdAccountsResponse,
-    FacebookAdAccount,
     AuthUrlResponse,
-} from '../domain/IFacebookClient'
-import { appConfig } from '../config/env'
+    FacebookAdAccount,
+} from '../../domain'
+import { appConfig } from '../../config/env'
 
 const config = {
     appId: appConfig.facebook.appId,
@@ -149,7 +149,7 @@ const getAdAccounts = async (accessToken: string): Promise<AdAccountsResponse> =
     }
 }
 
-export const facebookOAuthClient: IFacebookOAuthClient = {
+export const facebookOAuthClient: IFacebookOAuthService = {
     generateAuthUrl,
     exchangeCode,
     exchangeLongLivedToken,

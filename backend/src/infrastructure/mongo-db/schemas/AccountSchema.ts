@@ -1,28 +1,29 @@
 /**
- * MongoDB Schema: FacebookConnection
- * Defines the database schema for Facebook OAuth connections
+ * MongoDB Schema: Account (Facebook OAuth)
+ * Defines the database schema for Facebook OAuth account connections
  */
 
 import { Schema, model, Document } from 'mongoose'
-import { ConnectionStatus } from '../../domain/Connection'
-import { FacebookAdAccount } from '../../domain/IFacebookClient'
+import { AccountStatus } from '../../../domain/entities/Account'
+import { FacebookAdAccount } from '../../../domain/types/FacebookAdAccount'
 
-export interface IFacebookConnectionDocument extends Document {
-    fbUserId: string
+export interface IAccountDocument extends Document {
+    accountId: string
     accessToken: string
     scopes: string[]
-    status: ConnectionStatus
+    status: AccountStatus
     connectedAt: Date
     expiresAt: Date
     lastErrorCode?: string
+    lastSyncAt?: Date
     adAccounts?: FacebookAdAccount[]
     createdAt: Date
     updatedAt: Date
 }
 
-const FacebookConnectionSchema = new Schema<IFacebookConnectionDocument>(
+const AccountSchemaInstance = new Schema<IAccountDocument>(
     {
-        fbUserId: {
+        accountId: {
             type: String,
             required: true,
             index: true,
@@ -38,8 +39,8 @@ const FacebookConnectionSchema = new Schema<IFacebookConnectionDocument>(
         },
         status: {
             type: String,
-            enum: Object.values(ConnectionStatus),
-            default: ConnectionStatus.CONNECTED,
+            enum: Object.values(AccountStatus),
+            default: AccountStatus.CONNECTED,
         },
         connectedAt: {
             type: Date,
@@ -52,6 +53,9 @@ const FacebookConnectionSchema = new Schema<IFacebookConnectionDocument>(
         },
         lastErrorCode: {
             type: String,
+        },
+        lastSyncAt: {
+            type: Date,
         },
         adAccounts: {
             type: [
@@ -71,14 +75,11 @@ const FacebookConnectionSchema = new Schema<IFacebookConnectionDocument>(
     },
     {
         timestamps: true,
-        collection: 'facebook_connections',
+        collection: 'accounts',
     }
 )
 
 // Index for finding expiring tokens
-FacebookConnectionSchema.index({ expiresAt: 1, status: 1 })
+AccountSchemaInstance.index({ expiresAt: 1, status: 1 })
 
-export const FacebookConnectionModel = model<IFacebookConnectionDocument>(
-    'FacebookConnection',
-    FacebookConnectionSchema
-)
+export const AccountSchema = model<IAccountDocument>('Account', AccountSchemaInstance)
