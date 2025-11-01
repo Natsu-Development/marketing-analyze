@@ -6,8 +6,8 @@
 import { appConfig } from './env'
 
 export { accountRepository } from '../infrastructure/mongo-db/repositories/AccountRepository'
-export { facebookOAuthClient } from '../infrastructure/external/FacebookClient'
-export { adInsightsClient } from '../infrastructure/external/AdInsightsClient'
+export { facebookOAuthClient } from '../infrastructure/facebook-sdk/AuthClient'
+export { adInsightsClient } from '../infrastructure/facebook-sdk/InsightClient'
 export { exportResultRepository } from '../infrastructure/mongo-db/repositories/ExportResultRepository'
 export { adsetInsightDataRepository } from '../infrastructure/mongo-db/repositories/AdsetInsightRepository'
 

@@ -1,5 +1,5 @@
 /**
- * Domain Service Interface: IFacebookOAuthService
+ * Application Service Interface: IFacebookOAuthService
  * Defines contract for Facebook OAuth operations
  */
 
@@ -23,10 +23,10 @@ export interface AuthUrlResponse {
     state: string
 }
 
-import { FacebookAdAccount } from '../types/FacebookAdAccount'
+import { AdAccount } from '../../domain/value-objects/AdAccount'
 
 export interface AdAccountsResponse {
-    adAccounts: FacebookAdAccount[]
+    adAccounts: AdAccount[]
     paging?: {
         cursors?: {
             before: string

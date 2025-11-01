@@ -2,7 +2,8 @@
  * Repository Implementation: ExportResult
  */
 
-import { IExportResultRepository, ExportResult } from '../../../domain'
+import { IExportResultRepository } from '../../../application/repositories/IExportResultRepository'
+import { ExportResult } from '../../../application/entities/ExportResult'
 import { ExportResultModel } from '../schemas/ExportResultSchema'
 
 const toDomain = (doc: any): ExportResult => {

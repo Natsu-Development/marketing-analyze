@@ -2,7 +2,8 @@
  * Repository Implementation: Adset Insight Data
  */
 
-import { IAdSetInsightRepository, AdSetInsight } from '../../../domain'
+import { IAdSetInsightRepository } from '../../../application/repositories/IAdSetInsightRepository'
+import { AdSetInsight } from '../../../application/entities/AdSetInsight'
 import { AdSetInsightDataModel } from '../schemas/AdsetInsightSchema'
 
 const toDomain = (doc: any): AdSetInsight => {

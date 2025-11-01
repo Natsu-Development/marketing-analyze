@@ -11,8 +11,8 @@ import {
     DebugTokenResponse,
     AdAccountsResponse,
     AuthUrlResponse,
-    FacebookAdAccount,
-} from '../../domain'
+} from '../../application/ports/IFacebookOAuthService'
+import { AdAccount } from '../../domain'
 import { appConfig } from '../../config/env'
 
 const config = {
@@ -130,7 +130,7 @@ const getAdAccounts = async (accessToken: string): Promise<AdAccountsResponse> =
         })
 
         const data = response.data
-        const adAccounts: FacebookAdAccount[] = data.data.map((account: any) => ({
+        const adAccounts: AdAccount[] = data.data.map((account: any) => ({
             name: account.name,
             status: account.account_status,
             currency: account.currency,

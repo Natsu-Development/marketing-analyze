@@ -5,7 +5,7 @@
 
 import { Schema, model, Document } from 'mongoose'
 import { AccountStatus } from '../../../domain/entities/Account'
-import { FacebookAdAccount } from '../../../domain/types/FacebookAdAccount'
+import { AdAccount } from '../../../domain/value-objects/AdAccount'
 
 export interface IAccountDocument extends Document {
     accountId: string
@@ -16,7 +16,7 @@ export interface IAccountDocument extends Document {
     expiresAt: Date
     lastErrorCode?: string
     lastSyncAt?: Date
-    adAccounts?: FacebookAdAccount[]
+    adAccounts?: AdAccount[]
     createdAt: Date
     updatedAt: Date
 }

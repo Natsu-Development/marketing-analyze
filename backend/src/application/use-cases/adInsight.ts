@@ -3,10 +3,12 @@
  * Exports ad insights for all active ad accounts using Facebook async reporting API
  */
 
-import { Account, ExportResultDomain, AccountDomain, ADSET_INSIGHT_FIELDS } from '../../domain'
+import { Account, AccountDomain, AccountService } from '../../domain'
+import { ADSET_INSIGHT_FIELDS } from '../entities/AdSetInsight'
+import { ExportResultFactory } from '../factories/ExportResultFactory'
 import { exportResultRepository } from '../../infrastructure/mongo-db/repositories/ExportResultRepository'
 import { accountRepository } from '../../config/dependencies'
-import { adInsightsClient } from '../../infrastructure/external/AdInsightsClient'
+import { adInsightsClient } from '../../infrastructure/facebook-sdk/InsightClient'
 import { CsvProcessorService } from '../services/csvProcessor'
 import { logger } from '../../infrastructure/shared/logger'
 
@@ -27,22 +29,10 @@ export interface AdInsightExportResponse {
 }
 
 /**
- * Get the date range based on lastSyncAt or default to 365 days
- */
-export function getTimeRangeFromAccount(account: Account): AdInsightsTimeRange {
-    const { since, until } = AccountDomain.getAccountSyncTimeRange(account)
-
-    return {
-        since: since.toISOString().split('T')[0], // YYYY-MM-DD
-        until: until.toISOString().split('T')[0], // YYYY-MM-DD
-    }
-}
-
-/**
  * Export ad insights for all connections with active ad accounts
  */
-export async function exportInsights(request?: AdInsightExportRequest): Promise<AdInsightExportResponse> {
-    logger.info('Starting ad insights export')
+export async function startImportAsync(request?: AdInsightExportRequest): Promise<AdInsightExportResponse> {
+    logger.info('Starting import insight')
 
     try {
         // Find all accounts from database
@@ -53,9 +43,11 @@ export async function exportInsights(request?: AdInsightExportRequest): Promise<
         const errors: string[] = []
 
         for (const account of allAccounts) {
-            // Check if account is valid
-            if (AccountDomain.isAccountExpired(account) || account.status !== 'connected') {
-                logger.warn(`Skipping account ${account.accountId} - expired or disconnected`)
+            // Domain: Check if account should be exported using business rules
+            const schedulingDecision = AccountDomain.canAccountExport(account)
+
+            if (!schedulingDecision.canExport) {
+                logger.info(`Skipping account ${account.accountId} - ${schedulingDecision.reason}`)
                 continue
             }
 
@@ -67,8 +59,18 @@ export async function exportInsights(request?: AdInsightExportRequest): Promise<
                 continue
             }
 
-            // Get time range for this account
-            const timeRange = request?.timeRange || getTimeRangeFromAccount(account)
+            // Get time range for this account (use domain service)
+            const timeRange = request?.timeRange || schedulingDecision.timeRange
+
+            // Domain: Validate time range
+            const timeRangeValidation = AccountService.validateTimeRange(timeRange)
+            if (!timeRangeValidation.valid) {
+                logger.warn(
+                    `Invalid time range for account ${account.accountId}: ${timeRangeValidation.errors.join(', ')}`
+                )
+                continue
+            }
+
             logger.info(`Using time range for account ${account.accountId}: ${timeRange.since} to ${timeRange.until}`)
 
             let accountExportSuccess = true
@@ -76,7 +78,7 @@ export async function exportInsights(request?: AdInsightExportRequest): Promise<
             // Export for each active ad account
             for (const adAccount of activeAdAccounts) {
                 try {
-                    await exportForAccount(account, adAccount.adAccountId, timeRange, 'adset')
+                    await importAsyncInsight(account, adAccount.adAccountId, timeRange, 'adset')
                     exportsCreated += 1
                     adAccountIds.push(adAccount.adAccountId)
                     logger.info(`Created exports for ad account ${adAccount.adAccountId}`)
@@ -90,13 +92,13 @@ export async function exportInsights(request?: AdInsightExportRequest): Promise<
 
             // Update lastSyncAt if all exports succeeded for this account
             if (accountExportSuccess && activeAdAccounts.length > 0) {
-                const updatedAccount = AccountDomain.updateAccountLastSyncAt(account)
+                const updatedAccount = AccountDomain.updateAccountLastSync(account)
                 await accountRepository.save(updatedAccount)
                 logger.info(`Updated lastSyncAt for account ${account.accountId}`)
             }
         }
 
-        logger.info(`Ad insights export completed. Created ${exportsCreated} exports`)
+        logger.info(`Import insight completed. Created ${exportsCreated} exports`)
 
         return {
             success: errors.length === 0,
@@ -105,7 +107,7 @@ export async function exportInsights(request?: AdInsightExportRequest): Promise<
             errors: errors.length > 0 ? errors : undefined,
         }
     } catch (error) {
-        const errorMsg = `Failed to export ad insights: ${(error as Error).message}`
+        const errorMsg = `Failed to import insight: ${(error as Error).message}`
         logger.error(errorMsg)
         return {
             success: false,
@@ -117,9 +119,9 @@ export async function exportInsights(request?: AdInsightExportRequest): Promise<
 }
 
 /**
- * Export ad insights for a specific ad account
+ * Import insight for a specific ad account
  */
-async function exportForAccount(
+async function importAsyncInsight(
     account: Account,
     adAccountId: string,
     timeRange: AdInsightsTimeRange,
@@ -167,16 +169,15 @@ async function exportForAccount(
         throw new Error(csvProcessResult.error || 'Failed to process CSV data')
     }
 
-    // Save export result
-    const exportResult = ExportResultDomain.createExportResult({
+    // Domain: Create export result record
+    const exportResult = ExportResultFactory.createExportResultForAdInsights(
         adAccountId,
-        reportRunId: reportResponse.reportRunId,
-        fileUrl: csvResult.fileUrl,
-        recordCount: csvProcessResult.recordsProcessed,
+        reportResponse.reportRunId,
+        csvResult.fileUrl,
+        csvProcessResult.recordsProcessed,
         timeRange,
-        status: 'completed',
-        completedAt: csvResult.completedAt,
-    })
+        csvResult.completedAt
+    )
 
     await exportResultRepository.save(exportResult)
     logger.info(
@@ -224,6 +225,5 @@ async function findAllAccounts(): Promise<Account[]> {
  * Ad Insights Use Case - Grouped collection of all ad insights export functions
  */
 export const AdInsightUseCase = {
-    export: exportInsights,
-    getTimeRangeFromAccount,
+    startImportAsync: startImportAsync,
 }

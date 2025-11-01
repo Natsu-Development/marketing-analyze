@@ -3,7 +3,7 @@
  * Simplified functional approach - plain objects + pure functions
  */
 
-import { Account, AccountStatus, AccountDomain } from '../../domain'
+import { Account, AccountDomain } from '../../domain'
 import { accountRepository as repo } from '../../config/dependencies'
 import { facebookOAuthClient } from '../../config/dependencies'
 
@@ -213,7 +213,7 @@ export async function setAdAccountActive(request: SetAdAccountActiveRequest): Pr
         }
 
         // Use functional approach - no methods on objects, just functions
-        const updatedAccount = AccountDomain.setAdAccountActiveStatus(account, request.adAccountId, request.isActive)
+        const updatedAccount = AccountDomain.setAdAccountActive(account, request.adAccountId, request.isActive)
 
         const savedAccount = await repo.save(updatedAccount)
         return { success: true, account: savedAccount }
@@ -270,8 +270,6 @@ export async function handleCallback(request: HandleCallbackRequest): Promise<Ha
             accountId: debugInfo.userId,
             accessToken: longLivedToken.accessToken,
             scopes: debugInfo.scopes,
-            status: AccountStatus.CONNECTED,
-            connectedAt: new Date(),
             expiresAt: new Date(Date.now() + longLivedToken.expiresIn * 1000),
             adAccounts,
         })

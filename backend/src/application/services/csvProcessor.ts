@@ -4,10 +4,9 @@
  */
 
 import axios from 'axios'
-import { parse } from 'csv-parse/sync'
 import { logger } from '../../infrastructure/shared/logger'
 import { adsetInsightDataRepository } from '../../infrastructure/mongo-db/repositories/AdsetInsightRepository'
-import { AdSetInsight, AdSetInsightDomain, mapRecordToAdSetInsight } from '../../domain'
+import { CsvService } from './CsvService'
 
 export interface ProcessCSVRequest {
     fileUrl: string
@@ -22,37 +21,13 @@ export interface ProcessCSVResponse {
     error?: string
 }
 
-// parseNumeric moved into domain AdSetInsightSpec; local version removed
-
-/**
- * Canonicalize a raw CSV header to our internal key in one pass
- * - lowercases, replaces spaces with underscores
- * - removes parentheses content and common suffixes (e.g., _all, _vnd)
- * - normalizes known aliases to canonical field names
- */
-function canonicalizeHeader(fieldName: string): string {
-    if (!fieldName) return ''
-    // Normalize base form
-    let cleaned = fieldName.toLowerCase().replace(/\s+/g, '_').trim()
-    // Remove parentheses content and redundant underscores/suffixes
-    cleaned = cleaned
-        .replace(/\(.*?\)/g, '')
-        .replace(/_{2,}/g, '_')
-        .replace(/_all$/i, '')
-        .replace(/_vnd$/i, '')
-        .replace(/^amount_spent_.*$/i, 'amount_spent')
-        .replace(/^(3-second|3_second)_video_plays$/i, 'three_second_video_plays')
-        .replace(/_$/, '')
-
-    return cleaned
-}
-
 /**
  * Process CSV file for adset level data
+ * Application layer handles infrastructure (downloading, saving), domain layer handles business logic
  */
 async function processAdsetCSV(fileUrl: string, adAccountId: string, accessToken?: string): Promise<number> {
     try {
-        // Append access token to URL if it's a Facebook export URL
+        // Infrastructure: Download CSV file
         const downloadUrl =
             fileUrl.includes('export_report') && accessToken ? `${fileUrl}&access_token=${accessToken}` : fileUrl
 
@@ -62,46 +37,36 @@ async function processAdsetCSV(fileUrl: string, adAccountId: string, accessToken
         })
         const csvContent = response.data as string
 
-        logger.info(`Parsing adset CSV data (${csvContent.split('\n').length} lines)`)
+        logger.info(`Processing adset CSV data (${csvContent.split('\n').length} lines)`)
 
-        // First, parse with column normalization
-        const rawRecords = parse(csvContent, {
-            columns: (rawHeader: string[]) => {
-                console.log(`Raw header: ${rawHeader.join(', ')}`)
-                // One-pass canonicalization
-                return rawHeader.map((h) => canonicalizeHeader(h))
-            },
-            skip_empty_lines: true,
-            trim: true,
-        })
+        // Domain: Parse and transform CSV content to domain entities
+        const processingResult = CsvService.parseCsvToInsights(csvContent, adAccountId)
 
-        // Log first record for debugging
-        if (rawRecords.length > 0) {
-            logger.info(`Sample record fields: ${Object.keys(rawRecords[0] as Record<string, any>).join(', ')}`)
+        // Log processing results
+        if (processingResult.insights.length > 0) {
+            const sampleRecord = processingResult.insights[0]
+            logger.info(
+                `Sample processed insight: adAccountId=${sampleRecord.adAccountId}, campaign=${sampleRecord.campaignId}, date=${sampleRecord.date.toISOString().split('T')[0]}`
+            )
         }
 
-        const insights: AdSetInsight[] = rawRecords.map((record: any) => {
-            // Parse date from reporting_starts or reporting_ends (use starts as primary)
-            const dateStr = record.reporting_starts || record.reporting_ends || ''
-            let parsedDate = new Date()
-            if (dateStr) {
-                // Handle both YYYY-MM-DD and other date formats
-                const d = new Date(dateStr)
-                if (!isNaN(d.getTime())) {
-                    parsedDate = d
-                    // Set to middle of the day: 12:00:00.000
-                    parsedDate.setHours(12, 0, 0, 0)
-                }
-            }
+        if (processingResult.errors.length > 0) {
+            logger.warn(
+                `CSV processing errors: ${processingResult.errors.slice(0, 3).join('; ')}${processingResult.errors.length > 3 ? '...' : ''}`
+            )
+        }
 
-            const mapped = mapRecordToAdSetInsight(record, adAccountId)
-            return AdSetInsightDomain.createAdSetInsight(mapped)
-        })
+        // Validate processing results using domain service
+        const validation = CsvService.validateCsvResult(processingResult)
+        if (!validation.valid) {
+            logger.warn(`CSV processing validation issues: ${validation.errors.join('; ')}`)
+        }
 
-        logger.info(`Storing ${insights.length} adset insights in database`)
-        await adsetInsightDataRepository.saveBatch(insights)
+        // Infrastructure: Store domain entities in database
+        logger.info(`Storing ${processingResult.insights.length} adset insights in database`)
+        await adsetInsightDataRepository.saveBatch(processingResult.insights)
 
-        return insights.length
+        return processingResult.processed
     } catch (error) {
         logger.error(`Error processing adset CSV: ${(error as Error).message}`)
         throw error

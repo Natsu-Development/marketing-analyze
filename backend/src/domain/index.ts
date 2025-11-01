@@ -1,38 +1,25 @@
 /**
- * Domain Layer
- * Central export point for all domain entities, services, and repositories
+ * Domain Layer - Facebook Marketing Analytics Bounded Context
+ * Central export point for core domain objects following Domain-Driven Design principles
+ * Contains only core business logic and concepts
+ * Implemented using functional programming style and KISS principle
  */
 
-// Entities
+
+// ========== ENTITIES (Core Business Objects with Identity) ==========
 export * from './entities/Account'
-export * from './entities/AdSetInsight'
-export * from './entities/ExportResult'
 
-// Types
-export * from './types/FacebookAdAccount'
+// ========== VALUE OBJECTS (Immutable Objects without Identity) ==========
+export * from './value-objects/AdAccount'
 
-// Repositories
+// ========== DOMAIN SERVICES (Core Business Logic) ==========
+export * from './services/AccountService'
+
+// ========== REPOSITORIES (Persistence Interfaces for Core Entities) ==========
 export * from './repositories/IAccountRepository'
-export * from './repositories/IInsightRepository'
-export * from './repositories/IExportResultRepository'
 
-// Services - re-export specific interfaces
-export {
-    IFacebookOAuthService,
-    OAuthTokenResponse,
-    DebugTokenResponse,
-    AdAccountsResponse,
-    AuthUrlResponse,
-} from './services/IFacebookOAuthService'
-export {
-    IAdInsightsService,
-    AsyncReportStatus,
-    AsyncReportRequest,
-    AsyncReportResponse,
-    CSVExportResult,
-    AdInsightsTimeRange,
-} from './services/IAdInsightsService'
-export { ADSET_INSIGHT_FIELDS, normalizeInsightDate, mapRecordToAdSetInsight } from './services/AdSetInsightSpec'
+// ========== DOMAIN OBJECTS (Grouped Business Logic) ==========
+export { AccountDomain } from './entities/Account'
 
-// Exceptions
+// ========== EXCEPTIONS ==========
 export * from './exceptions/DomainException'

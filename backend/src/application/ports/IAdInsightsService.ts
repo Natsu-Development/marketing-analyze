@@ -1,12 +1,10 @@
 /**
- * Domain Service Interface: IAdInsightsService
+ * Application Service Interface: IAdInsightsService
  * Defines contract for Facebook Ad Insights async reporting operations
  */
 
-export interface AdInsightsTimeRange {
-    since: string // YYYY-MM-DD format
-    until: string // YYYY-MM-DD format
-}
+import { AdInsightsTimeRange } from '../types/AdInsightsTypes'
+
 
 export interface AsyncReportStatus {
     reportRunId: string

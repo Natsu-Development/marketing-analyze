@@ -5,7 +5,7 @@
 
 import * as cron from 'node-cron'
 import { logger } from '../../infrastructure/shared/logger'
-import { AdInsightUseCase } from '../use-cases/adSetInsights'
+import { AdInsightUseCase } from '../use-cases/adInsight'
 // Note: We use process.env directly here instead of appConfig to avoid circular dependencies
 
 let adInsightsJob: cron.ScheduledTask | null = null
@@ -27,7 +27,7 @@ export function startAdInsightsCron(): void {
     adInsightsJob = cron.schedule(schedule, async () => {
         logger.info('Running scheduled ad insights export...')
         try {
-            const result = await AdInsightUseCase.export()
+            const result = await AdInsightUseCase.startImportAsync()
             if (result.success) {
                 logger.info(`Ad insights export completed successfully. Created ${result.exportsCreated} exports.`)
             } else {
@@ -58,7 +58,7 @@ export function stopAdInsightsCron(): void {
 export async function runAdInsightsExportNow(): Promise<void> {
     logger.info('Running ad insights export immediately...')
     try {
-        const result = await AdInsightUseCase.export()
+        const result = await AdInsightUseCase.startImportAsync()
         if (result.success) {
             logger.info(`Ad insights export completed. Created ${result.exportsCreated} exports.`)
         } else {
