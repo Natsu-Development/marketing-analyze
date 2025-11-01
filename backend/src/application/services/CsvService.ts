@@ -4,8 +4,7 @@
  */
 
 import { parse } from 'csv-parse/sync'
-import { AdSetInsight } from '../entities/AdSetInsight'
-import { AdSetInsightFactory } from '../factories/AdSetInsightFactory'
+import { AdSetInsight, AdSetInsightDomain } from '../../domain/aggregates/ad-insights'
 
 export interface CsvResult {
     insights: AdSetInsight[]
@@ -66,23 +65,9 @@ export function parseCsvToInsights(csvContent: string, adAccountId: string): Csv
             try {
                 const record = rawRecords[i]
 
-                // Handle date parsing (domain logic)
-                const dateStr = record.reporting_starts || record.reporting_ends || ''
-                let parsedDate = new Date()
-                if (dateStr) {
-                    const d = new Date(dateStr as string)
-                    if (!isNaN(d.getTime())) {
-                        parsedDate = d
-                        // Set to middle of the day: 12:00:00.000
-                        parsedDate.setHours(12, 0, 0, 0)
-                    }
-                }
-
-                // Create domain entity using factory
-                const insight = AdSetInsightFactory.createAdSetInsightFromFacebookCsvRecord(
-                    record as any, // Type assertion for CSV record
-                    adAccountId
-                )
+                // Map CSV record to domain entity using domain mapper
+                const mappedProps = AdSetInsightDomain.mapRecordToAdSetInsight(record, adAccountId)
+                const insight = AdSetInsightDomain.createAdSetInsight(mappedProps)
                 insights.push(insight)
             } catch (error) {
                 const message = error instanceof Error ? error.message : String(error)

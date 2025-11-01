@@ -63,12 +63,14 @@ src/
 - Aggregates encapsulate business invariants
 - Value objects ensure immutability
 - Domain services contain pure business logic
+- **Mapping logic lives in domain** (not in factories)
 
 ✅ **Functional Programming**
 - Plain data objects instead of complex factory patterns
 - Pure functions operating on data
 - Immutable operations
 - Functional composition
+- **No unnecessary abstraction layers**
 
 ✅ **Clean Architecture**
 - Dependency inversion (domain doesn't depend on infrastructure)
@@ -76,11 +78,12 @@ src/
 - Testable business logic
 - Easy to swap implementations
 
-✅ **Better Maintainability**
-- Organized code structure following DDD patterns
-- Single source of truth for types (domain value objects)
-- Clear separation of concerns
-- Easier to understand and navigate
+✅ **KISS Principle (Keep It Simple, Stupid)**
+- **Removed factory pattern** - Use domain functions directly
+- **Removed duplicate entities** - Single source of truth in domain
+- **Reuse domain mappers** - No duplication in application layer
+- Flat folder structure where possible
+- Each layer has clear, focused responsibility
 
 ## Tech Stack
 
@@ -748,6 +751,29 @@ Import the provided `FacebookAuthController.postman_collection.json` for complet
 3. Configure Facebook App with production redirect URI
 4. Build and start: `yarn build && yarn start`
 
+## Architecture Simplifications (KISS Principle)
+
+### Removed Unnecessary Abstractions
+
+Following the KISS (Keep It Simple, Stupid) principle, we've removed unnecessary complexity:
+
+**1. Removed Factory Pattern**
+- ❌ Before: `application/factories/ExportResultFactory.ts`, `AdSetInsightFactory.ts`
+- ✅ After: Use domain functions directly (`ExportResultDomain.createExportResult()`)
+- **Why**: Factories added no value - they just wrapped domain functions
+
+**2. Removed Duplicate Entities**
+- ❌ Before: `application/entities/` duplicated domain aggregates
+- ✅ After: Single source of truth in `domain/aggregates/`
+- **Why**: Duplication violates DRY principle and creates maintenance burden
+
+**3. Reuse Domain Mappers**
+- ❌ Before: Created separate mappers in application layer
+- ✅ After: Use `mapRecordToAdSetInsight()` from domain layer
+- **Why**: Mapping CSV → Domain is domain logic, belongs in domain layer
+
+**Result**: Cleaner codebase, less code to maintain, clearer responsibilities
+
 ## Recent Architecture Changes
 
 ### Migration to DDD (v2.0)
@@ -791,12 +817,10 @@ This project follows strict naming conventions for better code organization and 
 - **Repository Interfaces**: `PascalCase` with `I` prefix - `IAccountRepository.ts`
 
 ### Application Layer
-- **Entities**: `PascalCase` - `AdSetInsight.ts`, `ExportResult.ts`
-- **Factories**: `PascalCase` - `AdSetInsightFactory.ts`, `ExportResultFactory.ts`
 - **Service Interfaces (Ports)**: `PascalCase` with `I` prefix - `IAdInsightService.ts`, `IOAuthService.ts`
 - **Services**: `PascalCase` - `AdInsightsService.ts`, `CsvService.ts`
 - **Utility Services**: `kebab-case` - `cron-scheduler.ts`, `csv-processor.ts`
-- **Use Cases**: `kebab-case` - `facebook-auth.ts`, `sync-ad-insights.ts`
+- **Use Cases**: `kebab-case` - `facebook-auth.ts`, `sync-ad-insights/`
 - **Schedulers**: `PascalCase` - `AdInsightsSyncScheduler.ts`
 
 ### Infrastructure Layer
