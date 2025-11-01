@@ -23,6 +23,3 @@ export * from './repositories/IAccountRepository'
 export { AccountDomain } from './aggregates/account'
 export { AdSetInsightDomain } from './aggregates/ad-insights'
 export { ExportResultDomain } from './aggregates/ad-insights'
-
-// ========== EXCEPTIONS ==========
-export * from './exceptions/DomainException'

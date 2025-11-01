@@ -6,7 +6,7 @@
 
 import { Account, AccountDomain, AccountStatus } from '../aggregates/account'
 import { AdAccount } from '../value-objects/AdAccount'
-import { AdInsightsTimeRange } from '../../application/types/AdInsightsTypes'
+import { AdInsightsTimeRange } from '../value-objects/TimeRange'
 
 export interface OAuthTokenData {
     accessToken: string

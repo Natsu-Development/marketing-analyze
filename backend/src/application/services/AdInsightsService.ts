@@ -6,7 +6,7 @@
 
 import { Account } from '../../domain'
 import { AdSetInsight } from '../entities/AdSetInsight'
-import { AdInsightsTimeRange } from '../types/AdInsightsTypes'
+import { AdInsightsTimeRange } from '../../domain/value-objects/TimeRange'
 
 export interface ExportAdInsightsCommand {
     account: Account

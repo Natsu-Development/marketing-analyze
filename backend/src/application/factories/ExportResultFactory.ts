@@ -5,7 +5,7 @@
  */
 
 import { ExportResult, ExportResultDomain } from '../entities/ExportResult'
-import { AdInsightsTimeRange } from '../types/AdInsightsTypes'
+import { AdInsightsTimeRange } from '../../domain/value-objects/TimeRange'
 
 /**
  * Create export result for ad insights export

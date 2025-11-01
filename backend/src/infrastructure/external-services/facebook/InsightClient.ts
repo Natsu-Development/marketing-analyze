@@ -10,7 +10,7 @@ import {
     AsyncReportResponse,
     AsyncReportStatus,
     CSVExportResult,
-} from '../../../application/ports/IAdInsightsService'
+} from '../../../application/ports/IAdInsightService'
 import { appConfig } from '../../../config/env'
 
 const config = {

@@ -6,7 +6,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { ZodError } from 'zod'
 import { logger } from '../../../infrastructure/shared/logger'
-import { DomainException } from '../../../domain/exceptions/DomainException'
 
 const httpStatusMap: Record<string, number> = {
     VALIDATION_ERROR: 400,
@@ -35,14 +34,15 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
         })
     }
 
-    // Handle domain exceptions
-    if (err instanceof DomainException) {
-        const statusCode = httpStatusMap[err.code] || 500
-        logger.warn({ message: err.message, code: err.code, path: req.path })
+    // Handle custom errors with a code property
+    if (err && typeof (err as any).code === 'string') {
+        const customError = err as Error & { code: string }
+        const statusCode = httpStatusMap[customError.code] || 500
+        logger.warn({ message: customError.message, code: customError.code, path: req.path })
         return res.status(statusCode).json({
             success: false,
-            error: err.code,
-            message: err.message,
+            error: customError.code,
+            message: customError.message,
         })
     }
 

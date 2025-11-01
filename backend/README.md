@@ -1,26 +1,48 @@
 # Marketing Analytics Backend
 
-Backend service for Facebook OAuth authentication with ad account management, built with **Simplified Functional Architecture**.
+Backend service for Facebook OAuth authentication with ad account management, built with **Domain-Driven Design (DDD)** and functional programming principles.
 
 ## Architecture
 
-This implementation follows **Simplified Clean Architecture** with a functional approach:
+This implementation follows **Domain-Driven Design (DDD)** with a functional approach and clean architecture principles:
 
 ```
 src/
 ├── domain/              # Business entities and rules (innermost layer)
-│   ├── Connection.ts    # Plain data interfaces + pure functions
-│   ├── IConnectionRepository.ts  # Repository interface
-│   └── IFacebookClient.ts       # Facebook API interface
+│   ├── aggregates/      # Core business objects with identity
+│   │   ├── account/     # Account aggregate (Facebook connection)
+│   │   └── ad-insights/ # Ad insights aggregates (AdSetInsight, ExportResult)
+│   ├── value-objects/   # Immutable objects without identity
+│   │   ├── AdAccount.ts
+│   │   └── TimeRange.ts
+│   ├── services/        # Core business logic
+│   │   ├── AccountService.ts
+│   │   └── AdInsightsService.ts
+│   └── repositories/    # Repository interfaces
 ├── application/         # Application business rules
-│   └── use-cases/       # Use case implementations (pure functions)
-│       └── facebookAuth.ts
+│   ├── entities/        # Application-layer entities
+│   ├── factories/       # Entity creation logic
+│   ├── ports/           # Service interfaces
+│   ├── services/        # Application services
+│   │   ├── AdInsightsService.ts
+│   │   ├── CsvService.ts
+│   │   └── csvProcessor.ts
+│   ├── schedulers/      # Cron job schedulers
+│   └── use-cases/       # Use case implementations
+│       ├── facebookAuth.ts
+│       ├── adInsight.ts
+│       └── sync-ad-insights/
 ├── infrastructure/      # External concerns (outermost layer)
-│   ├── mongo-db/        # MongoDB schemas and repositories
-│   │   ├── ConnectionRepository.ts
-│   │   └── ConnectionSchema.ts
-│   ├── FacebookClient.ts    # Facebook OAuth API client
-│   └── logger.ts            # Logging infrastructure
+│   ├── database/
+│   │   └── mongodb/     # MongoDB schemas and repositories
+│   │       ├── repositories/
+│   │       └── schemas/
+│   ├── external-services/
+│   │   └── facebook/    # Facebook API clients
+│   │       ├── AuthClient.ts
+│   │       └── InsightClient.ts
+│   └── shared/
+│       └── logger.ts    # Logging infrastructure
 ├── interfaces/          # Interface adapters
 │   └── http/            # Express controllers, routes, middleware
 │       ├── controllers/
@@ -34,25 +56,31 @@ src/
     └── dependencies.ts  # Singleton dependency exports
 ```
 
-## Functional Architecture Benefits
+## Architecture Benefits
 
-✅ **Simplified Design**
+✅ **Domain-Driven Design**
+- Clear separation of business logic in domain layer
+- Aggregates encapsulate business invariants
+- Value objects ensure immutability
+- Domain services contain pure business logic
+
+✅ **Functional Programming**
 - Plain data objects instead of complex factory patterns
 - Pure functions operating on data
-- No object methods or frozen instances
-- Direct imports instead of dependency injection
-
-✅ **Better Performance**
-- No `Object.freeze()` overhead
-- Plain object operations
-- Shared functions instead of object methods
-- Faster startup and execution
-
-✅ **Easier Testing**
-- Test pure functions independently
-- No complex mocking required
-- Clear input/output testing
+- Immutable operations
 - Functional composition
+
+✅ **Clean Architecture**
+- Dependency inversion (domain doesn't depend on infrastructure)
+- Clear layering (domain → application → infrastructure → interfaces)
+- Testable business logic
+- Easy to swap implementations
+
+✅ **Better Maintainability**
+- Organized code structure following DDD patterns
+- Single source of truth for types (domain value objects)
+- Clear separation of concerns
+- Easier to understand and navigate
 
 ## Tech Stack
 
@@ -500,92 +528,103 @@ The repository uses **bulkWrite with upsert operations** to:
 - Insert new records if they don't exist
 - Automatically handle duplicate prevention at the database level
 
-## Functional Architecture Pattern
+## DDD Architecture Pattern
 
-### Domain Layer (Pure Functions)
+### Domain Layer (Aggregates & Value Objects)
 
 ```typescript
-// Plain data interface
-export interface FacebookConnection {
+// Account Aggregate (domain/aggregates/account/Account.ts)
+export interface Account {
   readonly id?: string
-  readonly fbUserId: string
+  readonly accountId: string
   readonly accessToken: string
+  readonly status: AccountStatus
+  readonly adAccounts: AdAccount[]
   // ... other properties
 }
 
-// Pure functions namespace
-export const fbConnection = {
-  create: (props) => ({ ...props, /* defaults */ }),
-  setAdAccountActive: (connection, adAccountId, isActive) => ({
-    ...connection,
-    adAccounts: connection.adAccounts.map(account => 
-      account.adAccountId === adAccountId 
-        ? { ...account, isActive }
-        : account
-    ),
+// Domain functions (pure business logic)
+export const AccountDomain = {
+  createAccount: (props) => ({ ...props, /* defaults */ }),
+  updateAccountAdAccounts: (account, adAccounts) => ({
+    ...account,
+    adAccounts,
     updatedAt: new Date()
   }),
-  // ... other pure functions
+  canAccountExport: (account) => {
+    // Business rules for export scheduling
+  },
+  // ... other domain operations
+}
+
+// Value Objects (domain/value-objects/TimeRange.ts)
+export interface AdInsightsTimeRange {
+  since: string // YYYY-MM-DD format
+  until: string // YYYY-MM-DD format
 }
 ```
 
-### Repository Layer (Clean Document Mapping)
+### Application Layer (Use Cases & Services)
 
 ```typescript
-const toDomain = (doc: any): FacebookConnection => {
-  // Convert Mongoose document to plain object (no pollution)
-  const plainDoc = doc.toObject ? doc.toObject() : doc
-  
-  return {
-    id: plainDoc._id.toString(),
-    fbUserId: plainDoc.fbUserId,
-    // ... map all fields cleanly
+// Use Case (application/use-cases/adInsight.ts)
+export async function startImportAsync(
+  request?: AdInsightExportRequest
+): Promise<AdInsightExportResponse> {
+  // Find all accounts
+  const allAccounts = await findAllAccounts()
+
+  for (const account of allAccounts) {
+    // Use domain logic for business rules
+    const schedulingDecision = AccountDomain.canAccountExport(account)
+
+    if (!schedulingDecision.canExport) {
+      continue
+    }
+
+    // Process export...
   }
 }
 ```
 
-### Use Cases (Pure Functions)
+### Infrastructure Layer (Repository Implementation)
 
 ```typescript
-export async function setAdAccountActive(
-  request: SetAdAccountActiveRequest
-): Promise<SetAdAccountActiveResponse> {
-  const connection = await repo.findByFbUserId(request.fbUserId)
-  if (!connection) return { success: false, error: 'NO_CONNECTION' }
+// Repository (infrastructure/database/mongodb/repositories/AccountRepository.ts)
+const toDomain = (doc: any): Account => {
+  // Convert Mongoose document to domain entity
+  const plainDoc = doc.toObject ? doc.toObject() : doc
 
-  // Use pure function
-  const updated = fbConnection.setAdAccountActive(
-    connection, 
-    request.adAccountId, 
-    request.isActive
-  )
-
-  const saved = await repo.save(updated)
-  return { success: true, connection: saved }
+  return {
+    id: plainDoc._id.toString(),
+    accountId: plainDoc.accountId,
+    accessToken: plainDoc.accessToken,
+    // ... map all fields to domain entity
+  }
 }
 ```
 
 ## Database Schema
 
-### FacebookConnection Collection
+### Account Collection
 
 ```typescript
 {
-  fbUserId: string            // Unique Facebook user ID
-  accessToken: string         // Facebook access token
-  scopes: string[]           // OAuth scopes granted
-  status: ConnectionStatus   // connected | disconnected | needs_reconnect
-  connectedAt: Date          // Initial connection timestamp
-  expiresAt: Date           // Token expiration
-  lastErrorCode?: string    // Last error encountered
-  lastSyncAt?: Date         // Last successful sync timestamp (for incremental syncs)
-  adAccounts: FacebookAdAccount[]  // User's ad accounts
+  accountId: string          // Unique account identifier
+  accessToken: string        // Facebook access token
+  scopes: string[]          // OAuth scopes granted
+  status: AccountStatus     // connected | disconnected | needs_reconnect
+  connectedAt: Date         // Initial connection timestamp
+  expiresAt: Date          // Token expiration
+  lastErrorCode?: string   // Last error encountered
+  lastSyncAt?: Date        // Last successful sync timestamp (for incremental syncs)
+  adAccounts: AdAccount[]  // User's ad accounts
   createdAt: Date
   updatedAt: Date
 }
 ```
 
-### FacebookAdAccount (embedded)
+### AdAccount (embedded value object)
 
 ```typescript
 {
@@ -709,14 +748,47 @@ Import the provided `FacebookAuthController.postman_collection.json` for complet
 3. Configure Facebook App with production redirect URI
 4. Build and start: `yarn build && yarn start`
 
+## Recent Architecture Changes
+
+### Migration to DDD (v2.0)
+
+The codebase has been refactored from a simple functional architecture to Domain-Driven Design:
+
+**Key Changes:**
+- **Domain Layer**: Migrated from `domain/entities` to `domain/aggregates` pattern
+  - Account aggregate encapsulates all account-related business logic
+  - AdSetInsight and ExportResult aggregates for ad insights domain
+  - Value objects (AdAccount, TimeRange) ensure type safety and immutability
+
+- **Infrastructure Layer**: Reorganized folder structure
+  - `infrastructure/mongo-db` → `infrastructure/database/mongodb`
+  - `infrastructure/facebook-sdk` → `infrastructure/external-services/facebook`
+  - Better separation of database and external service concerns
+
+- **Application Layer**: Enhanced with factories and services
+  - Factories handle complex entity creation logic
+  - Services contain application-specific business logic
+  - Clear ports/interfaces for external dependencies
+
+- **Type System**: Centralized in domain value objects
+  - `AdInsightsTimeRange` moved to `domain/value-objects/TimeRange`
+  - Single source of truth for types across all layers
+  - No more duplicate type definitions
+
+- **Error Handling**: Simplified approach
+  - Removed complex `DomainException` class
+  - Using simple Error objects with code property
+  - Less boilerplate, easier to understand
+
 ## Contributing
 
-Follow the functional architecture patterns:
-1. Keep domain logic in pure functions
-2. Use plain data objects, not complex classes
-3. Import dependencies directly from `config/dependencies.ts`
-4. Test pure functions independently
-5. Maintain immutability in all operations
+Follow the DDD architecture patterns:
+1. Keep business logic in domain layer (aggregates, value objects, domain services)
+2. Use pure functions for domain operations (immutable transformations)
+3. Application layer orchestrates domain logic and infrastructure
+4. Infrastructure layer only handles external concerns (database, APIs, etc.)
+5. Import shared dependencies from `config/dependencies.ts`
+6. Maintain immutability in all domain operations
 
 ## License
 

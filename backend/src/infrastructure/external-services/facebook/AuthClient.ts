@@ -11,7 +11,7 @@ import {
     DebugTokenResponse,
     AdAccountsResponse,
     AuthUrlResponse,
-} from '../../../application/ports/IFacebookOAuthService'
+} from '../../../application/ports/IOAuthService'
 import { AdAccount } from '../../../domain'
 import { appConfig } from '../../../config/env'
 

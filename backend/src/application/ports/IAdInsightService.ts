@@ -3,7 +3,7 @@
  * Defines contract for Facebook Ad Insights async reporting operations
  */
 
-import { AdInsightsTimeRange } from '../types/AdInsightsTypes'
+import { AdInsightsTimeRange } from '../../domain/value-objects/TimeRange'
 
 
 export interface AsyncReportStatus {

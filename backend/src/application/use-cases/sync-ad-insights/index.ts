@@ -3,5 +3,5 @@
  * Entry point for ad insights synchronization functionality
  */
 
-export * from './SyncAdInsightsUseCase'
+export * from './SyncAdInsights'
 export * from './types'
