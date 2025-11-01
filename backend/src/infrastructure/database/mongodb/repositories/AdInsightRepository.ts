@@ -4,7 +4,7 @@
 
 import { IAdInsightRepository } from '../../../../domain/repositories/IAdSetInsightRepository'
 import { AdSetInsight } from '../../../../domain/aggregates/ad-insights'
-import { AdSetInsightDataModel } from '../schemas/AdsetInsightSchema'
+import { AdSetInsightDataModel } from '../schemas/AdSetInsightSchema'
 
 const toDomain = (doc: any): AdSetInsight => {
     const plainDoc = doc.toObject ? doc.toObject() : doc

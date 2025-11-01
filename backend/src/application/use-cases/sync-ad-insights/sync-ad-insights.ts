@@ -5,7 +5,7 @@
 
 import { Account, AccountDomain, AccountService, ADSET_INSIGHT_FIELDS, ExportResultDomain } from '../../../domain'
 import { exportResultRepository, accountRepository, adInsightsClient } from '../../../config/dependencies'
-import { CsvProcessorService } from '../../services/csvProcessor'
+import { CsvProcessorService } from '../../services/csv-processor'
 import { logger } from '../../../infrastructure/shared/logger'
 import { AdInsightsTimeRange, AdInsightExportRequest, AdInsightExportResponse } from './types'
 

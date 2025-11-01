@@ -9,8 +9,8 @@ import cors from 'cors'
 import helmet from 'helmet'
 import { appConfig } from './config/env'
 import { apiRouter } from './interfaces/http/routes'
-import { requestLogger } from './interfaces/http/middleware/requestLogger'
-import { errorHandler } from './interfaces/http/middleware/errorHandler'
+import { requestLogger } from './interfaces/http/middleware/request-logger'
+import { errorHandler } from './interfaces/http/middleware/error-handler'
 
 // Import dependencies to ensure initialization
 import './config/dependencies'

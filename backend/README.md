@@ -780,6 +780,47 @@ The codebase has been refactored from a simple functional architecture to Domain
   - Using simple Error objects with code property
   - Less boilerplate, easier to understand
 
+## File Naming Conventions
+
+This project follows strict naming conventions for better code organization and readability:
+
+### Domain Layer
+- **Aggregates**: `PascalCase` - `Account.ts`, `AdSetInsight.ts`, `ExportResult.ts`
+- **Value Objects**: `PascalCase` - `AdAccount.ts`, `TimeRange.ts`
+- **Domain Services**: `PascalCase` - `AccountService.ts`, `AdInsightsService.ts`
+- **Repository Interfaces**: `PascalCase` with `I` prefix - `IAccountRepository.ts`
+
+### Application Layer
+- **Entities**: `PascalCase` - `AdSetInsight.ts`, `ExportResult.ts`
+- **Factories**: `PascalCase` - `AdSetInsightFactory.ts`, `ExportResultFactory.ts`
+- **Service Interfaces (Ports)**: `PascalCase` with `I` prefix - `IAdInsightService.ts`, `IOAuthService.ts`
+- **Services**: `PascalCase` - `AdInsightsService.ts`, `CsvService.ts`
+- **Utility Services**: `kebab-case` - `cron-scheduler.ts`, `csv-processor.ts`
+- **Use Cases**: `kebab-case` - `facebook-auth.ts`, `sync-ad-insights.ts`
+- **Schedulers**: `PascalCase` - `AdInsightsSyncScheduler.ts`
+
+### Infrastructure Layer
+- **Repositories**: `PascalCase` - `AccountRepository.ts`, `AdInsightRepository.ts`
+- **Schemas**: `PascalCase` - `AccountSchema.ts`, `AdSetInsightSchema.ts`
+- **Clients**: `PascalCase` - `AuthClient.ts`, `InsightClient.ts`
+- **Utilities**: `camelCase` - `logger.ts`
+
+### Interface Layer (HTTP)
+- **Controllers**: `PascalCase` - `FacebookAuthController.ts`
+- **Routes**: `kebab-case` - `facebook-auth.routes.ts`, `ad-insights.routes.ts`
+- **Middleware**: `kebab-case` - `error-handler.ts`, `request-logger.ts`
+- **Helpers**: `kebab-case` - `response-helpers.ts`, `validation-schemas.ts`
+- **Types**: `kebab-case` - `controller-types.ts`, `facebook-auth.types.ts`
+
+### Config Files
+- `camelCase` - `env.ts`, `database.ts`, `dependencies.ts`
+
+### General Rules
+- **Types/Interfaces/Classes**: `PascalCase`
+- **Functions/Operations**: `kebab-case`
+- **Utilities/Helpers**: `kebab-case`
+- **Folders**: `kebab-case` - `ad-insights`, `sync-ad-insights`
+
 ## Contributing
 
 Follow the DDD architecture patterns:
@@ -789,6 +830,7 @@ Follow the DDD architecture patterns:
 4. Infrastructure layer only handles external concerns (database, APIs, etc.)
 5. Import shared dependencies from `config/dependencies.ts`
 6. Maintain immutability in all domain operations
+7. **Follow file naming conventions** as documented above
 
 ## License
 

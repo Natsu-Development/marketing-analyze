@@ -4,9 +4,9 @@
  */
 
 import { Router } from 'express'
-import { CronSchedulerService } from '../../../application/services/cronScheduler'
+import { CronSchedulerService } from '../../../application/services/cron-scheduler'
 import { logger } from '../../../infrastructure/shared/logger'
-import { jsonSuccess, jsonError } from '../helpers/responseHelpers'
+import { jsonSuccess, jsonError } from '../helpers/response-helpers'
 
 export const adInsightsRoutes = Router()
 

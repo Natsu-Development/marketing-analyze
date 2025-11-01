@@ -5,7 +5,7 @@
 
 import * as cron from 'node-cron'
 import { logger } from '../../infrastructure/shared/logger'
-import { AdInsightUseCase } from '../use-cases/adInsight'
+import { AdInsightUseCase } from '../use-cases/sync-ad-insights'
 // Note: We use process.env directly here instead of appConfig to avoid circular dependencies
 
 let adInsightsJob: cron.ScheduledTask | null = null

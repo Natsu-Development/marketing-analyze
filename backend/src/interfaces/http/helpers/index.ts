@@ -3,5 +3,5 @@
  * Centralized export for all HTTP-related helpers
  */
 
-export * from './responseHelpers'
-export * from './validationSchemas'
+export * from './response-helpers'
+export * from './validation-schemas'

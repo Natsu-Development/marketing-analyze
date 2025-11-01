@@ -6,7 +6,7 @@
 
 import { Request, Response } from 'express'
 import { z } from 'zod'
-import { FbAuthUseCase } from '../../../application/use-cases/facebookAuth'
+import { FbAuthUseCase } from '../../../application/use-cases/facebook-auth'
 import {
     jsonSuccess,
     jsonError,

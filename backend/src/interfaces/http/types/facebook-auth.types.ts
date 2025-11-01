@@ -18,4 +18,4 @@ export type {
     RefreshAdAccountsResponse,
     SetAdAccountActiveRequest,
     SetAdAccountActiveResponse,
-} from '../../../application/use-cases/facebookAuth'
+} from '../../../application/use-cases/facebook-auth'
