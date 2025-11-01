@@ -4,8 +4,8 @@
  */
 
 import { Schema, model, Document } from 'mongoose'
-import { AccountStatus } from '../../../domain/aggregates/account'
-import { AdAccount } from '../../../domain/value-objects/AdAccount'
+import { AccountStatus } from '../../../../domain/aggregates/account'
+import { AdAccount } from '../../../../domain/value-objects/AdAccount'
 
 export interface IAccountDocument extends Document {
     accountId: string

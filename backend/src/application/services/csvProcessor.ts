@@ -5,7 +5,7 @@
 
 import axios from 'axios'
 import { logger } from '../../infrastructure/shared/logger'
-import { adsetInsightDataRepository } from '../../infrastructure/mongo-db/repositories/AdsetInsightRepository'
+import { adsetInsightDataRepository } from '../../infrastructure/mongo-db/repositories/AdInsightRepository'
 import { CsvService } from './CsvService'
 
 export interface ProcessCSVRequest {

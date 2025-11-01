@@ -5,7 +5,7 @@
  * Implemented using functional programming style following DDD principles
  */
 
-import { AdAccount } from '../value-objects/AdAccount'
+import { AdAccount } from '../../value-objects/AdAccount'
 
 export enum AccountStatus {
     CONNECTED = 'connected',

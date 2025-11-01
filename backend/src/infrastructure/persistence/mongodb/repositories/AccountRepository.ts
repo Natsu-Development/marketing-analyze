@@ -3,7 +3,7 @@
  * Uses plain functional approach instead of factory pattern
  */
 
-import { IAccountRepository, Account } from '../../../domain'
+import { IAccountRepository, Account } from '../../../../domain'
 import { AccountSchema } from '../schemas/AccountSchema'
 
 // Convert Mongoose document to plain domain object

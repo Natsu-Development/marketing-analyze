@@ -9,7 +9,7 @@ export { accountRepository } from '../infrastructure/mongo-db/repositories/Accou
 export { facebookOAuthClient } from '../infrastructure/facebook-sdk/AuthClient'
 export { adInsightsClient } from '../infrastructure/facebook-sdk/InsightClient'
 export { exportResultRepository } from '../infrastructure/mongo-db/repositories/ExportResultRepository'
-export { adsetInsightDataRepository } from '../infrastructure/mongo-db/repositories/AdsetInsightRepository'
+export { adsetInsightDataRepository } from '../infrastructure/mongo-db/repositories/AdInsightRepository'
 
 export const facebookConfig = {
     appId: appConfig.facebook.appId,

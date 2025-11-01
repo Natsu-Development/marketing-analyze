@@ -6,8 +6,9 @@
  */
 
 
-// ========== ENTITIES (Core Business Objects with Identity) ==========
-export * from './entities/Account'
+// ========== AGGREGATES (Core Business Objects with Identity) ==========
+export * from './aggregates/account'
+export * from './aggregates/ad-insights'
 
 // ========== VALUE OBJECTS (Immutable Objects without Identity) ==========
 export * from './value-objects/AdAccount'
@@ -19,7 +20,9 @@ export * from './services/AccountService'
 export * from './repositories/IAccountRepository'
 
 // ========== DOMAIN OBJECTS (Grouped Business Logic) ==========
-export { AccountDomain } from './entities/Account'
+export { AccountDomain } from './aggregates/account'
+export { AdSetInsightDomain } from './aggregates/ad-insights'
+export { ExportResultDomain } from './aggregates/ad-insights'
 
 // ========== EXCEPTIONS ==========
 export * from './exceptions/DomainException'

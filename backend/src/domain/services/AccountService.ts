@@ -4,7 +4,7 @@
  * Uses functional programming style with pure functions
  */
 
-import { Account, AccountDomain, AccountStatus } from '../entities/Account'
+import { Account, AccountDomain, AccountStatus } from '../aggregates/account'
 import { AdAccount } from '../value-objects/AdAccount'
 import { AdInsightsTimeRange } from '../../application/types/AdInsightsTypes'
 
