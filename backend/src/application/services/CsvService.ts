@@ -1,10 +1,9 @@
 /**
  * Domain Service: CSV processing business logic
- * Handles CSV parsing, validation, and transformation into domain entities
+ * Handles CSV header normalization and validation
  */
 
-import { parse } from 'csv-parse/sync'
-import { AdSetInsight, AdSetInsightDomain } from '../../domain/aggregates/ad-insights'
+import { AdSetInsight } from '../../domain/aggregates/ad-insights'
 
 export interface CsvResult {
     insights: AdSetInsight[]
@@ -35,63 +34,8 @@ export function normalizeCsvHeader(header: string): string {
 }
 
 /**
- * Parse CSV content into domain insights
- */
-export function parseCsvToInsights(csvContent: string, adAccountId: string): CsvResult {
-    const errors: string[] = []
-
-    try {
-        // Parse CSV with column normalization
-        const rawRecords: CsvRecord[] = parse(csvContent, {
-            columns: (rawHeader: string[]) => {
-                return rawHeader.map(normalizeCsvHeader)
-            },
-            skip_empty_lines: true,
-            trim: true,
-        })
-
-        if (rawRecords.length === 0) {
-            return {
-                insights: [],
-                processed: 0,
-                errors: ['CSV contains no data records'],
-            }
-        }
-
-        // Transform records to domain entities
-        const insights: AdSetInsight[] = []
-
-        for (let i = 0; i < rawRecords.length; i++) {
-            try {
-                const record = rawRecords[i]
-
-                // Map CSV record to domain entity using domain mapper
-                const mappedProps = AdSetInsightDomain.mapRecordToAdSetInsight(record, adAccountId)
-                const insight = AdSetInsightDomain.createAdSetInsight(mappedProps)
-                insights.push(insight)
-            } catch (error) {
-                const message = error instanceof Error ? error.message : String(error)
-                errors.push(`Record ${i}: ${message}`)
-            }
-        }
-
-        return {
-            insights,
-            processed: insights.length,
-            errors,
-        }
-    } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        return {
-            insights: [],
-            processed: 0,
-            errors: [`Failed to parse CSV: ${message}`],
-        }
-    }
-}
-
-/**
  * Validate CSV parsing results
+ * Note: For streaming, validation is simplified since we process in batches
  */
 export function validateCsvResult(result: CsvResult): {
     valid: boolean
@@ -134,6 +78,5 @@ export function validateCsvResult(result: CsvResult): {
  */
 export const CsvService = {
     normalizeCsvHeader,
-    parseCsvToInsights,
     validateCsvResult,
 }

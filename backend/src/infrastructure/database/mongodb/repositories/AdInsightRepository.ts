@@ -70,7 +70,7 @@ const saveBatch = async (insights: AdSetInsight[]): Promise<void> => {
         },
     }))
 
-    await AdSetInsightDataModel.bulkWrite(operations)
+    await AdSetInsightDataModel.bulkWrite(operations, { ordered: false })
 }
 
 const findByAdAccountId = async (adAccountId: string): Promise<AdSetInsight[]> => {

@@ -1,18 +1,21 @@
 /**
  * CSV Data Processor Service
- * Downloads, parses, and stores CSV data from Facebook reports
+ * Streams CSV from URL → Parses → Saves in batches (low memory usage)
  */
 
 import axios from 'axios'
+import { parse } from 'csv-parse'
+import { Readable } from 'stream'
 import { logger } from '../../infrastructure/shared/logger'
 import { adsetInsightDataRepository } from '../../config/dependencies'
 import { CsvService } from './CsvService'
+import { AdSetInsight, AdSetInsightDomain } from '../../domain/aggregates/ad-insights'
 
 export interface ProcessCSVRequest {
     fileUrl: string
     adAccountId: string
     level: 'adset'
-    accessToken?: string // Optional access token for Facebook CSV downloads
+    accessToken?: string
 }
 
 export interface ProcessCSVResponse {
@@ -21,44 +24,68 @@ export interface ProcessCSVResponse {
     error?: string
 }
 
+const BATCH_SIZE = 1000 // MongoDB optimal batch size
+
 /**
- * Process CSV file for adset level data
- * Application layer handles infrastructure (downloading, saving), domain layer handles business logic
+ * Stream CSV from URL and process in batches
  */
 async function processAdsetCSV(fileUrl: string, adAccountId: string, accessToken?: string): Promise<number> {
-    try {
-        // Infrastructure: Download CSV file
-        const downloadUrl =
-            fileUrl.includes('export_report') && accessToken ? `${fileUrl}&access_token=${accessToken}` : fileUrl
+    const downloadUrl = fileUrl.includes('export_report') && accessToken ? `${fileUrl}&access_token=${accessToken}` : fileUrl
 
-        const response = await axios.get(downloadUrl, {
-            responseType: 'text',
+    // Stream CSV from URL
+    const response = await axios.get(downloadUrl, { responseType: 'stream' })
+    const stream = response.data as Readable
+
+    // Setup CSV parser
+    const parser = parse({
+        columns: (headers) => headers.map(CsvService.normalizeCsvHeader),
+        skip_empty_lines: true,
+        trim: true,
+    })
+
+    let batch: AdSetInsight[] = []
+    let totalSaved = 0
+    let errorCount = 0
+
+    return new Promise<number>((resolve, reject) => {
+        parser.on('readable', async () => {
+            let record
+            while ((record = parser.read()) !== null) {
+                try {
+                    const props = AdSetInsightDomain.mapRecordToAdSetInsight(record, adAccountId)
+                    const insight = AdSetInsightDomain.createAdSetInsight(props)
+                    batch.push(insight)
+
+                    // Save when batch is full
+                    if (batch.length >= BATCH_SIZE) {
+                        parser.pause()
+                        await adsetInsightDataRepository.saveBatch(batch)
+                        
+                        totalSaved += batch.length
+                        batch = []
+                        parser.resume()
+                    }
+                } catch (error) {
+                    errorCount++
+                    if (errorCount <= 3) logger.warn(`Parse error: ${(error as Error).message}`)
+                }
+            }
         })
-        const csvContent = response.data as string
 
-        // Domain: Parse and transform CSV content to domain entities
-        const processingResult = CsvService.parseCsvToInsights(csvContent, adAccountId)
+        parser.on('error', reject)
 
-        if (processingResult.errors.length > 0) {
-            logger.warn(
-                `CSV errors: ${processingResult.errors.slice(0, 3).join('; ')}${processingResult.errors.length > 3 ? '...' : ''}`
-            )
-        }
+        parser.on('end', async () => {
+            // Save remaining records
+            if (batch.length > 0) {
+                await adsetInsightDataRepository.saveBatch(batch)
+                totalSaved += batch.length
+            }
+            if (errorCount > 0) logger.warn(`Completed with ${errorCount} errors`)
+            resolve(totalSaved)
+        })
 
-        // Validate processing results using domain service
-        const validation = CsvService.validateCsvResult(processingResult)
-        if (!validation.valid) {
-            logger.warn(`CSV validation failed: ${validation.errors.join('; ')}`)
-        }
-
-        // Infrastructure: Store domain entities in database
-        await adsetInsightDataRepository.saveBatch(processingResult.insights)
-
-        return processingResult.processed
-    } catch (error) {
-        logger.error(`CSV processing failed: ${(error as Error).message}`)
-        throw error
-    }
+        stream.pipe(parser)
+    })
 }
 
 /**
