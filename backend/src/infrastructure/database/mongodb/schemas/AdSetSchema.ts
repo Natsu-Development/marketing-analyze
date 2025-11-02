@@ -17,7 +17,6 @@ export interface IAdSetDocument extends Document {
     startTime?: Date
     endTime?: Date
     updatedTime: Date
-    createdAt: Date
     syncedAt: Date
 }
 
@@ -74,7 +73,7 @@ const AdSetSchemaInstance = new Schema<IAdSetDocument>(
         },
     },
     {
-        timestamps: true,
+        timestamps: false,
         collection: 'adsets',
     }
 )

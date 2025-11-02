@@ -18,7 +18,6 @@ export interface AdSet {
     readonly startTime?: Date
     readonly endTime?: Date
     readonly updatedTime: Date
-    readonly createdAt: Date
     readonly syncedAt: Date
 }
 
@@ -28,7 +27,6 @@ export interface AdSet {
  * Create a new AdSet
  */
 export function createAdSet(props: AdSet): AdSet {
-    const now = new Date()
     return {
         adAccountId: props.adAccountId,
         adsetId: props.adsetId,
@@ -41,15 +39,14 @@ export function createAdSet(props: AdSet): AdSet {
         startTime: props.startTime,
         endTime: props.endTime,
         updatedTime: props.updatedTime,
-        createdAt: now,
-        syncedAt: now,
+        syncedAt: new Date(),
     }
 }
 
 /**
  * Update AdSet with new metadata returning new instance
  */
-export function updateAdSet(adset: AdSet, updates: Partial<Omit<AdSet, 'id' | 'adAccountId' | 'adsetId' | 'createdAt'>>): AdSet {
+export function updateAdSet(adset: AdSet, updates: Partial<Omit<AdSet, 'id' | 'adAccountId' | 'adsetId'>>): AdSet {
     return {
         ...adset,
         ...updates,

@@ -25,7 +25,6 @@ const toDomain = (doc: any): AdSet => {
         startTime: plainDoc.startTime,
         endTime: plainDoc.endTime,
         updatedTime: plainDoc.updatedTime,
-        createdAt: plainDoc.createdAt,
         syncedAt: plainDoc.syncedAt,
     }
 }
@@ -50,7 +49,7 @@ const save = async (adset: AdSet): Promise<AdSet> => {
     const doc = fromDomain(adset)
     const result = await AdSetSchema.findOneAndUpdate(
         { adAccountId: adset.adAccountId, adsetId: adset.adsetId },
-        { ...doc, $setOnInsert: { createdAt: adset.createdAt } },
+        doc,
         {
             upsert: true,
             new: true,
@@ -71,7 +70,6 @@ const saveBatch = async (adsets: AdSet[]): Promise<{ upsertedCount: number; modi
             filter: { adAccountId: adset.adAccountId, adsetId: adset.adsetId },
             update: {
                 $set: fromDomain(adset),
-                $setOnInsert: { createdAt: adset.createdAt },
             },
             upsert: true,
         },
