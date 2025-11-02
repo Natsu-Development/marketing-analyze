@@ -47,28 +47,6 @@ export function createAdSet(props: AdSet): AdSet {
 }
 
 /**
- * Create AdSet from persistence data
- */
-export function createAdSetFromPersistence(props: {
-    id?: string
-    adAccountId: string
-    adsetId: string
-    adsetName: string
-    campaignId: string
-    campaignName: string
-    status: string
-    dailyBudget?: number
-    lifetimeBudget?: number
-    startTime?: Date
-    endTime?: Date
-    updatedTime: Date
-    createdAt: Date
-    syncedAt: Date
-}): AdSet {
-    return { ...props }
-}
-
-/**
  * Update AdSet with new metadata returning new instance
  */
 export function updateAdSet(adset: AdSet, updates: Partial<Omit<AdSet, 'id' | 'adAccountId' | 'adsetId' | 'createdAt'>>): AdSet {
@@ -100,36 +78,12 @@ export function getAdSetBudgetType(adset: AdSet): 'daily' | 'lifetime' | 'none' 
 }
 
 /**
- * Convert to plain object for JSON serialization
- */
-export function adSetToJSON(adset: AdSet) {
-    return {
-        id: adset.id,
-        adAccountId: adset.adAccountId,
-        adsetId: adset.adsetId,
-        adsetName: adset.adsetName,
-        campaignId: adset.campaignId,
-        campaignName: adset.campaignName,
-        status: adset.status,
-        dailyBudget: adset.dailyBudget,
-        lifetimeBudget: adset.lifetimeBudget,
-        startTime: adset.startTime,
-        endTime: adset.endTime,
-        updatedTime: adset.updatedTime,
-        createdAt: adset.createdAt,
-        syncedAt: adset.syncedAt,
-    }
-}
-
-/**
  * AdSet Domain - Grouped collection of all AdSet-related functions
  * Following DDD principles with functional programming style
  */
 export const AdSetDomain = {
     createAdSet,
-    createAdSetFromPersistence,
     updateAdSet,
     isAdSetActive,
     getAdSetBudgetType,
-    adSetToJSON,
 }

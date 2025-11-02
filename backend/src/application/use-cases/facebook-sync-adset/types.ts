@@ -1,8 +1,8 @@
 /**
- * Types for Sync AdSets Use Case
+ * Types for Facebook Sync AdSet Use Case
  */
 
-export interface AdSetSyncResponse {
+export interface SyncResponse {
     success: boolean
     adAccountsSynced: number
     adsetsSynced: number

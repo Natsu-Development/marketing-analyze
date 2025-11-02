@@ -1,12 +1,12 @@
 /**
- * Types for Sync Ad Insights Use Case
+ * Types for Facebook Sync Insights Use Case
  */
 
 import { AdInsightsTimeRange } from '../../../domain/value-objects/TimeRange'
 
-export type { AdInsightsTimeRange }
+export type TimeRange = AdInsightsTimeRange
 
-export interface AdInsightExportResponse {
+export interface SyncResponse {
     success: boolean
     exportsCreated: number
     adAccountIds: string[]

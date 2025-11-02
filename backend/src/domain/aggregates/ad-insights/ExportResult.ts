@@ -53,22 +53,6 @@ export function markExportAsFailed(exportResult: ExportResult, error: string): E
     }
 }
 
-// Convert to JSON (for API responses)
-export function exportResultToJSON(exportResult: ExportResult) {
-    return {
-        id: exportResult.id,
-        adAccountId: exportResult.adAccountId,
-        reportRunId: exportResult.reportRunId,
-        fileUrl: exportResult.fileUrl,
-        recordCount: exportResult.recordCount,
-        timeRange: exportResult.timeRange,
-        status: exportResult.status,
-        error: exportResult.error,
-        createdAt: exportResult.createdAt,
-        completedAt: exportResult.completedAt,
-    }
-}
-
 /**
  * ExportResult Domain - Grouped collection of all ExportResult-related functions
  */
@@ -76,5 +60,4 @@ export const ExportResultDomain = {
     createExportResult,
     markExportAsCompleted,
     markExportAsFailed,
-    exportResultToJSON,
 }

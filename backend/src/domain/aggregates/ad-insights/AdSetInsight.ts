@@ -38,33 +38,6 @@ export function createAdSetInsight(
     }
 }
 
-// Convert to JSON (for API responses)
-export function adSetInsightToJSON(insight: AdSetInsight) {
-    return {
-        id: insight.id,
-        adAccountId: insight.adAccountId,
-        accountId: insight.accountId,
-        accountName: insight.accountName,
-        campaignId: insight.campaignId,
-        campaignName: insight.campaignName,
-        adsetId: insight.adsetId,
-        adsetName: insight.adsetName,
-        date: insight.date,
-        impressions: insight.impressions,
-        clicks: insight.clicks,
-        spend: insight.spend,
-        cpm: insight.cpm,
-        cpc: insight.cpc,
-        ctr: insight.ctr,
-        reach: insight.reach,
-        frequency: insight.frequency,
-        linkCtr: insight.linkCtr,
-        costPerInlineLinkClick: insight.costPerInlineLinkClick,
-        costPerResult: insight.costPerResult,
-        roas: insight.roas,
-    }
-}
-
 // Facebook Marketing API fields for adset insights
 export const ADSET_INSIGHT_FIELDS = [
     'account_id',
@@ -179,7 +152,6 @@ function extractCostPerResult(record: Record<string, any>): number | undefined {
  */
 export const AdSetInsightDomain = {
     createAdSetInsight,
-    adSetInsightToJSON,
     normalizeInsightDate,
     mapRecordToAdSetInsight,
     ADSET_INSIGHT_FIELDS,

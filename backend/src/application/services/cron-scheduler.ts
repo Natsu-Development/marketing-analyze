@@ -5,8 +5,8 @@
 
 import * as cron from 'node-cron'
 import { logger } from '../../infrastructure/shared/logger'
-import { AdInsightUseCase } from '../use-cases/sync-ad-insights'
-import { syncAdSets } from '../use-cases/sync-adsets'
+import { FacebookSyncInsightsUseCase } from '../use-cases/facebook-sync-insights'
+import { FacebookSyncAdSetUseCase } from '../use-cases/facebook-sync-adset'
 // Note: We use process.env directly here instead of appConfig to avoid circular dependencies
 
 let adInsightsJob: cron.ScheduledTask | null = null
@@ -29,7 +29,7 @@ export function startAdInsightsCron(): void {
     adInsightsJob = cron.schedule(schedule, async () => {
         logger.info('Running scheduled ad insights export')
         try {
-            const result = await AdInsightUseCase.startImportAsync()
+            const result = await FacebookSyncInsightsUseCase.sync()
             if (result.success) {
                 logger.info(`Export completed: ${result.exportsCreated} exports created`)
             } else {
@@ -58,7 +58,7 @@ export function stopAdInsightsCron(): void {
 export async function runAdInsightsExportNow(): Promise<void> {
     logger.info('Running ad insights export')
     try {
-        const result = await AdInsightUseCase.startImportAsync()
+        const result = await FacebookSyncInsightsUseCase.sync()
         if (result.success) {
             logger.info(`Export completed: ${result.exportsCreated} exports created`)
         } else {
@@ -88,7 +88,7 @@ export function startAdSetSyncCron(): void {
     adSetSyncJob = cron.schedule(schedule, async () => {
         logger.info('Running scheduled adset metadata sync')
         try {
-            const result = await syncAdSets()
+            const result = await FacebookSyncAdSetUseCase.sync()
             if (result.success) {
                 logger.info(`AdSet sync completed: ${result.adAccountsSynced} ad accounts, ${result.adsetsSynced} adsets synced`)
             } else {
@@ -117,7 +117,7 @@ export function stopAdSetSyncCron(): void {
 export async function runAdSetSyncNow(): Promise<void> {
     logger.info('Running adset metadata sync now')
     try {
-        const result = await syncAdSets()
+        const result = await FacebookSyncAdSetUseCase.sync()
         if (result.success) {
             logger.info(`AdSet sync completed: ${result.adAccountsSynced} ad accounts, ${result.adsetsSynced} adsets synced`)
         } else {

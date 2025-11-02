@@ -56,52 +56,10 @@ export function createAccount(props: {
 }
 
 /**
- * Create Account from persistence data
- */
-export function createAccountFromPersistence(props: {
-    id?: string
-    accountId: string
-    accessToken: string
-    scopes: readonly string[]
-    status: AccountStatus
-    connectedAt: Date
-    expiresAt: Date
-    lastErrorCode?: string
-    lastSyncAt?: Date
-    adAccounts: readonly AdAccount[]
-    createdAt: Date
-    updatedAt: Date
-}): Account {
-    return {
-        ...props,
-        scopes: [...props.scopes], // Ensure immutability
-        adAccounts: [...props.adAccounts], // Ensure immutability
-    }
-}
-
-/**
  * Check if account token is expired
  */
 export function isAccountExpired(account: Account): boolean {
     return account.expiresAt <= new Date()
-}
-
-/**
- * Check if account token is expiring soon (default: within 5 minutes)
- */
-export function isAccountExpiringSoon(account: Account, windowMinutes: number = 5): boolean {
-    const windowMs = windowMinutes * 60 * 1000
-    const now = Date.now()
-    return account.expiresAt.getTime() - now <= windowMs && !isAccountExpired(account)
-}
-
-/**
- * Check if account needs token refresh (default: within 15 minutes)
- */
-export function doesAccountNeedRefresh(account: Account, windowMinutes: number = 15): boolean {
-    const windowMs = windowMinutes * 60 * 1000
-    const now = Date.now()
-    return account.expiresAt.getTime() - now <= windowMs && !isAccountExpired(account)
 }
 
 /**
@@ -110,13 +68,11 @@ export function doesAccountNeedRefresh(account: Account, windowMinutes: number =
 export function canAccountExport(account: Account): {
     canExport: boolean
     reason: string
-    timeRange: { since: string; until: string }
 } {
     if (account.status !== AccountStatus.CONNECTED) {
         return {
             canExport: false,
             reason: `Account status is ${account.status}`,
-            timeRange: { since: '', until: '' }
         }
     }
 
@@ -124,7 +80,6 @@ export function canAccountExport(account: Account): {
         return {
             canExport: false,
             reason: 'Access token is expired',
-            timeRange: { since: '', until: '' }
         }
     }
 
@@ -132,25 +87,13 @@ export function canAccountExport(account: Account): {
         return {
             canExport: false,
             reason: 'No ad accounts available',
-            timeRange: { since: '', until: '' }
         }
     }
 
-    const timeRange = getAccountExportTimeRange(account)
     return {
         canExport: true,
         reason: '',
-        timeRange
     }
-}
-
-/**
- * Check if account has an active ad account
- */
-export function hasActiveAdAccount(account: Account, adAccountId: string): boolean {
-    return account.adAccounts.some(adAccount =>
-        adAccount.adAccountId === adAccountId && adAccount.isActive
-    )
 }
 
 /**
@@ -161,45 +104,9 @@ export function getActiveAdAccounts(account: Account): readonly AdAccount[] {
 }
 
 /**
- * Get default sync time range (last 90 days)
- */
-export function getDefaultSyncTimeRange(): { since: Date; until: Date } {
-    const until = new Date()
-    const since = new Date(until)
-    since.setDate(since.getDate() - 90) // Last 90 days
-
-    return { since, until }
-}
-
-/**
- * Get export time range (last 89 days to avoid timezone issues)
- */
-export function getAccountExportTimeRange(_account: Account): { since: string; until: string } {
-    const { since, until } = getDefaultSyncTimeRange()
-
-    // Return as ISO strings for API compatibility
-    return {
-        since: since.toISOString().split('T')[0], // YYYY-MM-DD format
-        until: until.toISOString().split('T')[0]
-    }
-}
-
-/**
- * Update account tokens
- */
-export function updateAccountTokens(account: Account, accessToken: string, expiresAt: Date): Account {
-    return {
-        ...account,
-        accessToken,
-        expiresAt,
-        updatedAt: new Date(),
-    }
-}
-
-/**
  * Update account ad accounts
  */
-export function updateAccountAdAccounts(account: Account, adAccounts: readonly AdAccount[]): Account {
+export function updateAdAccounts(account: Account, adAccounts: readonly AdAccount[]): Account {
     return {
         ...account,
         adAccounts: [...adAccounts], // Ensure immutability
@@ -225,18 +132,6 @@ export function setAdAccountActive(account: Account, adAccountId: string, isActi
 }
 
 /**
- * Mark account as needing reconnection
- */
-export function markAccountAsNeedsReconnect(account: Account, errorCode: string): Account {
-    return {
-        ...account,
-        status: AccountStatus.NEEDS_RECONNECT,
-        lastErrorCode: errorCode,
-        updatedAt: new Date(),
-    }
-}
-
-/**
  * Disconnect account
  */
 export function disconnectAccount(account: Account): Account {
@@ -255,50 +150,6 @@ export function updateAccountLastSync(account: Account): Account {
         ...account,
         lastSyncAt: new Date(),
         updatedAt: new Date(),
-    }
-}
-
-/**
- * Get account health status
- */
-export function getAccountHealthStatus(account: Account): 'healthy' | 'warning' | 'critical' {
-    if (isAccountExpired(account) || account.status === AccountStatus.NEEDS_RECONNECT) {
-        return 'critical'
-    }
-
-    if (doesAccountNeedRefresh(account) || isAccountExpiringSoon(account)) {
-        return 'warning'
-    }
-
-    return 'healthy'
-}
-
-/**
- * Convert account to JSON (for API responses)
- */
-export function accountToJSON(account: Account) {
-    return {
-        id: account.id,
-        accountId: account.accountId,
-        scopes: account.scopes,
-        status: account.status,
-        connectedAt: account.connectedAt,
-        expiresAt: account.expiresAt,
-        lastErrorCode: account.lastErrorCode,
-        lastSyncAt: account.lastSyncAt,
-        adAccounts: account.adAccounts.map(adAccount => ({
-            name: adAccount.name,
-            status: adAccount.status,
-            currency: adAccount.currency,
-            timezone: adAccount.timezone,
-            spendCap: adAccount.spendCap,
-            adAccountId: adAccount.adAccountId,
-            isActive: adAccount.isActive,
-            lastSyncAdSet: adAccount.lastSyncAdSet,
-            lastSyncInsight: adAccount.lastSyncInsight,
-        })),
-        createdAt: account.createdAt,
-        updatedAt: account.updatedAt,
     }
 }
 
@@ -390,23 +241,13 @@ export function getAdAccountInsightSyncTimeRange(account: Account, adAccountId: 
  */
 export const AccountDomain = {
     createAccount,
-    createAccountFromPersistence,
     isAccountExpired,
-    isAccountExpiringSoon,
-    doesAccountNeedRefresh,
     canAccountExport,
-    hasActiveAdAccount,
     getActiveAdAccounts,
-    getDefaultSyncTimeRange,
-    getAccountExportTimeRange,
-    updateAccountTokens,
-    updateAccountAdAccounts,
+    updateAdAccounts,
     setAdAccountActive,
-    markAccountAsNeedsReconnect,
     disconnectAccount,
     updateAccountLastSync,
-    getAccountHealthStatus,
-    accountToJSON,
     updateAdAccountSyncAdSet,
     updateAdAccountSyncInsight,
     getAdAccountAdSetSyncTimeRange,
