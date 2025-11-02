@@ -7,7 +7,7 @@ import { createApp } from './src/app'
 import { appConfig } from './src/config/env'
 import { connectDatabase } from './src/config/database'
 import { logger } from './src/infrastructure/shared/logger'
-import { startAllCronJobs, stopAllCronJobs } from './src/application/services/cronScheduler'
+import { startAllCronJobs, stopAllCronJobs } from './src/application/services/cron-scheduler'
 
 async function bootstrap() {
     try {

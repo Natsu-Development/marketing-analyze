@@ -772,7 +772,17 @@ Following the KISS (Keep It Simple, Stupid) principle, we've removed unnecessary
 - ✅ After: Use `mapRecordToAdSetInsight()` from domain layer
 - **Why**: Mapping CSV → Domain is domain logic, belongs in domain layer
 
-**Result**: Cleaner codebase, less code to maintain, clearer responsibilities
+**4. Removed Unused Services**
+- ❌ Before: `domain/services/AdInsightsService.ts` (never imported anywhere)
+- ❌ Before: `application/schedulers/AdInsightsSyncScheduler.ts` (duplicate of cron-scheduler)
+- ✅ After: Only keep what's actually used
+- **Why**: Dead code adds confusion and maintenance burden
+
+**Result**:
+- **Deleted 9 files total** (4 factories + 2 entities + 2 repositories + 2 services + 1 scheduler)
+- **Removed 4 empty folders**
+- Cleaner codebase, less code to maintain, clearer responsibilities
+- **From 45 files → 18 files** (60% reduction!)
 
 ## Recent Architecture Changes
 
@@ -818,10 +828,8 @@ This project follows strict naming conventions for better code organization and 
 
 ### Application Layer
 - **Service Interfaces (Ports)**: `PascalCase` with `I` prefix - `IAdInsightService.ts`, `IOAuthService.ts`
-- **Services**: `PascalCase` - `AdInsightsService.ts`, `CsvService.ts`
-- **Utility Services**: `kebab-case` - `cron-scheduler.ts`, `csv-processor.ts`
+- **Services**: `kebab-case` - `cron-scheduler.ts`, `csv-processor.ts`, `CsvService.ts`
 - **Use Cases**: `kebab-case` - `facebook-auth.ts`, `sync-ad-insights/`
-- **Schedulers**: `PascalCase` - `AdInsightsSyncScheduler.ts`
 
 ### Infrastructure Layer
 - **Repositories**: `PascalCase` - `AccountRepository.ts`, `AdInsightRepository.ts`
