@@ -7,12 +7,12 @@ import { Account, AccountDomain, AccountService, ADSET_INSIGHT_FIELDS, ExportRes
 import { exportResultRepository, accountRepository, adInsightsClient } from '../../../config/dependencies'
 import { CsvProcessorService } from '../../services/csv-processor'
 import { logger } from '../../../infrastructure/shared/logger'
-import { AdInsightsTimeRange, AdInsightExportRequest, AdInsightExportResponse } from './types'
+import { AdInsightExportResponse, AdInsightsTimeRange } from './types'
 
 /**
  * Export ad insights for all connections with active ad accounts
  */
-export async function startImportAsync(request?: AdInsightExportRequest): Promise<AdInsightExportResponse> {
+export async function startImportAsync(): Promise<AdInsightExportResponse> {
     logger.info('Starting import insight')
 
     try {
