@@ -46,6 +46,9 @@ lerna-debug.log*
 # Kiro/Codex (AI Development)
 .kiro/
 .codex/
+.claude/
+AGENT.md
+CLAUDE.md
 
 # Testing
 coverage/

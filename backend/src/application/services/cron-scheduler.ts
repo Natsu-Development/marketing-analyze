@@ -1,0 +1,160 @@
+/**
+ * Cron Scheduler Service
+ * Schedules and manages cron jobs for periodic tasks
+ */
+
+import * as cron from 'node-cron'
+import { logger } from '../../infrastructure/shared/logger'
+import { FacebookSyncInsightsUseCase } from '../use-cases/facebook-sync-insights'
+import { FacebookSyncAdSetUseCase } from '../use-cases/facebook-sync-adset'
+// Note: We use process.env directly here instead of appConfig to avoid circular dependencies
+
+let adInsightsJob: cron.ScheduledTask | null = null
+let adSetSyncJob: cron.ScheduledTask | null = null
+
+/**
+ * Start the ad insights export cron job
+ * Default schedule: Every day at 2 AM (can be configured via env)
+ */
+export function startAdInsightsCron(): void {
+    const schedule = process.env.AD_INSIGHTS_CRON_SCHEDULE || '0 2 * * *' // Default: 2 AM daily (second is optional)
+
+    logger.info(`Starting ad insights cron: ${schedule}`)
+
+    if (!cron.validate(schedule)) {
+        logger.error(`Invalid cron schedule: ${schedule}`)
+        throw new Error(`Invalid cron schedule: ${schedule}`)
+    }
+
+    adInsightsJob = cron.schedule(schedule, async () => {
+        logger.info('Running scheduled ad insights export')
+        try {
+            const result = await FacebookSyncInsightsUseCase.sync()
+            if (result.success) {
+                logger.info(`Export completed: ${result.exportsCreated} exports created`)
+            } else {
+                logger.error(`Export failed: ${result.errors?.join(', ')}`)
+            }
+        } catch (error) {
+            logger.error(`Export failed: ${(error as Error).message}`)
+        }
+    })
+}
+
+/**
+ * Stop the ad insights export cron job
+ */
+export function stopAdInsightsCron(): void {
+    if (adInsightsJob) {
+        adInsightsJob.stop()
+        adInsightsJob = null
+        logger.info('Ad insights export cron job stopped')
+    }
+}
+
+/**
+ * Run ad insights export immediately (for testing or manual triggers)
+ */
+export async function runAdInsightsExportNow(): Promise<void> {
+    logger.info('Running ad insights export')
+    try {
+        const result = await FacebookSyncInsightsUseCase.sync()
+        if (result.success) {
+            logger.info(`Export completed: ${result.exportsCreated} exports created`)
+        } else {
+            logger.error(`Export failed: ${result.errors?.join(', ')}`)
+        }
+    } catch (error) {
+        logger.error(`Export failed: ${(error as Error).message}`)
+        throw error
+    }
+}
+
+/**
+ * Start the adset metadata sync cron job
+ * Default schedule: Every Monday at 1 AM (can be configured via env)
+ * Falls back to AD_INSIGHTS_CRON_SCHEDULE if ADSET_SYNC_CRON_SCHEDULE not set
+ */
+export function startAdSetSyncCron(): void {
+    const schedule = process.env.ADSET_SYNC_CRON_SCHEDULE as string
+
+    logger.info(`Starting adset metadata sync cron: ${schedule}`)
+
+    if (!cron.validate(schedule)) {
+        logger.error(`Invalid cron schedule: ${schedule}`)
+        throw new Error(`Invalid cron schedule: ${schedule}`)
+    }
+
+    adSetSyncJob = cron.schedule(schedule, async () => {
+        logger.info('Running scheduled adset metadata sync')
+        try {
+            const result = await FacebookSyncAdSetUseCase.sync()
+            if (result.success) {
+                logger.info(`AdSet sync completed: ${result.adAccountsSynced} ad accounts, ${result.adsetsSynced} adsets synced`)
+            } else {
+                logger.error(`AdSet sync failed: ${result.errors?.join(', ')}`)
+            }
+        } catch (error) {
+            logger.error(`AdSet sync failed: ${(error as Error).message}`)
+        }
+    })
+}
+
+/**
+ * Stop the adset metadata sync cron job
+ */
+export function stopAdSetSyncCron(): void {
+    if (adSetSyncJob) {
+        adSetSyncJob.stop()
+        adSetSyncJob = null
+        logger.info('AdSet metadata sync cron job stopped')
+    }
+}
+
+/**
+ * Run adset metadata sync immediately (for testing or manual triggers)
+ */
+export async function runAdSetSyncNow(): Promise<void> {
+    logger.info('Running adset metadata sync now')
+    try {
+        const result = await FacebookSyncAdSetUseCase.sync()
+        if (result.success) {
+            logger.info(`AdSet sync completed: ${result.adAccountsSynced} ad accounts, ${result.adsetsSynced} adsets synced`)
+        } else {
+            logger.error(`AdSet sync failed: ${result.errors?.join(', ')}`)
+        }
+    } catch (error) {
+        logger.error(`AdSet sync failed: ${(error as Error).message}`)
+        throw error
+    }
+}
+
+/**
+ * Start all cron jobs
+ */
+export function startAllCronJobs(): void {
+    startAdSetSyncCron() // Run adset sync before insights sync
+    startAdInsightsCron()
+}
+
+/**
+ * Stop all cron jobs
+ */
+export function stopAllCronJobs(): void {
+    stopAdSetSyncCron()
+    stopAdInsightsCron()
+}
+
+/**
+ * Cron Scheduler Service - Grouped collection of all cron scheduling functions
+ */
+export const CronSchedulerService = {
+    startAdInsightsCron,
+    stopAdInsightsCron,
+    runAdInsightsExportNow,
+    startAdSetSyncCron,
+    stopAdSetSyncCron,
+    runAdSetSyncNow,
+    startAllCronJobs,
+    stopAllCronJobs,
+}

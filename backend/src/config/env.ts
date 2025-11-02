@@ -21,13 +21,10 @@ const EnvSchema = z.object({
     FACEBOOK_APP_ID: z.string().min(1, 'FACEBOOK_APP_ID is required'),
     FACEBOOK_APP_SECRET: z.string().min(1, 'FACEBOOK_APP_SECRET is required'),
     FACEBOOK_REDIRECT_URI: z.string().url('FACEBOOK_REDIRECT_URI must be a valid URL'),
-    FACEBOOK_API_VERSION: z.string().default('v19.0'),
+    FACEBOOK_API_VERSION: z.string().default('v23.0'),
 
     // Security
     ENCRYPTION_KEY: z.string().length(64, 'ENCRYPTION_KEY must be 64 hex characters (32 bytes)'),
-
-    // Token Configuration
-    TOKEN_REFRESH_WINDOW_MINUTES: z.string().default('5'),
 
     // CORS
     ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
@@ -44,6 +41,7 @@ const EnvSchema = z.object({
 
     // Cron
     AD_INSIGHTS_CRON_SCHEDULE: z.string().default('0 2 * * *'),
+    ADSET_SYNC_CRON_SCHEDULE: z.string().default('0 1 * * *'),
 })
 
 function validateEnv() {
@@ -80,9 +78,6 @@ export const appConfig = {
     },
     security: {
         encryptionKey: env.ENCRYPTION_KEY,
-    },
-    tokenRefresh: {
-        windowMinutes: parseInt(env.TOKEN_REFRESH_WINDOW_MINUTES, 10),
     },
     cors: {
         allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()),

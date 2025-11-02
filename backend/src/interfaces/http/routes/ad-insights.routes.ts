@@ -4,9 +4,9 @@
  */
 
 import { Router } from 'express'
-import { CronSchedulerService } from '../../../application/services/cronScheduler'
+import { CronSchedulerService } from '../../../application/services/cron-scheduler'
 import { logger } from '../../../infrastructure/shared/logger'
-import { jsonSuccess, jsonError } from '../helpers/responseHelpers'
+import { jsonSuccess, jsonError } from '../helpers/response-helpers'
 
 export const adInsightsRoutes = Router()
 
@@ -16,11 +16,11 @@ export const adInsightsRoutes = Router()
  */
 adInsightsRoutes.post('/export', async (_req, res) => {
     try {
-        logger.info('Manual ad insights export triggered')
         await CronSchedulerService.runAdInsightsExportNow()
-        return jsonSuccess(res, { message: 'Ad insights export completed successfully' })
+        await CronSchedulerService.runAdSetSyncNow()
+        return jsonSuccess(res, { message: 'Ad insights and adsets sync completed successfully' })
     } catch (error) {
-        logger.error('Failed to run ad insights export:', error)
+        logger.error({ error }, 'Export failed')
         return jsonError(res, 'Failed to run ad insights export', 500)
     }
 })

@@ -5,11 +5,11 @@
 
 import { appConfig } from './env'
 
-export { accountRepository } from '../infrastructure/mongo-db/repositories/AccountRepository'
-export { facebookOAuthClient } from '../infrastructure/external/FacebookClient'
-export { adInsightsClient } from '../infrastructure/external/AdInsightsClient'
-export { exportResultRepository } from '../infrastructure/mongo-db/repositories/ExportResultRepository'
-export { adsetInsightDataRepository } from '../infrastructure/mongo-db/repositories/AdsetInsightRepository'
+export { accountRepository } from '../infrastructure/database/mongodb/repositories/AccountRepository'
+export { facebookClient } from '../infrastructure/external-services/facebook/FacebookClient'
+export { exportResultRepository } from '../infrastructure/database/mongodb/repositories/ExportResultRepository'
+export { adsetInsightDataRepository } from '../infrastructure/database/mongodb/repositories/AdInsightRepository'
+export { adSetRepository } from '../infrastructure/database/mongodb/repositories/AdSetRepository'
 
 export const facebookConfig = {
     appId: appConfig.facebook.appId,
