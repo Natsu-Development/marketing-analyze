@@ -51,8 +51,6 @@ export interface AsyncReportStatus {
 export interface CSVExportResult {
     reportRunId: string
     fileUrl: string
-    completedAt: Date
-    recordCount?: number
 }
 
 // Graph API Types

@@ -23,10 +23,6 @@ facebookAuthRoutes.post('/session', facebookAuthController.handleSession)
 // OAuth flow
 facebookAuthRoutes.get('/callback', facebookAuthController.handleCallback)
 
-// Status and token
-facebookAuthRoutes.get('/status', facebookAuthController.getStatus)
-facebookAuthRoutes.get('/token', facebookAuthController.getToken)
-
 // Ad Account Management
 facebookAuthRoutes.post('/:accountId/refresh-ad-accounts', facebookAuthController.refreshAdAccounts)
 facebookAuthRoutes.put('/:accountId/ad-accounts/:adAccountId/active', facebookAuthController.updateAdAccountActive)

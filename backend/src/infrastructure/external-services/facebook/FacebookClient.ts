@@ -225,20 +225,11 @@ const pollReportStatus = async (accessToken: string, reportRunId: string): Promi
 const getReportCSV = async (accessToken: string, reportRunId: string): Promise<CSVExportResult> => {
     try {
         const exportUrl = 'https://www.facebook.com/ads/ads_insights/export_report'
-        const csvUrl = `${exportUrl}?report_run_id=${reportRunId}&format=csv&locale=en_US&access_token=${accessToken}`
 
-        const csvResponse = await axios.get(csvUrl, {
-            responseType: 'text',
-            timeout: 300000,
-        })
-
-        const recordCount = (csvResponse.data as string).split('\n').length - 1
-
+        // Just return the URL - let application layer handle download and processing
         return {
             reportRunId,
-            fileUrl: `${exportUrl}?report_run_id=${reportRunId}&format=csv&locale=en_US`,
-            completedAt: new Date(),
-            recordCount,
+            fileUrl: `${exportUrl}?report_run_id=${reportRunId}&format=csv&locale=en_US&access_token=${accessToken}`,
         }
     } catch (error: any) {
         return handleError('getReportCSV', error)

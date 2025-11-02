@@ -15,7 +15,6 @@ export interface ProcessCSVRequest {
     fileUrl: string
     adAccountId: string
     level: 'adset'
-    accessToken?: string
 }
 
 export interface ProcessCSVResponse {
@@ -29,11 +28,9 @@ const BATCH_SIZE = 1000 // MongoDB optimal batch size
 /**
  * Stream CSV from URL and process in batches
  */
-async function processAdsetCSV(fileUrl: string, adAccountId: string, accessToken?: string): Promise<number> {
-    const downloadUrl = fileUrl.includes('export_report') && accessToken ? `${fileUrl}&access_token=${accessToken}` : fileUrl
-
+async function processAdsetCSV(fileUrl: string, adAccountId: string): Promise<number> {
     // Stream CSV from URL
-    const response = await axios.get(downloadUrl, { responseType: 'stream' })
+    const response = await axios.get(fileUrl, { responseType: 'stream' })
     const stream = response.data as Readable
 
     // Setup CSV parser
@@ -92,10 +89,10 @@ async function processAdsetCSV(fileUrl: string, adAccountId: string, accessToken
  * Process CSV file based on level
  */
 export async function process(request: ProcessCSVRequest): Promise<ProcessCSVResponse> {
-    const { fileUrl, adAccountId, level, accessToken } = request
+    const { fileUrl, adAccountId, level } = request
 
     try {
-        const recordsProcessed = await processAdsetCSV(fileUrl, adAccountId, accessToken)
+        const recordsProcessed = await processAdsetCSV(fileUrl, adAccountId)
 
         logger.info(`Processed ${recordsProcessed} ${level} records for ${adAccountId}`)
 

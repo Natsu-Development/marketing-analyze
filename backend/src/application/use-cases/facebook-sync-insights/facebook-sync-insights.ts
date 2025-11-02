@@ -119,15 +119,14 @@ async function syncForAccount(
     // Wait for Facebook to make CSV available
     await new Promise((resolve) => setTimeout(resolve, 3000))
 
-    // Get CSV result
+    // Get CSV URL from Facebook
     const csvResult = await facebookClient.getReportCSV(account.accessToken, reportResponse.reportRunId)
 
-    // Process and store CSV
+    // Process and store CSV (downloads and streams)
     const csvProcessResult = await CsvProcessorService.process({
         fileUrl: csvResult.fileUrl,
         adAccountId,
         level: 'adset',
-        accessToken: account.accessToken,
     })
 
     if (!csvProcessResult.success) {
@@ -144,8 +143,8 @@ async function syncForAccount(
             since: timeRange.since,
             until: timeRange.until,
         },
-        status: csvResult.completedAt ? 'completed' : 'pending',
-        completedAt: csvResult.completedAt,
+        status: 'completed',
+        completedAt: new Date(),
     })
 
     await exportResultRepository.save(exportResult)
