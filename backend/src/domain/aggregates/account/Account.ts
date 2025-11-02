@@ -5,7 +5,7 @@
  * Implemented using functional programming style following DDD principles
  */
 
-import { AdAccount } from '../../value-objects/AdAccount'
+import { AdAccount, updateAdAccountLastSyncAdSet, updateAdAccountLastSyncInsight } from '../../value-objects/AdAccount'
 
 export enum AccountStatus {
     CONNECTED = 'connected',
@@ -294,9 +294,93 @@ export function accountToJSON(account: Account) {
             spendCap: adAccount.spendCap,
             adAccountId: adAccount.adAccountId,
             isActive: adAccount.isActive,
+            lastSyncAdSet: adAccount.lastSyncAdSet,
+            lastSyncInsight: adAccount.lastSyncInsight,
         })),
         createdAt: account.createdAt,
         updatedAt: account.updatedAt,
+    }
+}
+
+/**
+ * Update lastSyncAdSet for specific ad account by ID
+ */
+export function updateAdAccountSyncAdSet(account: Account, adAccountId: string, timestamp: Date): Account {
+    const updatedAdAccounts = account.adAccounts.map(adAccount =>
+        adAccount.adAccountId === adAccountId
+            ? updateAdAccountLastSyncAdSet(adAccount, timestamp)
+            : adAccount
+    )
+
+    return {
+        ...account,
+        adAccounts: updatedAdAccounts,
+        updatedAt: new Date(),
+    }
+}
+
+/**
+ * Update lastSyncInsight for specific ad account by ID
+ */
+export function updateAdAccountSyncInsight(account: Account, adAccountId: string, timestamp: Date): Account {
+    const updatedAdAccounts = account.adAccounts.map(adAccount =>
+        adAccount.adAccountId === adAccountId
+            ? updateAdAccountLastSyncInsight(adAccount, timestamp)
+            : adAccount
+    )
+
+    return {
+        ...account,
+        adAccounts: updatedAdAccounts,
+        updatedAt: new Date(),
+    }
+}
+
+/**
+ * Calculate adset sync time range for specific ad account
+ * Returns two-tier fallback: per-account lastSyncAdSet → 90 days default
+ */
+export function getAdAccountAdSetSyncTimeRange(account: Account, adAccountId: string): { since: string; until: string } {
+    const adAccount = account.adAccounts.find(aa => aa.adAccountId === adAccountId)
+    const until = new Date()
+    let since: Date
+
+    if (adAccount?.lastSyncAdSet) {
+        // Use per-account adset sync timestamp
+        since = new Date(adAccount.lastSyncAdSet)
+    } else {
+        // Default to 90 days for initial sync
+        since = new Date(until)
+        since.setDate(since.getDate() - 90)
+    }
+
+    return {
+        since: since.toISOString().split('T')[0], // YYYY-MM-DD format
+        until: until.toISOString().split('T')[0]
+    }
+}
+
+/**
+ * Calculate insights sync time range for specific ad account
+ * Returns two-tier fallback: per-account lastSyncInsight → 90 days default
+ */
+export function getAdAccountInsightSyncTimeRange(account: Account, adAccountId: string): { since: string; until: string } {
+    const adAccount = account.adAccounts.find(aa => aa.adAccountId === adAccountId)
+    const until = new Date()
+    let since: Date
+
+    if (adAccount?.lastSyncInsight) {
+        // Use per-account insight sync timestamp
+        since = new Date(adAccount.lastSyncInsight)
+    } else {
+        // Default to 90 days for initial sync
+        since = new Date(until)
+        since.setDate(since.getDate() - 90)
+    }
+
+    return {
+        since: since.toISOString().split('T')[0], // YYYY-MM-DD format
+        until: until.toISOString().split('T')[0]
     }
 }
 
@@ -323,4 +407,8 @@ export const AccountDomain = {
     updateAccountLastSync,
     getAccountHealthStatus,
     accountToJSON,
+    updateAdAccountSyncAdSet,
+    updateAdAccountSyncInsight,
+    getAdAccountAdSetSyncTimeRange,
+    getAdAccountInsightSyncTimeRange,
 }

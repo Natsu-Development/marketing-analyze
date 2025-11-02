@@ -12,6 +12,8 @@ export interface AdAccount {
     readonly spendCap?: string
     readonly adAccountId: string
     readonly isActive: boolean
+    readonly lastSyncAdSet?: Date
+    readonly lastSyncInsight?: Date
 }
 
 /**
@@ -25,6 +27,8 @@ export function createAdAccount(props: {
     spendCap?: string
     adAccountId: string
     isActive?: boolean
+    lastSyncAdSet?: Date
+    lastSyncInsight?: Date
 }): AdAccount {
     return {
         name: props.name,
@@ -34,22 +38,9 @@ export function createAdAccount(props: {
         spendCap: props.spendCap,
         adAccountId: props.adAccountId,
         isActive: props.isActive ?? true,
+        lastSyncAdSet: props.lastSyncAdSet,
+        lastSyncInsight: props.lastSyncInsight,
     }
-}
-
-/**
- * Create AdAccount from raw API data
- */
-export function createAdAccountFromApi(data: any): AdAccount {
-    return createAdAccount({
-        name: data.name || '',
-        status: data.status || 0,
-        currency: data.currency || 'USD',
-        timezone: data.timezone_name || data.timezone || 'UTC',
-        spendCap: data.spend_cap,
-        adAccountId: data.account_id || data.id || '',
-        isActive: data.status === 1, // ACTIVE status
-    })
 }
 
 /**
@@ -60,39 +51,22 @@ export function isAdAccountActive(account: AdAccount): boolean {
 }
 
 /**
- * Get formatted currency display
+ * Update lastSyncAdSet timestamp returning new immutable instance
  */
-export function getAdAccountCurrency(account: AdAccount): string {
-    return account.currency.toUpperCase()
-}
-
-/**
- * Check equality with another AdAccount
- */
-export function areAdAccountsEqual(account: AdAccount, other: AdAccount): boolean {
-    return (
-        account.adAccountId === other.adAccountId &&
-        account.name === other.name &&
-        account.status === other.status &&
-        account.currency === other.currency &&
-        account.timezone === other.timezone &&
-        account.spendCap === other.spendCap &&
-        account.isActive === other.isActive
-    )
-}
-
-/**
- * Convert to plain object for JSON serialization
- */
-export function adAccountToJSON(account: AdAccount) {
+export function updateAdAccountLastSyncAdSet(account: AdAccount, timestamp: Date): AdAccount {
     return {
-        name: account.name,
-        status: account.status,
-        currency: account.currency,
-        timezone: account.timezone,
-        spendCap: account.spendCap,
-        adAccountId: account.adAccountId,
-        isActive: account.isActive,
+        ...account,
+        lastSyncAdSet: timestamp,
+    }
+}
+
+/**
+ * Update lastSyncInsight timestamp returning new immutable instance
+ */
+export function updateAdAccountLastSyncInsight(account: AdAccount, timestamp: Date): AdAccount {
+    return {
+        ...account,
+        lastSyncInsight: timestamp,
     }
 }
 

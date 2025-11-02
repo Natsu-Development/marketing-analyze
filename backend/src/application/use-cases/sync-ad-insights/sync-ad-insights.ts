@@ -39,24 +39,31 @@ export async function startImportAsync(request?: AdInsightExportRequest): Promis
                 continue
             }
 
-            // Get time range for this account (use domain service)
-            const timeRange = request?.timeRange || schedulingDecision.timeRange
-
-            // Domain: Validate time range
-            const timeRangeValidation = AccountService.validateTimeRange(timeRange)
-            if (!timeRangeValidation.valid) {
-                logger.warn(`Invalid time range ${account.accountId}: ${timeRangeValidation.errors.join(', ')}`)
-                continue
-            }
-
             let accountExportSuccess = true
 
             // Export for each active ad account
             for (const adAccount of activeAdAccounts) {
                 try {
+                    // Calculate per-account time range using lastSyncInsight or fallback
+                    const timeRange = AccountDomain.getAdAccountInsightSyncTimeRange(account, adAccount.adAccountId)
+
+                    // Domain: Validate time range
+                    const timeRangeValidation = AccountService.validateTimeRange(timeRange)
+                    if (!timeRangeValidation.valid) {
+                        logger.warn(`Invalid time range for ${adAccount.adAccountId}: ${timeRangeValidation.errors.join(', ')}`)
+                        continue
+                    }
+
+                    logger.info(`Syncing insights for ${adAccount.adAccountId} from ${timeRange.since} to ${timeRange.until}`)
+
                     await importAsyncInsight(account, adAccount.adAccountId, timeRange, 'adset')
                     exportsCreated += 1
                     adAccountIds.push(adAccount.adAccountId)
+
+                    // Update lastSyncInsight for this ad account
+                    const now = new Date()
+                    AccountDomain.updateAdAccountSyncInsight(account, adAccount.adAccountId, now)
+                    logger.info(`Updated lastSyncInsight for ${adAccount.adAccountId} to ${now.toISOString()}`)
                 } catch (error) {
                     accountExportSuccess = false
                     const errorMsg = `Export failed ${adAccount.adAccountId}: ${(error as Error).message}`
@@ -65,10 +72,9 @@ export async function startImportAsync(request?: AdInsightExportRequest): Promis
                 }
             }
 
-            // Update lastSyncAt if all exports succeeded for this account
+            // Update global lastSyncAt for backward compatibility if all exports succeeded
             if (accountExportSuccess && activeAdAccounts.length > 0) {
-                const updatedAccount = AccountDomain.updateAccountLastSync(account)
-                await accountRepository.save(updatedAccount)
+                AccountDomain.updateAccountLastSync(account)
             }
         }
 

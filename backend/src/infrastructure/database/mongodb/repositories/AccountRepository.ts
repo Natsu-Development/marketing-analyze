@@ -30,6 +30,8 @@ const toDomain = (doc: any): Account => {
             spendCap: account.spendCap,
             adAccountId: account.adAccountId,
             isActive: account.isActive || false,
+            lastSyncAdSet: account.lastSyncAdSet || undefined,
+            lastSyncInsight: account.lastSyncInsight || undefined,
         })),
         createdAt: plainDoc.createdAt,
         updatedAt: plainDoc.updatedAt,

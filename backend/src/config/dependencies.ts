@@ -10,6 +10,7 @@ export { facebookOAuthClient } from '../infrastructure/external-services/faceboo
 export { adInsightsClient } from '../infrastructure/external-services/facebook/InsightClient'
 export { exportResultRepository } from '../infrastructure/database/mongodb/repositories/ExportResultRepository'
 export { adsetInsightDataRepository } from '../infrastructure/database/mongodb/repositories/AdInsightRepository'
+export { adSetRepository } from '../infrastructure/database/mongodb/repositories/AdSetRepository'
 
 export const facebookConfig = {
     appId: appConfig.facebook.appId,
