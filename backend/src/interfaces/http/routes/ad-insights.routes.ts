@@ -16,11 +16,10 @@ export const adInsightsRoutes = Router()
  */
 adInsightsRoutes.post('/export', async (_req, res) => {
     try {
-        logger.info('Manual ad insights export triggered')
         await CronSchedulerService.runAdInsightsExportNow()
         return jsonSuccess(res, { message: 'Ad insights export completed successfully' })
     } catch (error) {
-        logger.error('Failed to run ad insights export:', error)
+        logger.error({ error }, 'Export failed')
         return jsonError(res, 'Failed to run ad insights export', 500)
     }
 })

@@ -17,7 +17,7 @@ let adInsightsJob: cron.ScheduledTask | null = null
 export function startAdInsightsCron(): void {
     const schedule = process.env.AD_INSIGHTS_CRON_SCHEDULE || '0 2 * * *' // Default: 2 AM daily (second is optional)
 
-    logger.info(`Starting ad insights export cron job with schedule: ${schedule}`)
+    logger.info(`Starting ad insights cron: ${schedule}`)
 
     if (!cron.validate(schedule)) {
         logger.error(`Invalid cron schedule: ${schedule}`)
@@ -25,20 +25,18 @@ export function startAdInsightsCron(): void {
     }
 
     adInsightsJob = cron.schedule(schedule, async () => {
-        logger.info('Running scheduled ad insights export...')
+        logger.info('Running scheduled ad insights export')
         try {
             const result = await AdInsightUseCase.startImportAsync()
             if (result.success) {
-                logger.info(`Ad insights export completed successfully. Created ${result.exportsCreated} exports.`)
+                logger.info(`Export completed: ${result.exportsCreated} exports created`)
             } else {
-                logger.error(`Ad insights export completed with errors: ${result.errors?.join(', ')}`)
+                logger.error(`Export failed: ${result.errors?.join(', ')}`)
             }
         } catch (error) {
-            logger.error(`Ad insights export failed: ${(error as Error).message}`)
+            logger.error(`Export failed: ${(error as Error).message}`)
         }
     })
-
-    logger.info('Ad insights export cron job started successfully')
 }
 
 /**
@@ -56,16 +54,16 @@ export function stopAdInsightsCron(): void {
  * Run ad insights export immediately (for testing or manual triggers)
  */
 export async function runAdInsightsExportNow(): Promise<void> {
-    logger.info('Running ad insights export immediately...')
+    logger.info('Running ad insights export')
     try {
         const result = await AdInsightUseCase.startImportAsync()
         if (result.success) {
-            logger.info(`Ad insights export completed. Created ${result.exportsCreated} exports.`)
+            logger.info(`Export completed: ${result.exportsCreated} exports created`)
         } else {
-            logger.error(`Ad insights export completed with errors: ${result.errors?.join(', ')}`)
+            logger.error(`Export failed: ${result.errors?.join(', ')}`)
         }
     } catch (error) {
-        logger.error(`Ad insights export failed: ${(error as Error).message}`)
+        logger.error(`Export failed: ${(error as Error).message}`)
         throw error
     }
 }
@@ -74,7 +72,6 @@ export async function runAdInsightsExportNow(): Promise<void> {
  * Start all cron jobs
  */
 export function startAllCronJobs(): void {
-    logger.info('Starting all cron jobs...')
     startAdInsightsCron()
 }
 
@@ -82,7 +79,6 @@ export function startAllCronJobs(): void {
  * Stop all cron jobs
  */
 export function stopAllCronJobs(): void {
-    logger.info('Stopping all cron jobs...')
     stopAdInsightsCron()
 }
 

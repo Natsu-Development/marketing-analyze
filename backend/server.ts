@@ -11,7 +11,7 @@ import { startAllCronJobs, stopAllCronJobs } from './src/application/services/cr
 
 async function bootstrap() {
     try {
-        logger.info('🚀 Starting Marketing Analytics Backend...')
+        logger.info('Starting Marketing Analytics Backend')
 
         // Connect to database
         await connectDatabase(appConfig.database.uri)
@@ -24,19 +24,16 @@ async function bootstrap() {
 
         // Start HTTP server
         const server = app.listen(appConfig.server.port, () => {
-            logger.info(`✅ Server running on port ${appConfig.server.port}`)
-            logger.info(`📝 Environment: ${appConfig.server.nodeEnv}`)
-            logger.info(`🔗 Facebook OAuth configured for: ${appConfig.facebook.redirectUri}`)
+            logger.info(`Server running on port ${appConfig.server.port}`)
+            logger.info(`Environment: ${appConfig.server.nodeEnv}`)
         })
 
         // Graceful shutdown
         const gracefulShutdown = async (signal: string) => {
-            logger.info(`${signal} received, starting graceful shutdown...`)
+            logger.info(`${signal} received, starting graceful shutdown`)
 
             // Stop accepting new connections
             server.close(async () => {
-                logger.info('HTTP server closed')
-
                 // Stop all cron jobs
                 stopAllCronJobs()
 
@@ -44,7 +41,7 @@ async function bootstrap() {
                 const mongoose = await import('mongoose')
                 await mongoose.default.connection.close()
 
-                logger.info('✅ Graceful shutdown complete')
+                logger.info('Graceful shutdown complete')
                 process.exit(0)
             })
 
@@ -58,7 +55,7 @@ async function bootstrap() {
         process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
         process.on('SIGINT', () => gracefulShutdown('SIGINT'))
     } catch (error) {
-        logger.error('❌ Failed to start server:', error)
+        logger.error({ error }, 'Failed to start server')
         process.exit(1)
     }
 }

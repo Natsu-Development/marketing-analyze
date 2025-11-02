@@ -28,7 +28,7 @@ export async function startImportAsync(request?: AdInsightExportRequest): Promis
             const schedulingDecision = AccountDomain.canAccountExport(account)
 
             if (!schedulingDecision.canExport) {
-                logger.info(`Skipping account ${account.accountId} - ${schedulingDecision.reason}`)
+                logger.info(`Skipping ${account.accountId}: ${schedulingDecision.reason}`)
                 continue
             }
 
@@ -36,7 +36,6 @@ export async function startImportAsync(request?: AdInsightExportRequest): Promis
             const activeAdAccounts = AccountDomain.getActiveAdAccounts(account)
 
             if (activeAdAccounts.length === 0) {
-                logger.info(`No active ad accounts for account ${account.accountId}`)
                 continue
             }
 
@@ -46,13 +45,9 @@ export async function startImportAsync(request?: AdInsightExportRequest): Promis
             // Domain: Validate time range
             const timeRangeValidation = AccountService.validateTimeRange(timeRange)
             if (!timeRangeValidation.valid) {
-                logger.warn(
-                    `Invalid time range for account ${account.accountId}: ${timeRangeValidation.errors.join(', ')}`
-                )
+                logger.warn(`Invalid time range ${account.accountId}: ${timeRangeValidation.errors.join(', ')}`)
                 continue
             }
-
-            logger.info(`Using time range for account ${account.accountId}: ${timeRange.since} to ${timeRange.until}`)
 
             let accountExportSuccess = true
 
@@ -62,10 +57,9 @@ export async function startImportAsync(request?: AdInsightExportRequest): Promis
                     await importAsyncInsight(account, adAccount.adAccountId, timeRange, 'adset')
                     exportsCreated += 1
                     adAccountIds.push(adAccount.adAccountId)
-                    logger.info(`Created exports for ad account ${adAccount.adAccountId}`)
                 } catch (error) {
                     accountExportSuccess = false
-                    const errorMsg = `Failed to export for ad account ${adAccount.adAccountId}: ${(error as Error).message}`
+                    const errorMsg = `Export failed ${adAccount.adAccountId}: ${(error as Error).message}`
                     errors.push(errorMsg)
                     logger.error(errorMsg)
                 }
@@ -75,11 +69,10 @@ export async function startImportAsync(request?: AdInsightExportRequest): Promis
             if (accountExportSuccess && activeAdAccounts.length > 0) {
                 const updatedAccount = AccountDomain.updateAccountLastSync(account)
                 await accountRepository.save(updatedAccount)
-                logger.info(`Updated lastSyncAt for account ${account.accountId}`)
             }
         }
 
-        logger.info(`Import insight completed. Created ${exportsCreated} exports`)
+        logger.info(`Import completed: ${exportsCreated} exports`)
 
         return {
             success: errors.length === 0,
@@ -88,7 +81,7 @@ export async function startImportAsync(request?: AdInsightExportRequest): Promis
             errors: errors.length > 0 ? errors : undefined,
         }
     } catch (error) {
-        const errorMsg = `Failed to import insight: ${(error as Error).message}`
+        const errorMsg = `Import failed: ${(error as Error).message}`
         logger.error(errorMsg)
         return {
             success: false,
@@ -119,13 +112,13 @@ async function importAsyncInsight(
         timeRange,
     })
 
-    logger.info(`Created async report ${reportResponse.reportRunId} for ad account ${adAccountId}`)
+    logger.info(`Created report ${reportResponse.reportRunId} for ${adAccountId}`)
 
     // Poll until completion
     const status = await adInsightsClient.pollReportStatus(account.accessToken, reportResponse.reportRunId)
 
     if (status.asyncStatus !== 'Job Completed') {
-        const errorMsg = `Report ${reportResponse.reportRunId} failed with status: ${status.asyncStatus}`
+        const errorMsg = `Report ${reportResponse.reportRunId} failed: ${status.asyncStatus}`
         logger.error(errorMsg)
         throw new Error(errorMsg)
     }
@@ -137,7 +130,6 @@ async function importAsyncInsight(
     const csvResult = await adInsightsClient.getReportCSV(account.accessToken, reportResponse.reportRunId)
 
     // Process and store CSV data
-    logger.info(`Processing and storing ${level} CSV data for ad account ${adAccountId}`)
     const csvProcessResult = await CsvProcessorService.process({
         fileUrl: csvResult.fileUrl,
         adAccountId,
@@ -146,7 +138,7 @@ async function importAsyncInsight(
     })
 
     if (!csvProcessResult.success) {
-        logger.error(`Failed to process CSV data: ${csvProcessResult.error}`)
+        logger.error(`CSV process failed: ${csvProcessResult.error}`)
         throw new Error(csvProcessResult.error || 'Failed to process CSV data')
     }
 
@@ -165,9 +157,7 @@ async function importAsyncInsight(
     })
 
     await exportResultRepository.save(exportResult)
-    logger.info(
-        `Saved ${level} export result for ad account ${adAccountId} with ${csvProcessResult.recordsProcessed} records`
-    )
+    logger.info(`Saved ${adAccountId}: ${csvProcessResult.recordsProcessed} records`)
 }
 
 /**
