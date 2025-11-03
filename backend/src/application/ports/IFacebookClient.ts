@@ -57,7 +57,6 @@ export interface CSVExportResult {
 export interface FetchAdSetsParams {
     accessToken: string
     adAccountId: string
-    updatedSince: string
 }
 
 /**

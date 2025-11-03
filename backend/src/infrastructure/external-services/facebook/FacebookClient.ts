@@ -249,7 +249,7 @@ const fetchAdSets = async (params: FetchAdSetsParams): Promise<any[]> => {
         const queryParams = new URLSearchParams({
             access_token: params.accessToken,
             fields: 'id,name,campaign{id,name},status,daily_budget,lifetime_budget,start_time,end_time,updated_time',
-            filtering: JSON.stringify([{ field: 'updated_time', operator: 'GREATER_THAN', value: params.updatedSince }]),
+            filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE'] }]),
             limit: '500',
         })
 

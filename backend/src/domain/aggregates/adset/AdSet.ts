@@ -24,21 +24,22 @@ export interface AdSet {
 // Pure functions that operate on the AdSet data
 
 /**
- * Create a new AdSet
+ * Create AdSet from Facebook API response
+ * Handles nested campaign object and data transformation
  */
-export function createAdSet(props: AdSet): AdSet {
+export function createAdSet(data: any, adAccountId: string): AdSet {
     return {
-        adAccountId: props.adAccountId,
-        adsetId: props.adsetId,
-        adsetName: props.adsetName,
-        campaignId: props.campaignId,
-        campaignName: props.campaignName,
-        status: props.status,
-        dailyBudget: props.dailyBudget,
-        lifetimeBudget: props.lifetimeBudget,
-        startTime: props.startTime,
-        endTime: props.endTime,
-        updatedTime: props.updatedTime,
+        adAccountId,
+        adsetId: data.id,
+        adsetName: data.name,
+        campaignId: data.campaign?.id || '',
+        campaignName: data.campaign?.name || '',
+        status: data.status,
+        dailyBudget: data.daily_budget ? parseFloat(data.daily_budget) / 100 : undefined,
+        lifetimeBudget: data.lifetime_budget ? parseFloat(data.lifetime_budget) / 100 : undefined,
+        startTime: data.start_time ? new Date(data.start_time) : undefined,
+        endTime: data.end_time ? new Date(data.end_time) : undefined,
+        updatedTime: new Date(data.updated_time),
         syncedAt: new Date(),
     }
 }

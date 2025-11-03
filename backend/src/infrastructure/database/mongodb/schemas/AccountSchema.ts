@@ -85,7 +85,6 @@ const AccountSchemaInstance = new Schema<IAccountDocument>(
 AccountSchemaInstance.index({ expiresAt: 1, status: 1 })
 
 // Indexes for sync eligibility queries
-AccountSchemaInstance.index({ 'adAccounts.lastSyncAdSet': 1, 'adAccounts.isActive': 1 })
 AccountSchemaInstance.index({ 'adAccounts.lastSyncInsight': 1, 'adAccounts.isActive': 1 })
 
 export const AccountSchema = model<IAccountDocument>('Account', AccountSchemaInstance)

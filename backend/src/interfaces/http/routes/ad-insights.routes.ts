@@ -16,7 +16,7 @@ export const adInsightsRoutes = Router()
  */
 adInsightsRoutes.post('/export', async (_req, res) => {
     try {
-        await CronSchedulerService.runAdInsightsExportNow()
+        // await CronSchedulerService.runAdInsightsExportNow()
         await CronSchedulerService.runAdSetSyncNow()
         return jsonSuccess(res, { message: 'Ad insights and adsets sync completed successfully' })
     } catch (error) {
