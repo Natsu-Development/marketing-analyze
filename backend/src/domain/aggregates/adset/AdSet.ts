@@ -58,14 +58,14 @@ export function updateAdSet(adset: AdSet, updates: Partial<Omit<AdSet, 'id' | 'a
 /**
  * Check if adset is in active status
  */
-export function isAdSetActive(adset: AdSet): boolean {
+export function isActive(adset: AdSet): boolean {
     return adset.status === 'ACTIVE'
 }
 
 /**
  * Determine budget type (daily, lifetime, or none)
  */
-export function getAdSetBudgetType(adset: AdSet): 'daily' | 'lifetime' | 'none' {
+export function getBudgetType(adset: AdSet): 'daily' | 'lifetime' | 'none' {
     if (adset.dailyBudget !== undefined) {
         return 'daily'
     }
@@ -76,12 +76,53 @@ export function getAdSetBudgetType(adset: AdSet): 'daily' | 'lifetime' | 'none' 
 }
 
 /**
+ * Calculate campaign age in days
+ */
+export function getAgeInDays(adset: AdSet): number | null {
+    if (!adset.startTime) {
+        return null
+    }
+    const now = new Date()
+    const ageMs = now.getTime() - adset.startTime.getTime()
+    return ageMs / (1000 * 60 * 60 * 24)
+}
+
+/**
+ * Check if adset is eligible for suggestion analysis
+ * Requirements:
+ * - Must be ACTIVE status
+ * - Must have daily budget defined
+ * - Campaign age must be > 1 day
+ */
+export function isEligibleForAnalysis(adset: AdSet): boolean {
+    // Must be active
+    if (!isActive(adset)) {
+        return false
+    }
+
+    // Must have daily budget
+    if (adset.dailyBudget === undefined || adset.dailyBudget === null) {
+        return false
+    }
+
+    // Campaign age must be > 1 day
+    // const ageInDays = getAgeInDays(adset)
+    // if (ageInDays === null || ageInDays <= 1) {
+    //     return false
+    // }
+
+    return true
+}
+
+/**
  * AdSet Domain - Grouped collection of all AdSet-related functions
  * Following DDD principles with functional programming style
  */
 export const AdSetDomain = {
     createAdSet,
     updateAdSet,
-    isAdSetActive,
-    getAdSetBudgetType,
+    isActive,
+    getBudgetType,
+    getAgeInDays,
+    isEligibleForAnalysis,
 }

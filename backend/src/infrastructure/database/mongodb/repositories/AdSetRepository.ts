@@ -83,6 +83,16 @@ const saveBatch = async (adsets: AdSet[]): Promise<{ upsertedCount: number; modi
     }
 }
 
+const findAll = async (): Promise<AdSet[]> => {
+    const docs = await AdSetSchema.find().sort({ updatedTime: -1 })
+    return docs.map(toDomain)
+}
+
+const findAllActive = async (): Promise<AdSet[]> => {
+    const docs = await AdSetSchema.find({ status: 'ACTIVE' }).sort({ updatedTime: -1 })
+    return docs.map(toDomain)
+}
+
 const findByAdAccountId = async (adAccountId: string): Promise<AdSet[]> => {
     const docs = await AdSetSchema.find({ adAccountId }).sort({ updatedTime: -1 })
     return docs.map(toDomain)
@@ -106,6 +116,8 @@ const findByCampaignId = async (campaignId: string): Promise<AdSet[]> => {
 export const adSetRepository: IAdSetRepository = {
     save,
     saveBatch,
+    findAll,
+    findAllActive,
     findByAdAccountId,
     findActiveByAdAccountId,
     findByAdSetId,

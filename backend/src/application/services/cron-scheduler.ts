@@ -7,10 +7,12 @@ import * as cron from 'node-cron'
 import { logger } from '../../infrastructure/shared/logger'
 import { FacebookSyncInsightsUseCase } from '../use-cases/facebook-sync-insights'
 import { FacebookSyncAdSetUseCase } from '../use-cases/facebook-sync-adset'
+import * as AnalyzeSuggestionsUseCase from '../use-cases/analyze-suggestions'
 // Note: We use process.env directly here instead of appConfig to avoid circular dependencies
 
 let adInsightsJob: cron.ScheduledTask | null = null
 let adSetSyncJob: cron.ScheduledTask | null = null
+let suggestionAnalysisJob: cron.ScheduledTask | null = null
 
 /**
  * Start the ad insights export cron job
@@ -130,11 +132,72 @@ export async function runAdSetSyncNow(): Promise<void> {
 }
 
 /**
+ * Start the suggestion analysis cron job
+ * Default schedule: Every day at 3 AM (can be configured via env)
+ */
+export function startSuggestionAnalysisCron(): void {
+    const schedule = process.env.SUGGESTION_ANALYSIS_CRON_SCHEDULE || '0 3 * * *' // Default: 3 AM daily
+
+    logger.info(`Starting suggestion analysis cron: ${schedule}`)
+
+    if (!cron.validate(schedule)) {
+        logger.error(`Invalid cron schedule: ${schedule}`)
+        throw new Error(`Invalid cron schedule: ${schedule}`)
+    }
+
+    suggestionAnalysisJob = cron.schedule(schedule, async () => {
+        logger.info('Running scheduled suggestion analysis')
+        try {
+            const result = await AnalyzeSuggestionsUseCase.execute()
+            logger.info(
+                `Suggestion analysis completed: ${result.adsetsProcessed} adsets processed, ${result.suggestionsCreated} suggestions created, ${result.errors} errors`
+            )
+            if (!result.success && result.errorMessages) {
+                logger.error(`Suggestion analysis errors: ${result.errorMessages.join('; ')}`)
+            }
+        } catch (error) {
+            logger.error(`Suggestion analysis failed: ${(error as Error).message}`, { stack: (error as Error).stack })
+        }
+    })
+}
+
+/**
+ * Stop the suggestion analysis cron job
+ */
+export function stopSuggestionAnalysisCron(): void {
+    if (suggestionAnalysisJob) {
+        suggestionAnalysisJob.stop()
+        suggestionAnalysisJob = null
+        logger.info('Suggestion analysis cron job stopped')
+    }
+}
+
+/**
+ * Run suggestion analysis immediately (for testing or manual triggers)
+ */
+export async function runSuggestionAnalysisNow(): Promise<void> {
+    logger.info('Running suggestion analysis now')
+    try {
+        const result = await AnalyzeSuggestionsUseCase.execute()
+        logger.info(
+            `Suggestion analysis completed: ${result.adsetsProcessed} adsets processed, ${result.suggestionsCreated} suggestions created, ${result.errors} errors`
+        )
+        if (!result.success && result.errorMessages) {
+            logger.error(`Suggestion analysis errors: ${result.errorMessages.join('; ')}`)
+        }
+    } catch (error) {
+        logger.error(`Suggestion analysis failed: ${(error as Error).message}`)
+        throw error
+    }
+}
+
+/**
  * Start all cron jobs
  */
 export function startAllCronJobs(): void {
     startAdSetSyncCron() // Run adset sync before insights sync
     startAdInsightsCron()
+    startSuggestionAnalysisCron()
 }
 
 /**
@@ -143,6 +206,7 @@ export function startAllCronJobs(): void {
 export function stopAllCronJobs(): void {
     stopAdSetSyncCron()
     stopAdInsightsCron()
+    stopSuggestionAnalysisCron()
 }
 
 /**
@@ -155,6 +219,9 @@ export const CronSchedulerService = {
     startAdSetSyncCron,
     stopAdSetSyncCron,
     runAdSetSyncNow,
+    startSuggestionAnalysisCron,
+    stopSuggestionAnalysisCron,
+    runSuggestionAnalysisNow,
     startAllCronJobs,
     stopAllCronJobs,
 }

@@ -78,7 +78,13 @@ const findByAdAccountId = async (adAccountId: string): Promise<AdSetInsight[]> =
     return docs.map(toDomain)
 }
 
+const findByAdsetId = async (adsetId: string): Promise<AdSetInsight[]> => {
+    const docs = await AdSetInsightDataModel.find({ adsetId }).sort({ date: -1 })
+    return docs.map(toDomain)
+}
+
 export const adsetInsightDataRepository: IAdInsightRepository = {
     saveBatch,
     findByAdAccountId,
+    findByAdsetId,
 }

@@ -1,0 +1,105 @@
+/**
+ * Repository Implementation: SuggestionRepository
+ * Uses plain functional approach following existing repository patterns
+ */
+
+import { ISuggestionRepository, Suggestion, ExceedingMetric } from '../../../../domain'
+import { SuggestionSchema } from '../schemas/SuggestionSchema'
+
+// Convert Mongoose document to plain domain object
+const toDomain = (doc: any): Suggestion => {
+    // Convert Mongoose document to plain object to avoid document pollution
+    const plainDoc = doc.toObject ? doc.toObject() : doc
+
+    return {
+        id: plainDoc._id.toString(),
+        adAccountId: plainDoc.adAccountId,
+        adsetId: plainDoc.adsetId,
+        adsetName: plainDoc.adsetName,
+        metrics: plainDoc.metrics as ReadonlyArray<ExceedingMetric>,
+        metricsExceededCount: plainDoc.metricsExceededCount,
+        status: plainDoc.status,
+        createdAt: plainDoc.createdAt,
+        updatedAt: plainDoc.updatedAt,
+    }
+}
+
+// Convert domain object to database format
+const fromDomain = (suggestion: Suggestion) => ({
+    adAccountId: suggestion.adAccountId,
+    adsetId: suggestion.adsetId,
+    adsetName: suggestion.adsetName,
+    metrics: suggestion.metrics,
+    metricsExceededCount: suggestion.metricsExceededCount,
+    status: suggestion.status,
+})
+
+/**
+ * Save suggestion with upsert logic for duplicate handling
+ */
+const save = async (suggestion: Suggestion): Promise<Suggestion> => {
+    const doc = fromDomain(suggestion)
+
+    // Upsert based on composite key (adAccountId, adsetId, createdAt)
+    // If suggestion already exists for same adset at same time, update it
+    const result = await SuggestionSchema.findOneAndUpdate(
+        {
+            adAccountId: suggestion.adAccountId,
+            adsetId: suggestion.adsetId,
+            createdAt: suggestion.createdAt,
+        },
+        doc,
+        {
+            upsert: true,
+            new: true,
+            runValidators: true,
+        }
+    )
+
+    return toDomain(result)
+}
+
+/**
+ * Find all suggestions for a specific ad account
+ */
+const findByAdAccountId = async (adAccountId: string): Promise<Suggestion[]> => {
+    const docs = await SuggestionSchema.find({ adAccountId }).sort({ createdAt: -1 })
+    return docs.map(toDomain)
+}
+
+/**
+ * Find all suggestions for a specific adset
+ */
+const findByAdsetId = async (adsetId: string): Promise<Suggestion[]> => {
+    const docs = await SuggestionSchema.find({ adsetId }).sort({ createdAt: -1 })
+    return docs.map(toDomain)
+}
+
+/**
+ * Find all suggestions with pending status
+ */
+const findPending = async (): Promise<Suggestion[]> => {
+    const docs = await SuggestionSchema.find({ status: 'pending' }).sort({ createdAt: -1 })
+    return docs.map(toDomain)
+}
+
+/**
+ * Update suggestion status
+ */
+const updateStatus = async (id: string, status: 'pending' | 'rejected' | 'applied'): Promise<Suggestion | null> => {
+    const result = await SuggestionSchema.findByIdAndUpdate(
+        id,
+        { status, updatedAt: new Date() },
+        { new: true, runValidators: true }
+    )
+
+    return result ? toDomain(result) : null
+}
+
+export const suggestionRepository: ISuggestionRepository = {
+    save,
+    findByAdAccountId,
+    findByAdsetId,
+    findPending,
+    updateStatus,
+}
