@@ -20,7 +20,7 @@ export const AccountIdQuerySchema = z.object({
 })
 
 // ============================================================================
-// Metric Configuration Schemas
+// Ad Account Setting Schemas
 // ============================================================================
 
 /**
@@ -31,10 +31,10 @@ export const AdAccountIdParamSchema = z.object({
 })
 
 /**
- * Schema for upsert metric configuration request body
- * All metric fields are optional numbers
+ * Schema for upsert ad account setting request body
+ * All metric threshold fields and suggestion parameters are optional
  */
-export const UpsertMetricConfigSchema = z.object({
+export const UpsertAdAccountSettingSchema = z.object({
     impressions: z.number().optional(),
     clicks: z.number().optional(),
     spend: z.number().optional(),
@@ -47,4 +47,6 @@ export const UpsertMetricConfigSchema = z.object({
     costPerInlineLinkClick: z.number().optional(),
     costPerResult: z.number().optional(),
     roas: z.number().optional(),
+    scalePercent: z.number().optional(),
+    note: z.string().optional(),
 }).strict() // Reject unknown fields

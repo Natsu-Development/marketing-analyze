@@ -10,7 +10,7 @@ export { facebookClient } from '../infrastructure/external-services/facebook/Fac
 export { exportResultRepository } from '../infrastructure/database/mongodb/repositories/ExportResultRepository'
 export { adsetInsightDataRepository } from '../infrastructure/database/mongodb/repositories/AdInsightRepository'
 export { adSetRepository } from '../infrastructure/database/mongodb/repositories/AdSetRepository'
-export { metricConfigRepository } from '../infrastructure/database/mongodb/repositories/MetricConfigRepository'
+export { adAccountSettingRepository } from '../infrastructure/database/mongodb/repositories/AdAccountSettingRepository'
 export { suggestionRepository } from '../infrastructure/database/mongodb/repositories/SuggestionRepository'
 
 export const facebookConfig = {

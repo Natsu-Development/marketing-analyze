@@ -1,18 +1,18 @@
 /**
- * HTTP Controller: MetricConfigController
- * Handles HTTP requests for metric configuration endpoints
+ * HTTP Controller: AdAccountSettingController
+ * Handles HTTP requests for ad account setting endpoints
  */
 
 import { Request, Response } from 'express'
 import { z } from 'zod'
-import { MetricConfigUseCase } from '../../../application/use-cases/metric-config'
+import { AdAccountSettingUseCase } from '../../../application/use-cases/ad-account-setting'
 import {
     jsonSuccess,
     jsonError,
     handleValidationError,
     handleInternalError,
     AdAccountIdParamSchema,
-    UpsertMetricConfigSchema,
+    UpsertAdAccountSettingSchema,
 } from '../helpers'
 
 // ============================================================================
@@ -20,21 +20,21 @@ import {
 // ============================================================================
 
 /**
- * PUT /api/metric-config/:adAccountId
- * Upserts metric configuration for an ad account
+ * PUT /api/ad-account-settings/:adAccountId
+ * Upserts ad account setting
  */
-export async function upsertMetricConfiguration(req: Request, res: Response): Promise<void> {
+export async function upsertAdAccountSetting(req: Request, res: Response): Promise<void> {
     try {
         // Validate path parameter
         const { adAccountId } = AdAccountIdParamSchema.parse(req.params)
 
         // Validate request body
-        const metrics = UpsertMetricConfigSchema.parse(req.body)
+        const settings = UpsertAdAccountSettingSchema.parse(req.body)
 
         // Invoke use case
-        const result = await MetricConfigUseCase.upsert({
+        const result = await AdAccountSettingUseCase.upsert({
             adAccountId,
-            metrics,
+            settings,
         })
 
         if (!result.success) {
@@ -52,16 +52,16 @@ export async function upsertMetricConfiguration(req: Request, res: Response): Pr
 }
 
 /**
- * GET /api/metric-config/:adAccountId
- * Retrieves metric configuration for an ad account (returns default if not found)
+ * GET /api/ad-account-settings/:adAccountId
+ * Retrieves ad account setting (returns default if not found)
  */
-export async function getMetricConfiguration(req: Request, res: Response): Promise<void> {
+export async function getAdAccountSetting(req: Request, res: Response): Promise<void> {
     try {
         // Validate path parameter
         const { adAccountId } = AdAccountIdParamSchema.parse(req.params)
 
         // Invoke use case
-        const result = await MetricConfigUseCase.retrieve({ adAccountId })
+        const result = await AdAccountSettingUseCase.retrieve({ adAccountId })
 
         if (!result.success) {
             return jsonError(res, result.error || 'RETRIEVAL_FAILED', 500, result.message)

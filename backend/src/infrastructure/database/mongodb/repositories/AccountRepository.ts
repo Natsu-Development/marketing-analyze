@@ -83,10 +83,24 @@ const deleteByAccountId = async (accountId: string): Promise<void> => {
     await AccountSchema.deleteOne({ accountId })
 }
 
+const findAdAccountNameById = async (adAccountId: string): Promise<string | null> => {
+    const doc = await AccountSchema.findOne(
+        { 'adAccounts.adAccountId': adAccountId },
+        { 'adAccounts.$': 1 }
+    )
+
+    if (!doc || !doc.adAccounts || doc.adAccounts.length === 0) {
+        return null
+    }
+
+    return doc.adAccounts[0].name
+}
+
 export const accountRepository: IAccountRepository = {
     save,
     findByAccountId,
     findAllConnected,
     deleteByAccountId,
     findById,
+    findAdAccountNameById,
 }

@@ -5,7 +5,7 @@
  * Implemented using functional programming style following DDD principles
  */
 
-import { CONFIGURABLE_METRICS, MetricFieldName } from '../metric-config/MetricConfig'
+import { CONFIGURABLE_METRICS, MetricFieldName } from '../ad-account-setting/AdAccountSetting'
 
 /**
  * Exceeding metric data structure
@@ -27,8 +27,14 @@ export type SuggestionStatus = 'pending' | 'rejected' | 'applied'
 export interface Suggestion {
     readonly id?: string
     readonly adAccountId: string
+    readonly adAccountName: string
+    readonly campaignName: string
     readonly adsetId: string
     readonly adsetName: string
+    readonly adsetLink: string
+    readonly dailyBudget: number
+    readonly scalePercent?: number
+    readonly note?: string
     readonly metrics: ReadonlyArray<ExceedingMetric>
     readonly metricsExceededCount: number
     readonly status: SuggestionStatus
@@ -51,13 +57,25 @@ function isValidMetricName(metricName: string): metricName is MetricFieldName {
 }
 
 /**
+ * Generate Facebook Ads Manager link for adset
+ */
+function generateAdsetLink(adAccountId: string, adsetId: string): string {
+    return `https://business.facebook.com/adsmanager/manage/adsets?act=${adAccountId}&selected_adset_ids=${adsetId}`
+}
+
+/**
  * Create a new Suggestion entity with default values
  * Pure function that creates suggestion from provided data
  */
 export function createSuggestion(props: {
     adAccountId: string
+    adAccountName: string
+    campaignName: string
     adsetId: string
     adsetName: string
+    dailyBudget: number
+    scalePercent?: number
+    note?: string
     metrics: ReadonlyArray<ExceedingMetric>
 }): Suggestion {
     const now = new Date()
@@ -69,10 +87,21 @@ export function createSuggestion(props: {
         }
     }
 
+    // Validate daily budget
+    if (props.dailyBudget <= 0) {
+        throw new Error('Daily budget must be greater than 0')
+    }
+
     return {
         adAccountId: props.adAccountId,
+        adAccountName: props.adAccountName,
+        campaignName: props.campaignName,
         adsetId: props.adsetId,
         adsetName: props.adsetName,
+        adsetLink: generateAdsetLink(props.adAccountId, props.adsetId),
+        dailyBudget: props.dailyBudget,
+        scalePercent: props.scalePercent,
+        note: props.note,
         metrics: props.metrics,
         metricsExceededCount: props.metrics.length,
         status: 'pending',

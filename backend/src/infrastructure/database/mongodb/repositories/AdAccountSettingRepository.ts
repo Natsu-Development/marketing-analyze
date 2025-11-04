@@ -1,13 +1,13 @@
 /**
- * Repository Implementation: MetricConfigRepository
+ * Repository Implementation: AdAccountSettingRepository
  * Uses plain functional approach following AccountRepository pattern
  */
 
-import { IMetricConfigRepository, MetricConfig } from '../../../../domain'
-import { MetricConfigSchema } from '../schemas/MetricConfigSchema'
+import { IAdAccountSettingRepository, AdAccountSetting } from '../../../../domain'
+import { AdAccountSettingSchema } from '../schemas/AdAccountSettingSchema'
 
 // Convert Mongoose document to plain domain object
-const toDomain = (doc: any): MetricConfig => {
+const toDomain = (doc: any): AdAccountSetting => {
     // Convert Mongoose document to plain object to avoid document pollution
     const plainDoc = doc.toObject ? doc.toObject() : doc
 
@@ -26,13 +26,15 @@ const toDomain = (doc: any): MetricConfig => {
         costPerInlineLinkClick: plainDoc.costPerInlineLinkClick,
         costPerResult: plainDoc.costPerResult,
         roas: plainDoc.roas,
+        scalePercent: plainDoc.scalePercent,
+        note: plainDoc.note,
         createdAt: plainDoc.createdAt,
         updatedAt: plainDoc.updatedAt,
     }
 }
 
 // Convert domain object to database format
-const fromDomain = (config: MetricConfig) => ({
+const fromDomain = (config: AdAccountSetting) => ({
     adAccountId: config.adAccountId,
     impressions: config.impressions,
     clicks: config.clicks,
@@ -46,11 +48,13 @@ const fromDomain = (config: MetricConfig) => ({
     costPerInlineLinkClick: config.costPerInlineLinkClick,
     costPerResult: config.costPerResult,
     roas: config.roas,
+    scalePercent: config.scalePercent,
+    note: config.note,
 })
 
-const upsert = async (config: MetricConfig): Promise<MetricConfig> => {
+const upsert = async (config: AdAccountSetting): Promise<AdAccountSetting> => {
     const doc = fromDomain(config)
-    const result = await MetricConfigSchema.findOneAndUpdate(
+    const result = await AdAccountSettingSchema.findOneAndUpdate(
         { adAccountId: config.adAccountId },
         doc,
         {
@@ -63,12 +67,12 @@ const upsert = async (config: MetricConfig): Promise<MetricConfig> => {
     return toDomain(result)
 }
 
-const findByAdAccountId = async (adAccountId: string): Promise<MetricConfig | null> => {
-    const doc = await MetricConfigSchema.findOne({ adAccountId })
+const findByAdAccountId = async (adAccountId: string): Promise<AdAccountSetting | null> => {
+    const doc = await AdAccountSettingSchema.findOne({ adAccountId })
     return doc ? toDomain(doc) : null
 }
 
-export const metricConfigRepository: IMetricConfigRepository = {
+export const adAccountSettingRepository: IAdAccountSettingRepository = {
     upsert,
     findByAdAccountId,
 }

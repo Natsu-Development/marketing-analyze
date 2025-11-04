@@ -6,9 +6,10 @@
 
 import { AdSetDomain, SuggestionDomain, SuggestionAnalyzer } from '../../../domain'
 import {
+    accountRepository,
     adSetRepository,
     adsetInsightDataRepository,
-    metricConfigRepository,
+    adAccountSettingRepository,
     suggestionRepository,
 } from '../../../config/dependencies'
 import { logger } from '../../../infrastructure/shared/logger'
@@ -43,10 +44,18 @@ export async function execute(): Promise<AnalysisResult> {
         // Process each ad account
         for (const [adAccountId, adsets] of adsetsByAccount.entries()) {
             // Get and validate threshold config (inline - KISS)
-            const config = await metricConfigRepository.findByAdAccountId(adAccountId)
+            const config = await adAccountSettingRepository.findByAdAccountId(adAccountId)
 
             if (!config || !SuggestionAnalyzer.hasValidThresholds(config)) {
                 logger.debug(`Skipping ${adsets.length} adsets for ${adAccountId}: no valid threshold configuration`)
+                continue
+            }
+
+            // Get ad account name using repository
+            const adAccountName = await accountRepository.findAdAccountNameById(adAccountId)
+
+            if (!adAccountName) {
+                logger.warn(`Ad account name not found for ${adAccountId}, skipping`)
                 continue
             }
 
@@ -78,8 +87,13 @@ export async function execute(): Promise<AnalysisResult> {
                     // Create and save suggestion using domain factory
                     const suggestion = SuggestionDomain.createSuggestion({
                         adAccountId: adset.adAccountId,
+                        adAccountName,
+                        campaignName: adset.campaignName,
                         adsetId: adset.adsetId,
                         adsetName: adset.adsetName,
+                        dailyBudget: adset.dailyBudget!,
+                        scalePercent: config.scalePercent,
+                        note: config.note,
                         metrics: exceedingMetrics,
                     })
 

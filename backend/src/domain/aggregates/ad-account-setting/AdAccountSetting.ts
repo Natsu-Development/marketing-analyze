@@ -1,6 +1,6 @@
 /**
- * Entity: MetricConfig
- * Represents user-defined metric configuration values for a Facebook ad account
+ * Entity: AdAccountSetting
+ * Represents ad account settings including metric thresholds and suggestion parameters
  * Manages custom numeric values (targets, thresholds, budgets) per ad account
  * Implemented using functional programming style following DDD principles
  */
@@ -23,10 +23,10 @@ export const CONFIGURABLE_METRICS = [
 
 export type MetricFieldName = typeof CONFIGURABLE_METRICS[number]
 
-export interface MetricConfig {
+export interface AdAccountSetting {
     readonly id?: string
     readonly adAccountId: string
-    // 12 optional metric fields
+    // 12 optional metric threshold fields
     readonly impressions?: number
     readonly clicks?: number
     readonly spend?: number
@@ -39,17 +39,20 @@ export interface MetricConfig {
     readonly costPerInlineLinkClick?: number
     readonly costPerResult?: number
     readonly roas?: number
+    // Suggestion parameters
+    readonly scalePercent?: number
+    readonly note?: string
     // Timestamps (undefined for default configs)
     readonly createdAt?: Date
     readonly updatedAt?: Date
 }
 
-// Pure functions that operate on MetricConfig data
+// Pure functions that operate on AdAccountSetting data
 
 /**
- * Create a new MetricConfig from user input
+ * Create a new AdAccountSetting from user input
  */
-export function createMetricConfig(props: MetricConfig): MetricConfig {
+export function createAdAccountSetting(props: AdAccountSetting): AdAccountSetting {
     const now = new Date()
     return {
         adAccountId: props.adAccountId,
@@ -65,15 +68,17 @@ export function createMetricConfig(props: MetricConfig): MetricConfig {
         costPerInlineLinkClick: props.costPerInlineLinkClick,
         costPerResult: props.costPerResult,
         roas: props.roas,
+        scalePercent: props.scalePercent,
+        note: props.note,
         createdAt: now,
         updatedAt: now,
     }
 }
 
 /**
- * Create default MetricConfig with all metrics set to 0 (no timestamps)
+ * Create default AdAccountSetting with all metrics set to 0 (no timestamps)
  */
-export function createDefaultMetricConfig(adAccountId: string): MetricConfig {
+export function createDefaultAdAccountSetting(adAccountId: string): AdAccountSetting {
     return {
         adAccountId,
         impressions: 0,
@@ -88,6 +93,8 @@ export function createDefaultMetricConfig(adAccountId: string): MetricConfig {
         costPerInlineLinkClick: 0,
         costPerResult: 0,
         roas: 0,
+        scalePercent: 0,
+        note: '',
         // No createdAt/updatedAt for default configs
     }
 }
@@ -107,12 +114,12 @@ export function getConfigurableMetrics(): readonly string[] {
 }
 
 /**
- * MetricConfig Domain - Grouped collection of all MetricConfig-related functions
+ * AdAccountSetting Domain - Grouped collection of all AdAccountSetting-related functions
  * Following DDD principles with functional programming style
  */
-export const MetricConfigDomain = {
-    createMetricConfig,
-    createDefaultMetricConfig,
+export const AdAccountSettingDomain = {
+    createAdAccountSetting,
+    createDefaultAdAccountSetting,
     isValidMetricField,
     getConfigurableMetrics,
 }

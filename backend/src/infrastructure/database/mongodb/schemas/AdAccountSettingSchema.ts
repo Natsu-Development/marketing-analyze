@@ -1,11 +1,11 @@
 /**
- * MongoDB Schema: MetricConfig
- * Defines the database schema for metric configuration storage per ad account
+ * MongoDB Schema: AdAccountSetting
+ * Defines the database schema for ad account settings including metric thresholds
  */
 
 import { Schema, model, Document } from 'mongoose'
 
-export interface IMetricConfigDocument extends Document {
+export interface IAdAccountSettingDocument extends Document {
     adAccountId: string
     impressions?: number
     clicks?: number
@@ -19,11 +19,13 @@ export interface IMetricConfigDocument extends Document {
     costPerInlineLinkClick?: number
     costPerResult?: number
     roas?: number
+    scalePercent?: number
+    note?: string
     createdAt: Date
     updatedAt: Date
 }
 
-const MetricConfigSchemaInstance = new Schema<IMetricConfigDocument>(
+const AdAccountSettingSchemaInstance = new Schema<IAdAccountSettingDocument>(
     {
         adAccountId: {
             type: String,
@@ -67,14 +69,20 @@ const MetricConfigSchemaInstance = new Schema<IMetricConfigDocument>(
         roas: {
             type: Number,
         },
+        scalePercent: {
+            type: Number,
+        },
+        note: {
+            type: String,
+        },
     },
     {
         timestamps: true,
-        collection: 'metric_configs',
+        collection: 'ad_account_settings',
     }
 )
 
 // Unique index on adAccountId to ensure one configuration per ad account
-MetricConfigSchemaInstance.index({ adAccountId: 1 }, { unique: true })
+AdAccountSettingSchemaInstance.index({ adAccountId: 1 }, { unique: true })
 
-export const MetricConfigSchema = model<IMetricConfigDocument>('MetricConfig', MetricConfigSchemaInstance)
+export const AdAccountSettingSchema = model<IAdAccountSettingDocument>('AdAccountSetting', AdAccountSettingSchemaInstance)

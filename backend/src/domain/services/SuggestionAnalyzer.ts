@@ -4,7 +4,7 @@
  * Pure domain logic without infrastructure dependencies
  */
 
-import { MetricConfig, MetricFieldName, CONFIGURABLE_METRICS } from '../aggregates/metric-config/MetricConfig'
+import { AdAccountSetting, MetricFieldName, CONFIGURABLE_METRICS } from '../aggregates/ad-account-setting/AdAccountSetting'
 import { ExceedingMetric } from '../aggregates/suggestion/Suggestion'
 import { AdSetInsight } from '../aggregates/ad-insights/AdSetInsight'
 
@@ -89,7 +89,7 @@ export function aggregateInsightMetrics(insights: readonly AdSetInsight[]): Aggr
  */
 export function findExceedingMetrics(
     aggregated: AggregatedMetrics,
-    thresholds: MetricConfig
+    thresholds: AdAccountSetting
 ): ExceedingMetric[] {
     const exceedingMetrics: ExceedingMetric[] = []
 
@@ -119,10 +119,10 @@ export function findExceedingMetrics(
 }
 
 /**
- * Validate if metric configuration has meaningful thresholds
+ * Validate if ad account setting has meaningful thresholds
  * Returns true if at least one threshold is set to a non-zero value
  */
-export function hasValidThresholds(config: MetricConfig): boolean {
+export function hasValidThresholds(config: AdAccountSetting): boolean {
     return CONFIGURABLE_METRICS.some((metric) => {
         const value = config[metric]
         return value !== undefined && value !== null && value > 0

@@ -1,12 +1,12 @@
 /**
- * Types for Metric Configuration Use Cases
+ * Types for Ad Account Setting Use Cases
  */
 
-import { MetricConfig } from '../../../domain'
+import { AdAccountSetting } from '../../../domain'
 
 export interface UpsertInput {
     adAccountId: string
-    metrics: Partial<{
+    settings: Partial<{
         impressions: number
         clicks: number
         spend: number
@@ -19,12 +19,14 @@ export interface UpsertInput {
         costPerInlineLinkClick: number
         costPerResult: number
         roas: number
+        scalePercent: number
+        note: string
     }>
 }
 
 export interface UpsertResult {
     success: boolean
-    data?: MetricConfig
+    data?: AdAccountSetting
     error?: string
     message?: string
 }
@@ -35,7 +37,7 @@ export interface RetrieveInput {
 
 export interface RetrieveResult {
     success: boolean
-    data?: MetricConfig
+    data?: AdAccountSetting
     isDefault: boolean
     error?: string
     message?: string
