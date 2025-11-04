@@ -80,7 +80,7 @@ async function syncForAccount(account: Account, adAccountId: string): Promise<nu
         return 0
     }
 
-    const adsets = adsetsData.map((data: any) => AdSetDomain.createAdSet(data, adAccountId))
+    const adsets = adsetsData.map((data: any) => AdSetDomain.createAdSet(data, account.accountId, adAccountId))
     const result = await adSetRepository.saveBatch(adsets)
 
     logger.info(`Saved ${result.upsertedCount + result.modifiedCount} adsets for ${adAccountId}`)

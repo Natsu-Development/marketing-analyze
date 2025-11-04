@@ -15,6 +15,8 @@ import {
     AsyncReportStatus,
     CSVExportResult,
     FetchAdSetsParams,
+    UpdateAdsetBudgetParams,
+    UpdateAdsetBudgetResponse,
 } from '../../../application/ports/IFacebookClient'
 import { AdAccount } from '../../../domain'
 import { appConfig } from '../../../config/env'
@@ -262,6 +264,27 @@ const fetchAdSets = async (params: FetchAdSetsParams): Promise<any[]> => {
     }
 }
 
+/**
+ * Update adset daily budget
+ * Updates the daily_budget field for an adset via Facebook Marketing API
+ */
+const updateAdsetBudget = async (params: UpdateAdsetBudgetParams): Promise<UpdateAdsetBudgetResponse> => {
+    try {
+        // Facebook expects budget in cents
+        const budgetInCents = Math.round(params.dailyBudget * 100)
+
+        const url = `${baseUrl}/${params.adsetId}`
+        await axios.post(url, {
+            daily_budget: budgetInCents,
+            access_token: params.accessToken,
+        })
+
+        return { success: true }
+    } catch (error: any) {
+        return handleError('updateAdsetBudget', error)
+    }
+}
+
 // ============================================================================
 // Export
 // ============================================================================
@@ -276,4 +299,5 @@ export const facebookClient: IFacebookClient = {
     pollReportStatus,
     getReportCSV,
     fetchAdSets,
+    updateAdsetBudget,
 }

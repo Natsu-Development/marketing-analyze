@@ -51,6 +51,9 @@ export async function execute(): Promise<AnalysisResult> {
                 continue
             }
 
+            // Get account ID from first adset (all adsets in group share same accountId)
+            const accountId = adsets[0].accountId
+
             // Get ad account name using repository
             const adAccountName = await accountRepository.findAdAccountNameById(adAccountId)
 
@@ -86,6 +89,7 @@ export async function execute(): Promise<AnalysisResult> {
 
                     // Create and save suggestion using domain factory
                     const suggestion = SuggestionDomain.createSuggestion({
+                        accountId,
                         adAccountId: adset.adAccountId,
                         adAccountName,
                         campaignName: adset.campaignName,

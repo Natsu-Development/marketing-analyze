@@ -13,9 +13,17 @@ const toDomain = (doc: any): Suggestion => {
 
     return {
         id: plainDoc._id.toString(),
+        accountId: plainDoc.accountId,
         adAccountId: plainDoc.adAccountId,
+        adAccountName: plainDoc.adAccountName,
+        campaignName: plainDoc.campaignName,
         adsetId: plainDoc.adsetId,
         adsetName: plainDoc.adsetName,
+        adsetLink: plainDoc.adsetLink,
+        dailyBudget: plainDoc.dailyBudget,
+        budgetScaled: plainDoc.budgetScaled,
+        scalePercent: plainDoc.scalePercent,
+        note: plainDoc.note,
         metrics: plainDoc.metrics as ReadonlyArray<ExceedingMetric>,
         metricsExceededCount: plainDoc.metricsExceededCount,
         status: plainDoc.status,
@@ -26,9 +34,17 @@ const toDomain = (doc: any): Suggestion => {
 
 // Convert domain object to database format
 const fromDomain = (suggestion: Suggestion) => ({
+    accountId: suggestion.accountId,
     adAccountId: suggestion.adAccountId,
+    adAccountName: suggestion.adAccountName,
+    campaignName: suggestion.campaignName,
     adsetId: suggestion.adsetId,
     adsetName: suggestion.adsetName,
+    adsetLink: suggestion.adsetLink,
+    dailyBudget: suggestion.dailyBudget,
+    budgetScaled: suggestion.budgetScaled,
+    scalePercent: suggestion.scalePercent,
+    note: suggestion.note,
     metrics: suggestion.metrics,
     metricsExceededCount: suggestion.metricsExceededCount,
     status: suggestion.status,
@@ -57,6 +73,14 @@ const save = async (suggestion: Suggestion): Promise<Suggestion> => {
     )
 
     return toDomain(result)
+}
+
+/**
+ * Find suggestion by ID
+ */
+const findById = async (id: string): Promise<Suggestion | null> => {
+    const doc = await SuggestionSchema.findById(id)
+    return doc ? toDomain(doc) : null
 }
 
 /**
@@ -98,6 +122,7 @@ const updateStatus = async (id: string, status: 'pending' | 'rejected' | 'applie
 
 export const suggestionRepository: ISuggestionRepository = {
     save,
+    findById,
     findByAdAccountId,
     findByAdsetId,
     findPending,

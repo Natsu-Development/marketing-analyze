@@ -18,6 +18,7 @@ export interface IExceedingMetricDocument {
  * Suggestion document interface
  */
 export interface ISuggestionDocument extends Document {
+    accountId: string
     adAccountId: string
     adAccountName: string
     campaignName: string
@@ -25,6 +26,7 @@ export interface ISuggestionDocument extends Document {
     adsetName: string
     adsetLink: string
     dailyBudget: number
+    budgetScaled: number
     scalePercent?: number
     note?: string
     metrics: IExceedingMetricDocument[]
@@ -70,6 +72,11 @@ const ExceedingMetricSchema = new Schema<IExceedingMetricDocument>(
  */
 const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
     {
+        accountId: {
+            type: String,
+            required: true,
+            index: true,
+        },
         adAccountId: {
             type: String,
             required: true,
@@ -97,6 +104,11 @@ const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
             required: true,
         },
         dailyBudget: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
+        budgetScaled: {
             type: Number,
             required: true,
             min: 0,

@@ -26,6 +26,7 @@ export type SuggestionStatus = 'pending' | 'rejected' | 'applied'
  */
 export interface Suggestion {
     readonly id?: string
+    readonly accountId: string
     readonly adAccountId: string
     readonly adAccountName: string
     readonly campaignName: string
@@ -33,6 +34,7 @@ export interface Suggestion {
     readonly adsetName: string
     readonly adsetLink: string
     readonly dailyBudget: number
+    readonly budgetScaled: number
     readonly scalePercent?: number
     readonly note?: string
     readonly metrics: ReadonlyArray<ExceedingMetric>
@@ -68,6 +70,7 @@ function generateAdsetLink(adAccountId: string, adsetId: string): string {
  * Pure function that creates suggestion from provided data
  */
 export function createSuggestion(props: {
+    accountId: string
     adAccountId: string
     adAccountName: string
     campaignName: string
@@ -92,7 +95,12 @@ export function createSuggestion(props: {
         throw new Error('Daily budget must be greater than 0')
     }
 
+    // Calculate scaled budget
+    const scalePercent = props.scalePercent || 0
+    const budgetScaled = props.dailyBudget * (1 + scalePercent / 100)
+
     return {
+        accountId: props.accountId,
         adAccountId: props.adAccountId,
         adAccountName: props.adAccountName,
         campaignName: props.campaignName,
@@ -100,6 +108,7 @@ export function createSuggestion(props: {
         adsetName: props.adsetName,
         adsetLink: generateAdsetLink(props.adAccountId, props.adsetId),
         dailyBudget: props.dailyBudget,
+        budgetScaled,
         scalePercent: props.scalePercent,
         note: props.note,
         metrics: props.metrics,
@@ -128,10 +137,36 @@ export function updateSuggestionStatus(suggestion: Suggestion, newStatus: Sugges
 }
 
 /**
+ * Approve suggestion
+ * Validates suggestion can be approved and transitions to 'applied' status
+ */
+export function approveSuggestion(suggestion: Suggestion): Suggestion {
+    if (suggestion.status !== 'pending') {
+        throw new Error(`Cannot approve suggestion with status: ${suggestion.status}. Only pending suggestions can be approved.`)
+    }
+
+    return updateSuggestionStatus(suggestion, 'applied')
+}
+
+/**
+ * Reject suggestion
+ * Validates suggestion can be rejected and transitions to 'rejected' status
+ */
+export function rejectSuggestion(suggestion: Suggestion): Suggestion {
+    if (suggestion.status !== 'pending') {
+        throw new Error(`Cannot reject suggestion with status: ${suggestion.status}. Only pending suggestions can be rejected.`)
+    }
+
+    return updateSuggestionStatus(suggestion, 'rejected')
+}
+
+/**
  * Suggestion Domain - Grouped collection of all Suggestion-related functions
  * Following DDD principles with functional programming style
  */
 export const SuggestionDomain = {
     createSuggestion,
     updateSuggestionStatus,
+    approveSuggestion,
+    rejectSuggestion,
 }

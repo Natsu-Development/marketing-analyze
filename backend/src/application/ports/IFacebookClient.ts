@@ -59,6 +59,16 @@ export interface FetchAdSetsParams {
     adAccountId: string
 }
 
+export interface UpdateAdsetBudgetParams {
+    accessToken: string
+    adsetId: string
+    dailyBudget: number
+}
+
+export interface UpdateAdsetBudgetResponse {
+    success: boolean
+}
+
 /**
  * Unified Facebook Client Interface
  */
@@ -77,4 +87,5 @@ export interface IFacebookClient {
 
     // AdSet operations
     fetchAdSets(params: FetchAdSetsParams): Promise<any[]>
+    updateAdsetBudget(params: UpdateAdsetBudgetParams): Promise<UpdateAdsetBudgetResponse>
 }

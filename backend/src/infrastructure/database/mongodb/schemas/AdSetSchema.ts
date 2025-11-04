@@ -6,6 +6,7 @@
 import { Schema, model, Document } from 'mongoose'
 
 export interface IAdSetDocument extends Document {
+    accountId: string
     adAccountId: string
     adsetId: string
     adsetName: string
@@ -22,6 +23,11 @@ export interface IAdSetDocument extends Document {
 
 const AdSetSchemaInstance = new Schema<IAdSetDocument>(
     {
+        accountId: {
+            type: String,
+            required: true,
+            index: true,
+        },
         adAccountId: {
             type: String,
             required: true,

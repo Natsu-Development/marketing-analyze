@@ -14,6 +14,7 @@ const toDomain = (doc: any): AdSet => {
 
     return {
         id: plainDoc._id.toString(),
+        accountId: plainDoc.accountId,
         adAccountId: plainDoc.adAccountId,
         adsetId: plainDoc.adsetId,
         adsetName: plainDoc.adsetName,
@@ -31,6 +32,7 @@ const toDomain = (doc: any): AdSet => {
 
 // Convert domain object to database format
 const fromDomain = (adset: AdSet) => ({
+    accountId: adset.accountId,
     adAccountId: adset.adAccountId,
     adsetId: adset.adsetId,
     adsetName: adset.adsetName,

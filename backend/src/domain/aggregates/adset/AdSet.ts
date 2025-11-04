@@ -7,6 +7,7 @@
 
 export interface AdSet {
     readonly id?: string
+    readonly accountId: string
     readonly adAccountId: string
     readonly adsetId: string
     readonly adsetName: string
@@ -27,8 +28,9 @@ export interface AdSet {
  * Create AdSet from Facebook API response
  * Handles nested campaign object and data transformation
  */
-export function createAdSet(data: any, adAccountId: string): AdSet {
+export function createAdSet(data: any, accountId: string, adAccountId: string): AdSet {
     return {
+        accountId,
         adAccountId,
         adsetId: data.id,
         adsetName: data.name,
@@ -47,7 +49,7 @@ export function createAdSet(data: any, adAccountId: string): AdSet {
 /**
  * Update AdSet with new metadata returning new instance
  */
-export function updateAdSet(adset: AdSet, updates: Partial<Omit<AdSet, 'id' | 'adAccountId' | 'adsetId'>>): AdSet {
+export function updateAdSet(adset: AdSet, updates: Partial<Omit<AdSet, 'id' | 'accountId' | 'adAccountId' | 'adsetId'>>): AdSet {
     return {
         ...adset,
         ...updates,

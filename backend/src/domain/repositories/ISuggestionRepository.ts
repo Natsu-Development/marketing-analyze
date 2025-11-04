@@ -14,6 +14,13 @@ export interface ISuggestionRepository {
     save(suggestion: Suggestion): Promise<Suggestion>
 
     /**
+     * Find suggestion by ID
+     * Precondition: id must be valid MongoDB ObjectId
+     * Postcondition: Returns Suggestion if found, null otherwise
+     */
+    findById(id: string): Promise<Suggestion | null>
+
+    /**
      * Find all suggestions for a specific ad account
      * Precondition: adAccountId must be non-empty string
      * Postcondition: Returns array of suggestions (empty if none found)

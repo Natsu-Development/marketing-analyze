@@ -7,6 +7,7 @@ import { Router } from 'express'
 import { facebookAuthRoutes } from './facebook-auth.routes'
 import { adInsightsRoutes } from './ad-insights.routes'
 import { adAccountSettingRoutes } from './ad-account-setting.routes'
+import { suggestionRoutes } from './suggestion.routes'
 
 /**
  * Creates v1 API router with all sub-routes
@@ -21,6 +22,9 @@ v1Router.use('/ad-insights', adInsightsRoutes)
 
 // Ad Account Setting routes
 v1Router.use('/ad-account-settings', adAccountSettingRoutes)
+
+// Suggestion routes
+v1Router.use('/suggestions', suggestionRoutes)
 
 /**
  * Main API router with versioning
