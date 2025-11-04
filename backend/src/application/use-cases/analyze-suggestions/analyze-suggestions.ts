@@ -11,6 +11,7 @@ import {
     adsetInsightDataRepository,
     adAccountSettingRepository,
     suggestionRepository,
+    telegramClient,
 } from '../../../config/dependencies'
 import { logger } from '../../../infrastructure/shared/logger'
 import { AnalysisResult } from './types'
@@ -106,6 +107,12 @@ export async function execute(): Promise<AnalysisResult> {
                     logger.info(
                         `Created suggestion for ${adset.adsetName} (${adset.adsetId}) with ${exceedingMetrics.length} exceeding metrics`
                     )
+
+                    // Send Telegram notification (errors handled internally)
+                    await telegramClient.notifySuggestionCreated({
+                        suggestion,
+                        accountId,
+                    })
 
                     adsetsProcessed++
                     suggestionsCreated++

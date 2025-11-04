@@ -42,6 +42,10 @@ const EnvSchema = z.object({
     // Cron
     AD_INSIGHTS_CRON_SCHEDULE: z.string().default('0 2 * * *'),
     ADSET_SYNC_CRON_SCHEDULE: z.string().default('0 1 * * *'),
+
+    // Telegram
+    TELEGRAM_BOT_TOKEN: z.string().optional(),
+    TELEGRAM_CHAT_ID: z.string().optional(),
 })
 
 function validateEnv() {
@@ -94,5 +98,10 @@ export const appConfig = {
     },
     cron: {
         adInsightsSchedule: env.AD_INSIGHTS_CRON_SCHEDULE,
+        adsetSyncSchedule: env.ADSET_SYNC_CRON_SCHEDULE,
+    },
+    telegram: {
+        botToken: env.TELEGRAM_BOT_TOKEN,
+        chatId: env.TELEGRAM_CHAT_ID,
     },
 }
