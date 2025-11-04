@@ -75,12 +75,10 @@ const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
         accountId: {
             type: String,
             required: true,
-            index: true,
         },
         adAccountId: {
             type: String,
             required: true,
-            index: true,
         },
         adAccountName: {
             type: String,
@@ -93,7 +91,6 @@ const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
         adsetId: {
             type: String,
             required: true,
-            index: true,
         },
         adsetName: {
             type: String,
@@ -139,7 +136,6 @@ const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
             required: true,
             enum: ['pending', 'rejected', 'applied'],
             default: 'pending',
-            index: true,
         },
     },
     {
@@ -148,20 +144,12 @@ const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
     }
 )
 
-/**
- * Composite unique index on (adAccountId, adsetId, createdAt) to prevent duplicate suggestions
- * Allows for multiple suggestions for the same adset over time
- */
+// Composite unique index to prevent duplicate suggestions (one per adset per timestamp)
 SuggestionSchemaInstance.index({ adAccountId: 1, adsetId: 1, createdAt: 1 }, { unique: true })
 
-/**
- * Index for querying pending suggestions
- */
+// Indexes for common queries
 SuggestionSchemaInstance.index({ status: 1 })
-
-/**
- * Index for querying suggestions by ad account
- */
-SuggestionSchemaInstance.index({ adAccountId: 1 })
+SuggestionSchemaInstance.index({ adAccountId: 1, status: 1 })
+SuggestionSchemaInstance.index({ adsetId: 1 })
 
 export const SuggestionSchema = model<ISuggestionDocument>('Suggestion', SuggestionSchemaInstance)

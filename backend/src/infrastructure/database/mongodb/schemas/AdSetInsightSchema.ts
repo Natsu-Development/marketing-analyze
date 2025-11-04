@@ -30,14 +30,14 @@ export interface IAdSetInsightDataDocument extends Document {
 
 const AdSetInsightDataSchema = new Schema<IAdSetInsightDataDocument>(
     {
-        adAccountId: { type: String, required: true, index: true },
+        adAccountId: { type: String, required: true },
         accountId: { type: String, required: true },
         accountName: { type: String },
-        campaignId: { type: String, required: true, index: true },
+        campaignId: { type: String, required: true },
         campaignName: { type: String },
-        adsetId: { type: String, required: true, index: true },
+        adsetId: { type: String, required: true },
         adsetName: { type: String },
-        date: { type: Date, required: true, index: true },
+        date: { type: Date, required: true },
         impressions: { type: Number },
         clicks: { type: Number },
         spend: { type: Number },
@@ -57,7 +57,10 @@ const AdSetInsightDataSchema = new Schema<IAdSetInsightDataDocument>(
     }
 )
 
-// Unique compound index to prevent duplicates: adsetId + date (one record per adset per day)
+// Unique compound index to prevent duplicates: one record per adset per day
 AdSetInsightDataSchema.index({ adAccountId: 1, adsetId: 1, date: 1 }, { unique: true })
+
+// Index for querying insights by adset (used in suggestion analysis)
+AdSetInsightDataSchema.index({ adsetId: 1, date: 1 })
 
 export const AdSetInsightDataModel = model<IAdSetInsightDataDocument>('AdSetInsightData', AdSetInsightDataSchema)

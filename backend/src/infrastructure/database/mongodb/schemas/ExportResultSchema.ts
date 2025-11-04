@@ -26,12 +26,10 @@ const ExportResultSchema = new Schema<IExportResultDocument>(
         adAccountId: {
             type: String,
             required: true,
-            index: true,
         },
         reportRunId: {
             type: String,
             required: true,
-            unique: true,
         },
         fileUrl: {
             type: String,
@@ -63,7 +61,10 @@ const ExportResultSchema = new Schema<IExportResultDocument>(
     }
 )
 
-// Index for finding latest exports per ad account
+// Unique index on reportRunId
+ExportResultSchema.index({ reportRunId: 1 }, { unique: true })
+
+// Compound index for finding latest exports per ad account
 ExportResultSchema.index({ adAccountId: 1, createdAt: -1 })
 
 export const ExportResultModel = model<IExportResultDocument>('ExportResult', ExportResultSchema)

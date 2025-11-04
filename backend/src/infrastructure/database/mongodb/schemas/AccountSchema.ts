@@ -26,8 +26,6 @@ const AccountSchemaInstance = new Schema<IAccountDocument>(
         accountId: {
             type: String,
             required: true,
-            index: true,
-            unique: true,
         },
         accessToken: {
             type: String,
@@ -49,7 +47,6 @@ const AccountSchemaInstance = new Schema<IAccountDocument>(
         expiresAt: {
             type: Date,
             required: true,
-            index: true,
         },
         lastErrorCode: {
             type: String,
@@ -81,10 +78,13 @@ const AccountSchemaInstance = new Schema<IAccountDocument>(
     }
 )
 
-// Index for finding expiring tokens
+// Unique index on accountId
+AccountSchemaInstance.index({ accountId: 1 }, { unique: true })
+
+// Compound index for finding expiring tokens
 AccountSchemaInstance.index({ expiresAt: 1, status: 1 })
 
-// Indexes for sync eligibility queries
+// Compound index for sync eligibility queries
 AccountSchemaInstance.index({ 'adAccounts.lastSyncInsight': 1, 'adAccounts.isActive': 1 })
 
 export const AccountSchema = model<IAccountDocument>('Account', AccountSchemaInstance)

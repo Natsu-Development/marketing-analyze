@@ -30,8 +30,6 @@ const AdAccountSettingSchemaInstance = new Schema<IAdAccountSettingDocument>(
         adAccountId: {
             type: String,
             required: true,
-            unique: true,
-            index: true,
         },
         impressions: {
             type: Number,
