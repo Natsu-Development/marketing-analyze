@@ -15,16 +15,15 @@ import { AdSetInsight } from '../aggregates/ad-insights/AdSetInsight'
 export interface AggregatedMetrics {
     impressions: number
     clicks: number
-    spend: number
+    amountSpent: number
     cpm: number
     cpc: number
     ctr: number
     reach: number
     frequency: number
-    linkCtr: number
+    inlineLinkCtr: number
     costPerInlineLinkClick: number
-    costPerResult: number
-    roas: number
+    purchaseRoas: number
 }
 
 /**
@@ -40,46 +39,43 @@ export function aggregateInsightMetrics(insights: readonly AdSetInsight[]): Aggr
     // Initialize aggregators
     let totalImpressions = 0
     let totalClicks = 0
-    let totalSpend = 0
+    let totalAmountSpent = 0
     let totalCpm = 0
     let totalCpc = 0
     let totalCtr = 0
     let totalReach = 0
     let totalFrequency = 0
-    let totalLinkCtr = 0
+    let totalInlineLinkCtr = 0
     let totalCostPerInlineLinkClick = 0
-    let totalCostPerResult = 0
-    let totalRoas = 0
+    let totalPurchaseRoas = 0
 
     // Sum all metrics from daily insights
     for (const insight of insights) {
         totalImpressions += insight.impressions || 0
         totalClicks += insight.clicks || 0
-        totalSpend += insight.spend || 0
+        totalAmountSpent += insight.amountSpent || 0
         totalCpm += insight.cpm || 0
         totalCpc += insight.cpc || 0
         totalCtr += insight.ctr || 0
         totalReach += insight.reach || 0
         totalFrequency += insight.frequency || 0
-        totalLinkCtr += insight.linkCtr || 0
+        totalInlineLinkCtr += insight.inlineLinkCtr || 0
         totalCostPerInlineLinkClick += insight.costPerInlineLinkClick || 0
-        totalCostPerResult += insight.costPerResult || 0
-        totalRoas += insight.roas || 0
+        totalPurchaseRoas += insight.purchaseRoas || 0
     }
 
     return {
         impressions: totalImpressions,
         clicks: totalClicks,
-        spend: totalSpend,
+        amountSpent: totalAmountSpent,
         cpm: totalCpm,
         cpc: totalCpc,
         ctr: totalCtr,
         reach: totalReach,
         frequency: totalFrequency,
-        linkCtr: totalLinkCtr,
+        inlineLinkCtr: totalInlineLinkCtr,
         costPerInlineLinkClick: totalCostPerInlineLinkClick,
-        costPerResult: totalCostPerResult,
-        roas: totalRoas,
+        purchaseRoas: totalPurchaseRoas,
     }
 }
 

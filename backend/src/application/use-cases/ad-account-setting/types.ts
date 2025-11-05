@@ -7,18 +7,12 @@ import { AdAccountSetting } from '../../../domain'
 export interface UpsertInput {
     adAccountId: string
     settings: Partial<{
-        impressions: number
-        clicks: number
-        spend: number
         cpm: number
-        cpc: number
         ctr: number
-        reach: number
         frequency: number
-        linkCtr: number
+        inlineLinkCtr: number
         costPerInlineLinkClick: number
-        costPerResult: number
-        roas: number
+        purchaseRoas: number
         scalePercent: number
         note: string
     }>

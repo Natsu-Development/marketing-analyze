@@ -7,18 +7,12 @@
 
 // Configurable metrics constant - aligns with ADSET_INSIGHT_FIELDS
 export const CONFIGURABLE_METRICS = [
-    'impressions',
-    'clicks',
-    'spend',
     'cpm',
-    'cpc',
     'ctr',
-    'reach',
     'frequency',
-    'linkCtr',
+    'inlineLinkCtr',
     'costPerInlineLinkClick',
-    'costPerResult',
-    'roas',
+    'purchaseRoas',
 ] as const
 
 export type MetricFieldName = typeof CONFIGURABLE_METRICS[number]
@@ -26,19 +20,13 @@ export type MetricFieldName = typeof CONFIGURABLE_METRICS[number]
 export interface AdAccountSetting {
     readonly id?: string
     readonly adAccountId: string
-    // 12 optional metric threshold fields
-    readonly impressions?: number
-    readonly clicks?: number
-    readonly spend?: number
+    // 6 optional metric threshold fields
     readonly cpm?: number
-    readonly cpc?: number
     readonly ctr?: number
-    readonly reach?: number
     readonly frequency?: number
-    readonly linkCtr?: number
+    readonly inlineLinkCtr?: number
     readonly costPerInlineLinkClick?: number
-    readonly costPerResult?: number
-    readonly roas?: number
+    readonly purchaseRoas?: number
     // Suggestion parameters
     readonly scalePercent?: number
     readonly note?: string
@@ -56,18 +44,12 @@ export function createAdAccountSetting(props: AdAccountSetting): AdAccountSettin
     const now = new Date()
     return {
         adAccountId: props.adAccountId,
-        impressions: props.impressions,
-        clicks: props.clicks,
-        spend: props.spend,
         cpm: props.cpm,
-        cpc: props.cpc,
         ctr: props.ctr,
-        reach: props.reach,
         frequency: props.frequency,
-        linkCtr: props.linkCtr,
+        inlineLinkCtr: props.inlineLinkCtr,
         costPerInlineLinkClick: props.costPerInlineLinkClick,
-        costPerResult: props.costPerResult,
-        roas: props.roas,
+        purchaseRoas: props.purchaseRoas,
         scalePercent: props.scalePercent,
         note: props.note,
         createdAt: now,
@@ -81,18 +63,12 @@ export function createAdAccountSetting(props: AdAccountSetting): AdAccountSettin
 export function createDefaultAdAccountSetting(adAccountId: string): AdAccountSetting {
     return {
         adAccountId,
-        impressions: 0,
-        clicks: 0,
-        spend: 0,
         cpm: 0,
-        cpc: 0,
         ctr: 0,
-        reach: 0,
         frequency: 0,
-        linkCtr: 0,
+        inlineLinkCtr: 0,
         costPerInlineLinkClick: 0,
-        costPerResult: 0,
-        roas: 0,
+        purchaseRoas: 0,
         scalePercent: 0,
         note: '',
         // No createdAt/updatedAt for default configs

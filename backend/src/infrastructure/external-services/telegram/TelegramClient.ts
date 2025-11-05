@@ -18,18 +18,12 @@ const TELEGRAM_API_BASE = 'https://api.telegram.org'
 
 // Simple metric display names
 const METRIC_NAMES: Record<MetricFieldName, string> = {
-    impressions: 'Impressions',
-    clicks: 'Clicks',
-    spend: 'Spend',
     cpm: 'CPM',
-    cpc: 'CPC',
     ctr: 'CTR',
-    reach: 'Reach',
     frequency: 'Frequency',
-    linkCtr: 'Link CTR',
+    inlineLinkCtr: 'Inline Link CTR',
     costPerInlineLinkClick: 'Cost per Link Click',
-    costPerResult: 'Cost per Result',
-    roas: 'ROAS',
+    purchaseRoas: 'Purchase ROAS',
 }
 
 /**
@@ -47,27 +41,21 @@ function formatNumber(value: number, decimals: number = 0): string {
  */
 function formatMetric(metric: MetricFieldName, value: number): string {
     // Currency
-    if (metric === 'spend' || metric === 'costPerInlineLinkClick' ||
-        metric === 'costPerResult' || metric === 'cpc') {
+    if (metric === 'costPerInlineLinkClick' || metric === 'cpm') {
         return `$${formatNumber(value, 2)}`
     }
 
     // Percentage
-    if (metric === 'ctr' || metric === 'linkCtr') {
+    if (metric === 'ctr' || metric === 'inlineLinkCtr') {
         return `${formatNumber(value, 2)}%`
     }
 
     // ROAS
-    if (metric === 'roas') {
+    if (metric === 'purchaseRoas') {
         return `${formatNumber(value, 2)}x`
     }
 
-    // Count (no decimals)
-    if (metric === 'impressions' || metric === 'clicks' || metric === 'reach') {
-        return formatNumber(value, 0)
-    }
-
-    // Default: 2 decimals
+    // Default: 2 decimals (frequency)
     return formatNumber(value, 2)
 }
 

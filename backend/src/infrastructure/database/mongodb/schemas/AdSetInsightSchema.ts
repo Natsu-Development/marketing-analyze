@@ -16,16 +16,15 @@ export interface IAdSetInsightDataDocument extends Document {
     date: Date // Date from Facebook report for daily aggregation
     impressions?: number
     clicks?: number
-    spend?: number
+    amountSpent?: number
     cpm?: number
     cpc?: number
     ctr?: number
     reach?: number
     frequency?: number
-    linkCtr?: number
+    inlineLinkCtr?: number
     costPerInlineLinkClick?: number
-    costPerResult?: number
-    roas?: number
+    purchaseRoas?: number
 }
 
 const AdSetInsightDataSchema = new Schema<IAdSetInsightDataDocument>(
@@ -40,16 +39,15 @@ const AdSetInsightDataSchema = new Schema<IAdSetInsightDataDocument>(
         date: { type: Date, required: true },
         impressions: { type: Number },
         clicks: { type: Number },
-        spend: { type: Number },
+        amountSpent: { type: Number },
         cpm: { type: Number },
         cpc: { type: Number },
         ctr: { type: Number },
         reach: { type: Number },
         frequency: { type: Number },
-        linkCtr: { type: Number },
+        inlineLinkCtr: { type: Number },
         costPerInlineLinkClick: { type: Number },
-        costPerResult: { type: Number },
-        roas: { type: Number },
+        purchaseRoas: { type: Number },
     },
     {
         collection: 'adset_insights',

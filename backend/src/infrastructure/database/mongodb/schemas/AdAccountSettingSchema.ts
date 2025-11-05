@@ -7,18 +7,12 @@ import { Schema, model, Document } from 'mongoose'
 
 export interface IAdAccountSettingDocument extends Document {
     adAccountId: string
-    impressions?: number
-    clicks?: number
-    spend?: number
     cpm?: number
-    cpc?: number
     ctr?: number
-    reach?: number
     frequency?: number
-    linkCtr?: number
+    inlineLinkCtr?: number
     costPerInlineLinkClick?: number
-    costPerResult?: number
-    roas?: number
+    purchaseRoas?: number
     scalePercent?: number
     note?: string
     createdAt: Date
@@ -31,40 +25,22 @@ const AdAccountSettingSchemaInstance = new Schema<IAdAccountSettingDocument>(
             type: String,
             required: true,
         },
-        impressions: {
-            type: Number,
-        },
-        clicks: {
-            type: Number,
-        },
-        spend: {
-            type: Number,
-        },
         cpm: {
-            type: Number,
-        },
-        cpc: {
             type: Number,
         },
         ctr: {
             type: Number,
         },
-        reach: {
-            type: Number,
-        },
         frequency: {
             type: Number,
         },
-        linkCtr: {
+        inlineLinkCtr: {
             type: Number,
         },
         costPerInlineLinkClick: {
             type: Number,
         },
-        costPerResult: {
-            type: Number,
-        },
-        roas: {
+        purchaseRoas: {
             type: Number,
         },
         scalePercent: {
