@@ -26,7 +26,7 @@ export function validateTimeRange(timeRange: AdInsightsTimeRange): {
         errors.push('Invalid until date format')
     }
 
-    if (sinceDate >= untilDate) {
+    if (sinceDate > untilDate) {
         errors.push('Since date must be before until date')
     }
 
@@ -34,12 +34,6 @@ export function validateTimeRange(timeRange: AdInsightsTimeRange): {
     const maxRangeMs = 90 * 24 * 60 * 60 * 1000 // 90 days
     if (untilDate.getTime() - sinceDate.getTime() > maxRangeMs) {
         errors.push('Time range cannot exceed 90 days')
-    }
-
-    // Check minimum range (business rule: at least 1 day)
-    const minRangeMs = 24 * 60 * 60 * 1000 // 1 day
-    if (untilDate.getTime() - sinceDate.getTime() < minRangeMs) {
-        errors.push('Time range must be at least 1 day')
     }
 
     return {

@@ -6,6 +6,7 @@
 import { Router } from 'express'
 import { facebookAuthRoutes } from './facebook-auth.routes'
 import { adsetInsightsRoutes } from './adset-insights.routes'
+import { adsetSyncRoutes } from './adset-sync.routes'
 import { adAccountSettingRoutes } from './ad-account-setting.routes'
 import { suggestionRoutes } from './suggestion.routes'
 
@@ -19,6 +20,9 @@ v1Router.use('/auth/facebook', facebookAuthRoutes)
 
 // AdSet Insights routes
 v1Router.use('/adset-insights', adsetInsightsRoutes)
+
+// AdSet Sync routes
+v1Router.use('/adset-sync', adsetSyncRoutes)
 
 // Ad Account Setting routes
 v1Router.use('/ad-account-settings', adAccountSettingRoutes)

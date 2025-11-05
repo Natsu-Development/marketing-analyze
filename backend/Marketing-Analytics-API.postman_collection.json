@@ -1,0 +1,326 @@
+{
+	"info": {
+		"_postman_id": "marketing-analytics-api-2025",
+		"name": "Marketing Analytics API",
+		"description": "Complete API collection for Marketing Analytics Backend with Facebook OAuth, AdSet Insights, Suggestions, and more.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Facebook Auth",
+			"item": [
+				{
+					"name": "Connect Account",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"connect\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/auth/facebook/session",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "auth", "facebook", "session"]
+						},
+						"description": "Generate Facebook OAuth URL to connect account"
+					}
+				},
+				{
+					"name": "Disconnect Account",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"action\": \"disconnect\",\n  \"fbUserId\": \"{{FB_USER_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/auth/facebook/session",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "auth", "facebook", "session"]
+						},
+						"description": "Disconnect Facebook account"
+					}
+				},
+				{
+					"name": "Get Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/auth/facebook/status?fbUserId={{FB_USER_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "auth", "facebook", "status"],
+							"query": [
+								{
+									"key": "fbUserId",
+									"value": "{{FB_USER_ID}}"
+								}
+							]
+						},
+						"description": "Get Facebook connection status"
+					}
+				},
+				{
+					"name": "Get Access Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/auth/facebook/token?fbUserId={{FB_USER_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "auth", "facebook", "token"],
+							"query": [
+								{
+									"key": "fbUserId",
+									"value": "{{FB_USER_ID}}"
+								}
+							]
+						},
+						"description": "Get valid access token for Facebook API"
+					}
+				},
+				{
+					"name": "Refresh Ad Accounts",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/auth/facebook/{{FB_USER_ID}}/refresh-ad-accounts",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "auth", "facebook", "{{FB_USER_ID}}", "refresh-ad-accounts"]
+						},
+						"description": "Refresh ad accounts list from Facebook"
+					}
+				},
+				{
+					"name": "Update Ad Account Active Status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/auth/facebook/{{FB_USER_ID}}/ad-accounts/{{AD_ACCOUNT_ID}}/active",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "auth", "facebook", "{{FB_USER_ID}}", "ad-accounts", "{{AD_ACCOUNT_ID}}", "active"]
+						},
+						"description": "Activate or deactivate an ad account"
+					}
+				}
+			]
+		},
+		{
+			"name": "AdSet Insights",
+			"item": [
+				{
+					"name": "Manually Trigger Sync",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/adset-insights/sync",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "adset-insights", "sync"]
+						},
+						"description": "Manually trigger adset insights sync for all active ad accounts"
+					}
+				},
+				{
+					"name": "Get Exports for Ad Account",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/adset-insights/exports/{{AD_ACCOUNT_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "adset-insights", "exports", "{{AD_ACCOUNT_ID}}"]
+						},
+						"description": "Get all export results for a specific ad account"
+					}
+				},
+				{
+					"name": "Get Latest Export",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/adset-insights/exports/{{AD_ACCOUNT_ID}}/latest",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "adset-insights", "exports", "{{AD_ACCOUNT_ID}}", "latest"]
+						},
+						"description": "Get latest export result for a specific ad account"
+					}
+				},
+				{
+					"name": "Get AdSet Insights Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/adset-insights/data/{{AD_ACCOUNT_ID}}/adset",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "adset-insights", "data", "{{AD_ACCOUNT_ID}}", "adset"]
+						},
+						"description": "Get adset-level insight data for a specific ad account"
+					}
+				},
+				{
+					"name": "Get Ad Insights Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/adset-insights/data/{{AD_ACCOUNT_ID}}/ad",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "adset-insights", "data", "{{AD_ACCOUNT_ID}}", "ad"]
+						},
+						"description": "Get ad-level insight data for a specific ad account"
+					}
+				}
+			]
+		},
+		{
+			"name": "AdSet Sync",
+			"item": [
+				{
+					"name": "Manually Trigger AdSet Metadata Sync",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/adset-sync/sync",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "adset-sync", "sync"]
+						},
+						"description": "Manually trigger adset metadata sync (name, status, budget, targeting)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Ad Account Settings",
+			"item": [
+				{
+					"name": "Get Settings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/ad-account-settings/{{AD_ACCOUNT_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "ad-account-settings", "{{AD_ACCOUNT_ID}}"]
+						},
+						"description": "Get threshold settings for an ad account"
+					}
+				},
+				{
+					"name": "Update Settings",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"scalePercent\": 20,\n  \"note\": \"Aggressive scaling strategy\",\n  \"cpm\": 10.0,\n  \"ctr\": 2.5,\n  \"frequency\": 3.0,\n  \"inlineLinkCtr\": 1.5,\n  \"costPerInlineLinkClick\": 0.50,\n  \"purchaseRoas\": 3.0\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/ad-account-settings/{{AD_ACCOUNT_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "ad-account-settings", "{{AD_ACCOUNT_ID}}"]
+						},
+						"description": "Update threshold settings for an ad account"
+					}
+				}
+			]
+		},
+		{
+			"name": "Suggestions",
+			"item": [
+				{
+					"name": "Manually Trigger Analysis",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/suggestions/analyze",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "suggestions", "analyze"]
+						},
+						"description": "Manually trigger suggestion analysis for all eligible adsets"
+					}
+				},
+				{
+					"name": "Approve Suggestion",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/suggestions/{{SUGGESTION_ID}}/approve",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "suggestions", "{{SUGGESTION_ID}}", "approve"]
+						},
+						"description": "Approve a suggestion and update Facebook budget"
+					}
+				},
+				{
+					"name": "Reject Suggestion",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v1/suggestions/{{SUGGESTION_ID}}/reject",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v1", "suggestions", "{{SUGGESTION_ID}}", "reject"]
+						},
+						"description": "Reject a suggestion"
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "http://localhost:3001",
+			"type": "string"
+		},
+		{
+			"key": "FB_USER_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "AD_ACCOUNT_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "SUGGESTION_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

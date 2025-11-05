@@ -47,7 +47,7 @@ export const ADSET_INSIGHT_FIELDS = [
     'adset_name',
     'impressions',
     'clicks',
-    'amount_spent',
+    'spend',
     'cpm',
     'cpc',
     'ctr',

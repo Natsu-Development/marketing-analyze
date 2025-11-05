@@ -55,24 +55,6 @@ export function stopAdSetInsightsCron(): void {
 }
 
 /**
- * Run adset insights export immediately (for testing or manual triggers)
- */
-export async function runAdSetInsightsExportNow(): Promise<void> {
-    logger.info('Running adset insights export')
-    try {
-        const result = await FacebookSyncAdSetInsightsUseCase.sync()
-        if (result.success) {
-            logger.info(`Export completed: ${result.exportsCreated} exports created`)
-        } else {
-            logger.error(`Export failed: ${result.errors?.join(', ')}`)
-        }
-    } catch (error) {
-        logger.error(`Export failed: ${(error as Error).message}`)
-        throw error
-    }
-}
-
-/**
  * Start the adset metadata sync cron job
  * Default schedule: Every Monday at 1 AM (can be configured via env)
  * Falls back to AD_INSIGHTS_CRON_SCHEDULE if ADSET_SYNC_CRON_SCHEDULE not set
@@ -110,24 +92,6 @@ export function stopAdSetSyncCron(): void {
         adSetSyncJob.stop()
         adSetSyncJob = null
         logger.info('AdSet metadata sync cron job stopped')
-    }
-}
-
-/**
- * Run adset metadata sync immediately (for testing or manual triggers)
- */
-export async function runAdSetSyncNow(): Promise<void> {
-    logger.info('Running adset metadata sync now')
-    try {
-        const result = await FacebookSyncAdSetUseCase.sync()
-        if (result.success) {
-            logger.info(`AdSet sync completed: ${result.adAccountsSynced} ad accounts, ${result.adsetsSynced} adsets synced`)
-        } else {
-            logger.error(`AdSet sync failed: ${result.errors?.join(', ')}`)
-        }
-    } catch (error) {
-        logger.error(`AdSet sync failed: ${(error as Error).message}`)
-        throw error
     }
 }
 
@@ -173,25 +137,6 @@ export function stopSuggestionAnalysisCron(): void {
 }
 
 /**
- * Run suggestion analysis immediately (for testing or manual triggers)
- */
-export async function runSuggestionAnalysisNow(): Promise<void> {
-    logger.info('Running suggestion analysis now')
-    try {
-        const result = await AnalyzeSuggestionsUseCase.execute()
-        logger.info(
-            `Suggestion analysis completed: ${result.adsetsProcessed} adsets processed, ${result.suggestionsCreated} suggestions created, ${result.errors} errors`
-        )
-        if (!result.success && result.errorMessages) {
-            logger.error(`Suggestion analysis errors: ${result.errorMessages.join('; ')}`)
-        }
-    } catch (error) {
-        logger.error(`Suggestion analysis failed: ${(error as Error).message}`)
-        throw error
-    }
-}
-
-/**
  * Start all cron jobs
  */
 export function startAllCronJobs(): void {
@@ -211,17 +156,15 @@ export function stopAllCronJobs(): void {
 
 /**
  * Cron Scheduler Service - Grouped collection of all cron scheduling functions
+ * Note: Manual triggers are now available via separate API endpoints
  */
 export const CronSchedulerService = {
     startAdSetInsightsCron,
     stopAdSetInsightsCron,
-    runAdSetInsightsExportNow,
     startAdSetSyncCron,
     stopAdSetSyncCron,
-    runAdSetSyncNow,
     startSuggestionAnalysisCron,
     stopSuggestionAnalysisCron,
-    runSuggestionAnalysisNow,
     startAllCronJobs,
     stopAllCronJobs,
 }
