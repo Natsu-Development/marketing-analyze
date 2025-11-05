@@ -22,7 +22,6 @@ export interface Account {
     readonly connectedAt: Date
     readonly expiresAt: Date
     readonly lastErrorCode?: string
-    readonly lastSyncAt?: Date
     readonly adAccounts: readonly AdAccount[]
     readonly createdAt: Date
     readonly updatedAt: Date
@@ -143,17 +142,6 @@ export function disconnectAccount(account: Account): Account {
 }
 
 /**
- * Update last sync timestamp
- */
-export function updateAccountLastSync(account: Account): Account {
-    return {
-        ...account,
-        lastSyncAt: new Date(),
-        updatedAt: new Date(),
-    }
-}
-
-/**
  * Update lastSyncAdSet for specific ad account by ID
  */
 export function updateAdAccountSyncAdSet(account: Account, adAccountId: string, timestamp: Date): Account {
@@ -223,7 +211,6 @@ export const AccountDomain = {
     updateAdAccounts,
     setAdAccountActive,
     disconnectAccount,
-    updateAccountLastSync,
     updateAdAccountSyncAdSet,
     updateAdAccountSyncInsight,
     getAdAccountInsightSyncTimeRange,

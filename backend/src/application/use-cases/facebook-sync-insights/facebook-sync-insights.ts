@@ -22,7 +22,7 @@ export async function sync(): Promise<SyncResponse> {
         const adAccountIds: string[] = []
         const errors: string[] = []
 
-        for (const account of accounts) {
+        for (let account of accounts) {
             const schedulingDecision = AccountDomain.canAccountExport(account)
 
             if (!schedulingDecision.canExport) {
@@ -35,8 +35,6 @@ export async function sync(): Promise<SyncResponse> {
             if (activeAdAccounts.length === 0) {
                 continue
             }
-
-            let accountSuccess = true
 
             for (const adAccount of activeAdAccounts) {
                 try {
@@ -54,21 +52,16 @@ export async function sync(): Promise<SyncResponse> {
                     exportsCreated += 1
                     adAccountIds.push(adAccount.adAccountId)
 
-                    // Update sync timestamp
+                    // Update sync timestamp and save to repository
                     const now = new Date()
-                    AccountDomain.updateAdAccountSyncInsight(account, adAccount.adAccountId, now)
+                    account = AccountDomain.updateAdAccountSyncInsight(account, adAccount.adAccountId, now)
+                    await accountRepository.save(account)
                     logger.info(`Updated lastSyncInsight for ${adAccount.adAccountId} to ${now.toISOString()}`)
                 } catch (error) {
-                    accountSuccess = false
                     const msg = `Export failed for ${adAccount.adAccountId}: ${(error as Error).message}`
                     errors.push(msg)
                     logger.error(msg)
                 }
-            }
-
-            // Update global lastSyncAt if all succeeded
-            if (accountSuccess && activeAdAccounts.length > 0) {
-                AccountDomain.updateAccountLastSync(account)
             }
         }
 

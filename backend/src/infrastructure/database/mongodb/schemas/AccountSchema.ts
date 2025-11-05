@@ -15,7 +15,6 @@ export interface IAccountDocument extends Document {
     connectedAt: Date
     expiresAt: Date
     lastErrorCode?: string
-    lastSyncAt?: Date
     adAccounts?: AdAccount[]
     createdAt: Date
     updatedAt: Date
@@ -50,9 +49,6 @@ const AccountSchemaInstance = new Schema<IAccountDocument>(
         },
         lastErrorCode: {
             type: String,
-        },
-        lastSyncAt: {
-            type: Date,
         },
         adAccounts: {
             type: [

@@ -20,7 +20,6 @@ const toDomain = (doc: any): Account => {
         connectedAt: plainDoc.connectedAt,
         expiresAt: plainDoc.expiresAt,
         lastErrorCode: plainDoc.lastErrorCode,
-        lastSyncAt: plainDoc.lastSyncAt,
         // Convert subdocuments to plain objects
         adAccounts: (plainDoc.adAccounts || []).map((account: any) => ({
             name: account.name,
@@ -47,7 +46,6 @@ const fromDomain = (account: Account) => ({
     connectedAt: account.connectedAt,
     expiresAt: account.expiresAt,
     lastErrorCode: account.lastErrorCode,
-    lastSyncAt: account.lastSyncAt,
     adAccounts: account.adAccounts || [],
     createdAt: account.createdAt,
     updatedAt: account.updatedAt,
