@@ -19,6 +19,7 @@ export interface AdSet {
     readonly lifetimeBudget?: number
     readonly startTime?: Date
     readonly endTime?: Date
+    readonly lastScaledAt?: Date // Last time budget was scaled (for recurring scale threshold)
     readonly updatedTime: Date
     readonly syncedAt: Date
 }
@@ -62,6 +63,17 @@ export function updateAdSet(adset: AdSet, updates: Partial<Omit<AdSet, 'id' | 'a
 }
 
 /**
+ * Mark adset as scaled (set lastScaledAt to current time)
+ * Used when budget scale suggestion is approved
+ */
+export function markAsScaled(adset: AdSet): AdSet {
+    return {
+        ...adset,
+        lastScaledAt: new Date(),
+    }
+}
+
+/**
  * Check if adset is in active status
  */
 export function isActive(adset: AdSet): boolean {
@@ -94,11 +106,13 @@ export function getAgeInDays(adset: AdSet): number | null {
 }
 
 /**
- * Check if adset is eligible for suggestion analysis
+ * Check if adset has basic eligibility for suggestion analysis
  * Requirements:
  * - Must be ACTIVE status
  * - Must have daily budget defined
- * - Campaign age must be > 1 day
+ *
+ * Note: Scale timing eligibility (initScaleDay/recurScaleDay) should be checked separately
+ * using AdAccountSettingDomain functions when config is available
  */
 export function isEligibleForAnalysis(adset: AdSet): boolean {
     // Must be active
@@ -108,12 +122,6 @@ export function isEligibleForAnalysis(adset: AdSet): boolean {
 
     // Must have daily budget
     if (adset.dailyBudget === undefined || adset.dailyBudget === null) {
-        return false
-    }
-
-    // Campaign age must be > 1 day
-    const ageInDays = getAgeInDays(adset)
-    if (ageInDays === null || ageInDays <= 1) {
         return false
     }
 
@@ -127,6 +135,7 @@ export function isEligibleForAnalysis(adset: AdSet): boolean {
 export const AdSetDomain = {
     createAdSet,
     updateAdSet,
+    markAsScaled,
     isActive,
     getBudgetType,
     getAgeInDays,

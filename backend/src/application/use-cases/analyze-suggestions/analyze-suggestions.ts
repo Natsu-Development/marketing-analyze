@@ -4,7 +4,7 @@
  * KISS: Simple, direct, minimal abstractions
  */
 
-import { AdSetDomain, SuggestionDomain, SuggestionAnalyzer } from '../../../domain'
+import { AdSetDomain, SuggestionDomain, SuggestionAnalyzer, AdAccountSettingDomain } from '../../../domain'
 import {
     accountRepository,
     adSetRepository,
@@ -66,6 +66,15 @@ export async function execute(): Promise<AnalysisResult> {
             // Process each adset
             for (const adset of adsets) {
                 try {
+                    // Check scale timing eligibility
+                    const adsetAge = AdSetDomain.getAgeInDays(adset)
+                    const meetsInitial = AdAccountSettingDomain.meetsInitialScaleThreshold(adsetAge, adset.lastScaledAt, config)
+
+                    if (!meetsInitial) {
+                        logger.debug(`Skipping ${adset.adsetId}: does not meet scale timing threshold (age: ${adsetAge}, initScaleDay: ${config.initScaleDay})`)
+                        continue
+                    }
+
                     // Fetch insights
                     const insights = await adsetInsightDataRepository.findByAdsetId(adset.adsetId)
 

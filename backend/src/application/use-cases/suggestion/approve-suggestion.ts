@@ -4,8 +4,8 @@
  * KISS: Simple, direct implementation with early returns
  */
 
-import { SuggestionDomain } from '../../../domain'
-import { accountRepository, suggestionRepository, facebookClient } from '../../../config/dependencies'
+import { SuggestionDomain, AdSetDomain } from '../../../domain'
+import { accountRepository, suggestionRepository, adSetRepository, facebookClient } from '../../../config/dependencies'
 import { logger } from '../../../infrastructure/shared/logger'
 import { ApproveSuggestionInput, ApproveSuggestionResult } from './types'
 
@@ -47,7 +47,17 @@ export async function execute(input: ApproveSuggestionInput): Promise<ApproveSug
         dailyBudget: suggestion.budgetScaled,
     })
 
-    // 5. Save approved suggestion
+    // 5. Mark adset as scaled (update lastScaledAt for recurring scale threshold)
+    const adset = await adSetRepository.findByAdSetId(suggestion.adAccountId, suggestion.adsetId)
+    if (adset) {
+        const scaledAdset = AdSetDomain.markAsScaled(adset)
+        await adSetRepository.save(scaledAdset)
+        logger.info(`Marked adset ${suggestion.adsetId} as scaled at ${scaledAdset.lastScaledAt?.toISOString()}`)
+    } else {
+        logger.warn(`Adset ${suggestion.adsetId} not found to mark as scaled`)
+    }
+
+    // 6. Save approved suggestion
     const result = await suggestionRepository.save(approvedSuggestion)
 
     logger.info(`Approved suggestion ${suggestionId} and updated adset ${suggestion.adsetId} budget to ${suggestion.budgetScaled}`)

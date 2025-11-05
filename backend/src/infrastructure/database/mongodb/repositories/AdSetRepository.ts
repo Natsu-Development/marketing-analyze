@@ -26,6 +26,7 @@ const toDomain = (doc: any): AdSet => {
         lifetimeBudget: plainDoc.lifetimeBudget,
         startTime: plainDoc.startTime,
         endTime: plainDoc.endTime,
+        lastScaledAt: plainDoc.lastScaledAt,
         updatedTime: plainDoc.updatedTime,
         syncedAt: plainDoc.syncedAt,
     }
@@ -45,6 +46,7 @@ const fromDomain = (adset: AdSet) => ({
     lifetimeBudget: adset.lifetimeBudget,
     startTime: adset.startTime,
     endTime: adset.endTime,
+    lastScaledAt: adset.lastScaledAt,
     updatedTime: adset.updatedTime,
     syncedAt: adset.syncedAt,
 })

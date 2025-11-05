@@ -29,6 +29,8 @@ export interface AdAccountSetting {
     readonly purchaseRoas?: number
     // Suggestion parameters
     readonly scalePercent?: number
+    readonly initScaleDay?: number // Minimum adset age (from startTime) before first budget scale
+    readonly recurScaleDay?: number // Days since last scale (from lastScaledAt) before recurring scale
     readonly note?: string
     // Timestamps (undefined for default configs)
     readonly createdAt?: Date
@@ -51,6 +53,8 @@ export function createAdAccountSetting(props: AdAccountSetting): AdAccountSettin
         costPerInlineLinkClick: props.costPerInlineLinkClick,
         purchaseRoas: props.purchaseRoas,
         scalePercent: props.scalePercent,
+        initScaleDay: props.initScaleDay,
+        recurScaleDay: props.recurScaleDay,
         note: props.note,
         createdAt: now,
         updatedAt: now,
@@ -70,6 +74,8 @@ export function createDefaultAdAccountSetting(adAccountId: string): AdAccountSet
         costPerInlineLinkClick: 0,
         purchaseRoas: 0,
         scalePercent: 0,
+        initScaleDay: 0, // Default: 0 days minimum age before first budget scale
+        recurScaleDay: 0, // Default: 0 days between recurring budget scales
         note: '',
         // No createdAt/updatedAt for default configs
     }
@@ -90,6 +96,67 @@ export function getConfigurableMetrics(): readonly string[] {
 }
 
 /**
+ * Check if an adset meets initial scale threshold (first time scale)
+ * Returns true if adset age (from startTime to now) >= initScaleDay AND never scaled before
+ *
+ * @param adsetAgeInDays - Age of the adset in days (can be null if no startTime)
+ * @param lastScaledAt - Last time the adset was scaled (undefined if never scaled)
+ * @param setting - Ad account setting containing the threshold
+ * @returns boolean indicating if adset meets initial scale threshold
+ */
+export function meetsInitialScaleThreshold(
+    adsetAgeInDays: number | null,
+    lastScaledAt: Date | undefined,
+    setting: AdAccountSetting
+): boolean {
+    // If already scaled before, not eligible for initial scale
+    if (lastScaledAt !== undefined) {
+        return false
+    }
+
+    // If adset has no age (no startTime), cannot meet threshold
+    if (adsetAgeInDays === null) {
+        return false
+    }
+
+    // If no threshold is set, cannot meet threshold
+    if (setting.initScaleDay === undefined || setting.initScaleDay === null) {
+        return false
+    }
+
+    return adsetAgeInDays >= setting.initScaleDay
+}
+
+/**
+ * Check if an adset meets recurring scale threshold (subsequent scales)
+ * Returns true if days since last scale (from lastScaledAt to now) >= recurScaleDay
+ *
+ * @param lastScaledAt - Last time the adset was scaled (undefined if never scaled)
+ * @param setting - Ad account setting containing the threshold
+ * @returns boolean indicating if adset meets recurring scale threshold
+ */
+export function meetsRecurringScaleThreshold(
+    lastScaledAt: Date | undefined,
+    setting: AdAccountSetting
+): boolean {
+    // If never scaled before, not eligible for recurring scale
+    if (lastScaledAt === undefined) {
+        return false
+    }
+
+    // If no threshold is set, cannot meet threshold
+    if (setting.recurScaleDay === undefined || setting.recurScaleDay === null) {
+        return false
+    }
+
+    // Calculate days since last scale
+    const now = new Date()
+    const daysSinceLastScale = (now.getTime() - lastScaledAt.getTime()) / (1000 * 60 * 60 * 24)
+
+    return daysSinceLastScale >= setting.recurScaleDay
+}
+
+/**
  * AdAccountSetting Domain - Grouped collection of all AdAccountSetting-related functions
  * Following DDD principles with functional programming style
  */
@@ -98,4 +165,6 @@ export const AdAccountSettingDomain = {
     createDefaultAdAccountSetting,
     isValidMetricField,
     getConfigurableMetrics,
+    meetsInitialScaleThreshold,
+    meetsRecurringScaleThreshold,
 }

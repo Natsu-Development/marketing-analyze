@@ -21,6 +21,8 @@ const toDomain = (doc: any): AdAccountSetting => {
         costPerInlineLinkClick: plainDoc.costPerInlineLinkClick,
         purchaseRoas: plainDoc.purchaseRoas,
         scalePercent: plainDoc.scalePercent,
+        initScaleDay: plainDoc.initScaleDay,
+        recurScaleDay: plainDoc.recurScaleDay,
         note: plainDoc.note,
         createdAt: plainDoc.createdAt,
         updatedAt: plainDoc.updatedAt,
@@ -37,6 +39,8 @@ const fromDomain = (config: AdAccountSetting) => ({
     costPerInlineLinkClick: config.costPerInlineLinkClick,
     purchaseRoas: config.purchaseRoas,
     scalePercent: config.scalePercent,
+    initScaleDay: config.initScaleDay,
+    recurScaleDay: config.recurScaleDay,
     note: config.note,
 })
 

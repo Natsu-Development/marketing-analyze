@@ -14,6 +14,8 @@ export interface IAdAccountSettingDocument extends Document {
     costPerInlineLinkClick?: number
     purchaseRoas?: number
     scalePercent?: number
+    initScaleDay?: number
+    recurScaleDay?: number
     note?: string
     createdAt: Date
     updatedAt: Date
@@ -44,6 +46,12 @@ const AdAccountSettingSchemaInstance = new Schema<IAdAccountSettingDocument>(
             type: Number,
         },
         scalePercent: {
+            type: Number,
+        },
+        initScaleDay: {
+            type: Number,
+        },
+        recurScaleDay: {
             type: Number,
         },
         note: {

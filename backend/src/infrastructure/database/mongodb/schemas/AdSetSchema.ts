@@ -18,6 +18,7 @@ export interface IAdSetDocument extends Document {
     lifetimeBudget?: number
     startTime?: Date
     endTime?: Date
+    lastScaledAt?: Date
     updatedTime: Date
     syncedAt: Date
 }
@@ -67,6 +68,9 @@ const AdSetSchemaInstance = new Schema<IAdSetDocument>(
             type: Date,
         },
         endTime: {
+            type: Date,
+        },
+        lastScaledAt: {
             type: Date,
         },
         updatedTime: {
