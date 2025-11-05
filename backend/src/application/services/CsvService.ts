@@ -3,7 +3,7 @@
  * Handles CSV header normalization and validation
  */
 
-import { AdSetInsight } from '../../domain/aggregates/ad-insights'
+import { AdSetInsight } from '../../domain/aggregates/adset-insights'
 
 export interface CsvResult {
     insights: AdSetInsight[]

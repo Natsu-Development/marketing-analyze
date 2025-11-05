@@ -6,7 +6,7 @@
 
 import { AdAccountSetting, MetricFieldName, CONFIGURABLE_METRICS } from '../aggregates/ad-account-setting/AdAccountSetting'
 import { ExceedingMetric } from '../aggregates/suggestion/Suggestion'
-import { AdSetInsight } from '../aggregates/ad-insights/AdSetInsight'
+import { AdSetInsight } from '../aggregates/adset-insights/AdSetInsight'
 
 /**
  * Aggregated metrics structure for performance analysis

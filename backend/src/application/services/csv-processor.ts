@@ -9,7 +9,7 @@ import { Readable } from 'stream'
 import { logger } from '../../infrastructure/shared/logger'
 import { adsetInsightDataRepository } from '../../config/dependencies'
 import { CsvService } from './CsvService'
-import { AdSetInsight, AdSetInsightDomain } from '../../domain/aggregates/ad-insights'
+import { AdSetInsight, AdSetInsightDomain } from '../../domain/aggregates/adset-insights'
 
 export interface ProcessCSVRequest {
     fileUrl: string
