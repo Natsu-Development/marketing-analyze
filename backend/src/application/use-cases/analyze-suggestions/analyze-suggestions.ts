@@ -96,6 +96,7 @@ export async function execute(): Promise<AnalysisResult> {
                         campaignName: adset.campaignName,
                         adsetId: adset.adsetId,
                         adsetName: adset.adsetName,
+                        currency: adset.currency,
                         dailyBudget: adset.dailyBudget!,
                         scalePercent: config.scalePercent,
                         note: config.note,

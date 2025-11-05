@@ -6,6 +6,7 @@
  */
 
 import { AdAccount, updateAdAccountLastSyncAdSet, updateAdAccountLastSyncInsight } from '../../value-objects/AdAccount'
+import { AdInsightsTimeRange } from '../../value-objects/TimeRange'
 
 export enum AccountStatus {
     CONNECTED = 'connected',
@@ -176,11 +177,69 @@ export function updateAdAccountSyncInsight(account: Account, adAccountId: string
 }
 
 /**
+ * Find ad account by ID
+ * Returns the ad account if found, undefined otherwise
+ */
+export function findAdAccount(account: Account, adAccountId: string): AdAccount | undefined {
+    return account.adAccounts.find(aa => aa.adAccountId === adAccountId)
+}
+
+/**
+ * Get ad account currency
+ * Returns the currency code for the specified ad account
+ * Throws error if ad account not found
+ */
+export function getAdAccountCurrency(account: Account, adAccountId: string): string {
+    const adAccount = findAdAccount(account, adAccountId)
+    if (!adAccount) {
+        throw new Error(`Ad account ${adAccountId} not found in account ${account.accountId}`)
+    }
+    return adAccount.currency
+}
+
+/**
+ * Validate export time range
+ * Domain logic: business rules for valid time ranges
+ */
+export function validateTimeRange(timeRange: AdInsightsTimeRange): {
+    valid: boolean
+    errors: string[]
+} {
+    const errors: string[] = []
+
+    const sinceDate = new Date(timeRange.since)
+    const untilDate = new Date(timeRange.until)
+
+    if (isNaN(sinceDate.getTime())) {
+        errors.push('Invalid since date format')
+    }
+
+    if (isNaN(untilDate.getTime())) {
+        errors.push('Invalid until date format')
+    }
+
+    if (sinceDate > untilDate) {
+        errors.push('Since date must be before until date')
+    }
+
+    // Check maximum range (business rule: max 90 days)
+    const maxRangeMs = 90 * 24 * 60 * 60 * 1000 // 90 days
+    if (untilDate.getTime() - sinceDate.getTime() > maxRangeMs) {
+        errors.push('Time range cannot exceed 90 days')
+    }
+
+    return {
+        valid: errors.length === 0,
+        errors,
+    }
+}
+
+/**
  * Calculate insights sync time range for specific ad account
  * Returns two-tier fallback: per-account lastSyncInsight → 90 days default
  */
 export function getAdAccountInsightSyncTimeRange(account: Account, adAccountId: string): { since: string; until: string } {
-    const adAccount = account.adAccounts.find(aa => aa.adAccountId === adAccountId)
+    const adAccount = findAdAccount(account, adAccountId)
     const until = new Date()
     let since: Date
 
@@ -208,10 +267,13 @@ export const AccountDomain = {
     isAccountExpired,
     canAccountExport,
     getActiveAdAccounts,
+    findAdAccount,
+    getAdAccountCurrency,
     updateAdAccounts,
     setAdAccountActive,
     disconnectAccount,
     updateAdAccountSyncAdSet,
     updateAdAccountSyncInsight,
+    validateTimeRange,
     getAdAccountInsightSyncTimeRange,
 }

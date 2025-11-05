@@ -13,6 +13,7 @@ export interface IAdSetDocument extends Document {
     campaignId: string
     campaignName: string
     status: string
+    currency: string
     dailyBudget?: number
     lifetimeBudget?: number
     startTime?: Date
@@ -51,6 +52,10 @@ const AdSetSchemaInstance = new Schema<IAdSetDocument>(
             type: String,
             required: true,
             enum: ['ACTIVE', 'PAUSED', 'DELETED', 'ARCHIVED', 'UNKNOWN'],
+        },
+        currency: {
+            type: String,
+            required: true,
         },
         dailyBudget: {
             type: Number,

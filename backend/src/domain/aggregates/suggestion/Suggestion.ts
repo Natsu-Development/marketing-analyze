@@ -33,6 +33,7 @@ export interface Suggestion {
     readonly adsetId: string
     readonly adsetName: string
     readonly adsetLink: string
+    readonly currency: string
     readonly dailyBudget: number
     readonly budgetScaled: number
     readonly scalePercent?: number
@@ -76,6 +77,7 @@ export function createSuggestion(props: {
     campaignName: string
     adsetId: string
     adsetName: string
+    currency: string
     dailyBudget: number
     scalePercent?: number
     note?: string
@@ -107,6 +109,7 @@ export function createSuggestion(props: {
         adsetId: props.adsetId,
         adsetName: props.adsetName,
         adsetLink: generateAdsetLink(props.adAccountId, props.adsetId),
+        currency: props.currency,
         dailyBudget: props.dailyBudget,
         budgetScaled,
         scalePercent: props.scalePercent,

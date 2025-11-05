@@ -3,7 +3,7 @@
  * Synchronizes adset insights using Facebook async reporting API
  */
 
-import { Account, AccountDomain, AccountService, ADSET_INSIGHT_FIELDS, ExportResultDomain } from '../../../domain'
+import { Account, AccountDomain, ADSET_INSIGHT_FIELDS, ExportResultDomain } from '../../../domain'
 import { exportResultRepository, accountRepository, facebookClient } from '../../../config/dependencies'
 import { CsvProcessorService } from '../../services/csv-processor'
 import { logger } from '../../../infrastructure/shared/logger'
@@ -40,7 +40,7 @@ export async function sync(): Promise<SyncResponse> {
                 try {
                     const timeRange = AccountDomain.getAdAccountInsightSyncTimeRange(account, adAccount.adAccountId)
 
-                    const validation = AccountService.validateTimeRange(timeRange)
+                    const validation = AccountDomain.validateTimeRange(timeRange)
                     if (!validation.valid) {
                         logger.warn(`Invalid time range for ${adAccount.adAccountId}: ${validation.errors.join(', ')}`)
                         continue

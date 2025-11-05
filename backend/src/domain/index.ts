@@ -17,7 +17,6 @@ export * from './aggregates/suggestion'
 export * from './value-objects/AdAccount'
 
 // ========== DOMAIN SERVICES (Core Business Logic) ==========
-export * from './services/AccountService'
 export * from './services/SuggestionAnalyzer'
 
 // ========== REPOSITORIES (Persistence Interfaces for Core Entities) ==========

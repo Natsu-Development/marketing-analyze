@@ -14,6 +14,7 @@ export interface AdSet {
     readonly campaignId: string
     readonly campaignName: string
     readonly status: string
+    readonly currency: string
     readonly dailyBudget?: number
     readonly lifetimeBudget?: number
     readonly startTime?: Date
@@ -27,8 +28,10 @@ export interface AdSet {
 /**
  * Create AdSet from Facebook API response
  * Handles nested campaign object and data transformation
+ * Currency must be provided from parent AdAccount
+ * Budget values are stored as raw data from Facebook API for easy tracking and calculation
  */
-export function createAdSet(data: any, accountId: string, adAccountId: string): AdSet {
+export function createAdSet(data: any, accountId: string, adAccountId: string, currency: string): AdSet {
     return {
         accountId,
         adAccountId,
@@ -37,8 +40,9 @@ export function createAdSet(data: any, accountId: string, adAccountId: string): 
         campaignId: data.campaign?.id || '',
         campaignName: data.campaign?.name || '',
         status: data.status,
-        dailyBudget: data.daily_budget ? parseFloat(data.daily_budget) / 100 : undefined,
-        lifetimeBudget: data.lifetime_budget ? parseFloat(data.lifetime_budget) / 100 : undefined,
+        currency,
+        dailyBudget: data.daily_budget ? Number(data.daily_budget) : undefined,
+        lifetimeBudget: data.lifetime_budget ? Number(data.lifetime_budget) : undefined,
         startTime: data.start_time ? new Date(data.start_time) : undefined,
         endTime: data.end_time ? new Date(data.end_time) : undefined,
         updatedTime: new Date(data.updated_time),
@@ -108,10 +112,10 @@ export function isEligibleForAnalysis(adset: AdSet): boolean {
     }
 
     // Campaign age must be > 1 day
-    // const ageInDays = getAgeInDays(adset)
-    // if (ageInDays === null || ageInDays <= 1) {
-    //     return false
-    // }
+    const ageInDays = getAgeInDays(adset)
+    if (ageInDays === null || ageInDays <= 1) {
+        return false
+    }
 
     return true
 }

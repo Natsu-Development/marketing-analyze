@@ -25,6 +25,7 @@ export interface ISuggestionDocument extends Document {
     adsetId: string
     adsetName: string
     adsetLink: string
+    currency: string
     dailyBudget: number
     budgetScaled: number
     scalePercent?: number
@@ -91,6 +92,10 @@ const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
             required: true,
         },
         adsetLink: {
+            type: String,
+            required: true,
+        },
+        currency: {
             type: String,
             required: true,
         },
