@@ -5,7 +5,7 @@
 
 import { Router } from 'express'
 import { facebookAuthRoutes } from './facebook-auth.routes'
-import { adInsightsRoutes } from './ad-insights.routes'
+import { adsetInsightsRoutes } from './adset-insights.routes'
 import { adAccountSettingRoutes } from './ad-account-setting.routes'
 import { suggestionRoutes } from './suggestion.routes'
 
@@ -17,8 +17,8 @@ export const v1Router = Router()
 // Auth routes
 v1Router.use('/auth/facebook', facebookAuthRoutes)
 
-// Ad Insights routes
-v1Router.use('/ad-insights', adInsightsRoutes)
+// AdSet Insights routes
+v1Router.use('/adset-insights', adsetInsightsRoutes)
 
 // Ad Account Setting routes
 v1Router.use('/ad-account-settings', adAccountSettingRoutes)

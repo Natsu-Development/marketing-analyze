@@ -1,6 +1,6 @@
 /**
- * Ad Insights Aggregate
- * Contains entities and logic related to advertising performance insights
+ * AdSet Insights Aggregate
+ * Contains entities and logic related to adset performance insights
  */
 
 export * from './AdSetInsight'

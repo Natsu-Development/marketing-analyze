@@ -1,6 +1,6 @@
 /**
- * Facebook Sync Insights Use Case
- * Synchronizes ad insights using Facebook async reporting API
+ * Facebook Sync AdSet Insights Use Case
+ * Synchronizes adset insights using Facebook async reporting API
  */
 
 import { Account, AccountDomain, AccountService, ADSET_INSIGHT_FIELDS, ExportResultDomain } from '../../../domain'
@@ -10,10 +10,10 @@ import { logger } from '../../../infrastructure/shared/logger'
 import { SyncResponse, TimeRange } from './types'
 
 /**
- * Sync insights for all active ad accounts
+ * Sync adset insights for all active ad accounts
  */
 export async function sync(): Promise<SyncResponse> {
-    logger.info('Starting insight sync')
+    logger.info('Starting adset insight sync')
 
     try {
         const accounts = await accountRepository.findAllConnected()
@@ -46,7 +46,7 @@ export async function sync(): Promise<SyncResponse> {
                         continue
                     }
 
-                    logger.info(`Syncing insights for ${adAccount.adAccountId} from ${timeRange.since} to ${timeRange.until}`)
+                    logger.info(`Syncing adset insights for ${adAccount.adAccountId} from ${timeRange.since} to ${timeRange.until}`)
 
                     await syncForAccount(account, adAccount.adAccountId, timeRange)
                     exportsCreated += 1
@@ -65,7 +65,7 @@ export async function sync(): Promise<SyncResponse> {
             }
         }
 
-        logger.info(`Insight sync completed: ${exportsCreated} exports`)
+        logger.info(`AdSet insight sync completed: ${exportsCreated} exports`)
 
         return {
             success: errors.length === 0,
@@ -74,7 +74,7 @@ export async function sync(): Promise<SyncResponse> {
             errors: errors.length > 0 ? errors : undefined,
         }
     } catch (error) {
-        const msg = `Insight sync failed: ${(error as Error).message}`
+        const msg = `AdSet insight sync failed: ${(error as Error).message}`
         logger.error(msg)
         return {
             success: false,

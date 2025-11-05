@@ -8,7 +8,7 @@
 
 // ========== AGGREGATES (Core Business Objects with Identity) ==========
 export * from './aggregates/account'
-export * from './aggregates/ad-insights'
+export * from './aggregates/adset-insights'
 export * from './aggregates/adset'
 export * from './aggregates/ad-account-setting'
 export * from './aggregates/suggestion'
@@ -29,8 +29,8 @@ export * from './repositories/ISuggestionRepository'
 // ========== DOMAIN OBJECTS (Grouped Business Logic) ==========
 export { AccountDomain } from './aggregates/account'
 export { AdSetDomain } from './aggregates/adset'
-export { AdSetInsightDomain } from './aggregates/ad-insights'
-export { ExportResultDomain } from './aggregates/ad-insights'
+export { AdSetInsightDomain } from './aggregates/adset-insights'
+export { ExportResultDomain } from './aggregates/adset-insights'
 export { AdAccountSettingDomain } from './aggregates/ad-account-setting'
 export { SuggestionDomain } from './aggregates/suggestion'
 export { SuggestionAnalyzer } from './services/SuggestionAnalyzer'

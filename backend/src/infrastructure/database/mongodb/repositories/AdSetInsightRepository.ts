@@ -1,9 +1,9 @@
 /**
- * Repository Implementation: Adset Insight Data
+ * Repository Implementation: AdSet Insight Data
  */
 
-import { IAdInsightRepository } from '../../../../domain/repositories/IAdSetInsightRepository'
-import { AdSetInsight } from '../../../../domain/aggregates/ad-insights'
+import { IAdSetInsightRepository } from '../../../../domain/repositories/IAdSetInsightRepository'
+import { AdSetInsight } from '../../../../domain/aggregates/adset-insights'
 import { AdSetInsightDataModel } from '../schemas/AdSetInsightSchema'
 
 const toDomain = (doc: any): AdSetInsight => {
@@ -81,7 +81,7 @@ const findByAdsetId = async (adsetId: string): Promise<AdSetInsight[]> => {
     return docs.map(toDomain)
 }
 
-export const adsetInsightDataRepository: IAdInsightRepository = {
+export const adsetInsightDataRepository: IAdSetInsightRepository = {
     saveBatch,
     findByAdAccountId,
     findByAdsetId,

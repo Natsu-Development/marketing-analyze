@@ -5,33 +5,33 @@
 
 import * as cron from 'node-cron'
 import { logger } from '../../infrastructure/shared/logger'
-import { FacebookSyncInsightsUseCase } from '../use-cases/facebook-sync-insights'
+import { FacebookSyncAdSetInsightsUseCase } from '../use-cases/facebook-sync-adset-insights'
 import { FacebookSyncAdSetUseCase } from '../use-cases/facebook-sync-adset'
 import * as AnalyzeSuggestionsUseCase from '../use-cases/analyze-suggestions'
 // Note: We use process.env directly here instead of appConfig to avoid circular dependencies
 
-let adInsightsJob: cron.ScheduledTask | null = null
+let adSetInsightsJob: cron.ScheduledTask | null = null
 let adSetSyncJob: cron.ScheduledTask | null = null
 let suggestionAnalysisJob: cron.ScheduledTask | null = null
 
 /**
- * Start the ad insights export cron job
+ * Start the adset insights export cron job
  * Default schedule: Every day at 2 AM (can be configured via env)
  */
-export function startAdInsightsCron(): void {
-    const schedule = process.env.AD_INSIGHTS_CRON_SCHEDULE || '0 2 * * *' // Default: 2 AM daily (second is optional)
+export function startAdSetInsightsCron(): void {
+    const schedule = process.env.ADSET_INSIGHTS_CRON_SCHEDULE || '0 2 * * *' // Default: 2 AM daily (second is optional)
 
-    logger.info(`Starting ad insights cron: ${schedule}`)
+    logger.info(`Starting adset insights cron: ${schedule}`)
 
     if (!cron.validate(schedule)) {
         logger.error(`Invalid cron schedule: ${schedule}`)
         throw new Error(`Invalid cron schedule: ${schedule}`)
     }
 
-    adInsightsJob = cron.schedule(schedule, async () => {
-        logger.info('Running scheduled ad insights export')
+    adSetInsightsJob = cron.schedule(schedule, async () => {
+        logger.info('Running scheduled adset insights export')
         try {
-            const result = await FacebookSyncInsightsUseCase.sync()
+            const result = await FacebookSyncAdSetInsightsUseCase.sync()
             if (result.success) {
                 logger.info(`Export completed: ${result.exportsCreated} exports created`)
             } else {
@@ -44,23 +44,23 @@ export function startAdInsightsCron(): void {
 }
 
 /**
- * Stop the ad insights export cron job
+ * Stop the adset insights export cron job
  */
-export function stopAdInsightsCron(): void {
-    if (adInsightsJob) {
-        adInsightsJob.stop()
-        adInsightsJob = null
-        logger.info('Ad insights export cron job stopped')
+export function stopAdSetInsightsCron(): void {
+    if (adSetInsightsJob) {
+        adSetInsightsJob.stop()
+        adSetInsightsJob = null
+        logger.info('AdSet insights export cron job stopped')
     }
 }
 
 /**
- * Run ad insights export immediately (for testing or manual triggers)
+ * Run adset insights export immediately (for testing or manual triggers)
  */
-export async function runAdInsightsExportNow(): Promise<void> {
-    logger.info('Running ad insights export')
+export async function runAdSetInsightsExportNow(): Promise<void> {
+    logger.info('Running adset insights export')
     try {
-        const result = await FacebookSyncInsightsUseCase.sync()
+        const result = await FacebookSyncAdSetInsightsUseCase.sync()
         if (result.success) {
             logger.info(`Export completed: ${result.exportsCreated} exports created`)
         } else {
@@ -196,7 +196,7 @@ export async function runSuggestionAnalysisNow(): Promise<void> {
  */
 export function startAllCronJobs(): void {
     startAdSetSyncCron() // Run adset sync before insights sync
-    startAdInsightsCron()
+    startAdSetInsightsCron()
     startSuggestionAnalysisCron()
 }
 
@@ -205,7 +205,7 @@ export function startAllCronJobs(): void {
  */
 export function stopAllCronJobs(): void {
     stopAdSetSyncCron()
-    stopAdInsightsCron()
+    stopAdSetInsightsCron()
     stopSuggestionAnalysisCron()
 }
 
@@ -213,9 +213,9 @@ export function stopAllCronJobs(): void {
  * Cron Scheduler Service - Grouped collection of all cron scheduling functions
  */
 export const CronSchedulerService = {
-    startAdInsightsCron,
-    stopAdInsightsCron,
-    runAdInsightsExportNow,
+    startAdSetInsightsCron,
+    stopAdSetInsightsCron,
+    runAdSetInsightsExportNow,
     startAdSetSyncCron,
     stopAdSetSyncCron,
     runAdSetSyncNow,
