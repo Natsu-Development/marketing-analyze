@@ -356,6 +356,11 @@ Response:
   "message": "Suggestion approved and budget updated successfully",
   "suggestion": {...}
 }
+
+Note: When a suggestion is approved:
+1. Updates Facebook adset budget via API
+2. Marks adset as scaled by setting lastScaledAt to current time
+3. Enables recurring scale eligibility after recurScaleDay period
 ```
 
 **Reject Suggestion**
@@ -509,6 +514,11 @@ ADSET_SYNC_CRON_SCHEDULE=0 1 * * 1  # Every Monday at 1 AM (default)
 
 ### 3. Suggestion Analysis
 Analyzes adset performance against thresholds and generates budget increase suggestions.
+
+**Scale Timing Logic:**
+- **Initial Scale**: Adset must be at least `initScaleDay` days old (from `startTime`) AND never scaled before
+- **Recurring Scale**: At least `recurScaleDay` days must pass since last scale (from `lastScaledAt`)
+- When a suggestion is approved, the adset's `lastScaledAt` is updated to track recurring scales
 
 **Configuration:**
 ```bash
@@ -735,11 +745,14 @@ const toDomain = (doc: any): Account => {
   campaignId: string       // Facebook campaign ID
   campaignName: string     // Campaign name
   status: string           // ACTIVE | PAUSED | ARCHIVED
-  dailyBudget?: number     // Daily budget in cents
-  lifetimeBudget?: number  // Lifetime budget in cents
-  targeting?: any          // Targeting criteria (JSON)
-  createdAt: Date
-  updatedAt: Date
+  currency: string         // Currency code
+  dailyBudget?: number     // Daily budget in cents (raw from Facebook API)
+  lifetimeBudget?: number  // Lifetime budget in cents (raw from Facebook API)
+  startTime?: Date         // Adset start time
+  endTime?: Date           // Adset end time
+  lastScaledAt?: Date      // Last time budget was scaled (for recurring scale threshold)
+  updatedTime: Date        // Last updated from Facebook
+  syncedAt: Date           // Last sync timestamp
 }
 ```
 
@@ -747,9 +760,10 @@ const toDomain = (doc: any): Account => {
 
 ```typescript
 {
-  accountId: string        // Our internal account ID
   adAccountId: string      // Facebook ad account ID (unique)
-  scalePercent: number     // Budget increase percentage (e.g., 20 for 20%)
+  scalePercent?: number    // Budget increase percentage (e.g., 20 for 20%)
+  initScaleDay?: number    // Minimum adset age (from startTime) before first budget scale
+  recurScaleDay?: number   // Days since last scale (from lastScaledAt) before recurring scale
   note?: string           // Optional notes
   // Threshold settings (6 configurable metrics)
   cpm?: number            // Cost per 1000 impressions threshold

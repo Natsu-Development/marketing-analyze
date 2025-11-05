@@ -244,14 +244,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"scalePercent\": 20,\n  \"note\": \"Aggressive scaling strategy\",\n  \"cpm\": 10.0,\n  \"ctr\": 2.5,\n  \"frequency\": 3.0,\n  \"inlineLinkCtr\": 1.5,\n  \"costPerInlineLinkClick\": 0.50,\n  \"purchaseRoas\": 3.0\n}"
+							"raw": "{\n  \"scalePercent\": 20,\n  \"initScaleDay\": 7,\n  \"recurScaleDay\": 7,\n  \"note\": \"Aggressive scaling strategy\",\n  \"cpm\": 10.0,\n  \"ctr\": 2.5,\n  \"frequency\": 3.0,\n  \"inlineLinkCtr\": 1.5,\n  \"costPerInlineLinkClick\": 0.50,\n  \"purchaseRoas\": 3.0\n}"
 						},
 						"url": {
 							"raw": "{{BASE_URL}}/api/v1/ad-account-settings/{{AD_ACCOUNT_ID}}",
 							"host": ["{{BASE_URL}}"],
 							"path": ["api", "v1", "ad-account-settings", "{{AD_ACCOUNT_ID}}"]
 						},
-						"description": "Update threshold settings for an ad account"
+						"description": "Update threshold settings for an ad account. initScaleDay: minimum adset age (from startTime) before first budget scale. recurScaleDay: days since last scale (from lastScaledAt) before recurring scale."
 					}
 				}
 			]

@@ -12,8 +12,8 @@ import * as facebookAuthController from '../controllers/FacebookAuthController'
  * Routes:
  * - POST   /session   - Connect or disconnect Facebook
  * - GET    /callback  - OAuth callback handler
- * - GET    /status    - Get connection status
- * - GET    /token     - Get valid access token
+ * - POST   /:accountId/refresh-ad-accounts - Refresh ad accounts
+ * - PUT    /:accountId/ad-accounts/:adAccountId/active - Update ad account active status
  */
 export const facebookAuthRoutes = Router()
 
