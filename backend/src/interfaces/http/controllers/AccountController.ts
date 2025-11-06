@@ -130,7 +130,7 @@ export async function updateAdAccountActive(req: Request, res: Response): Promis
             if (result.error === 'NO_CONNECTION') statusCode = 404
             if (result.error === 'AD_ACCOUNT_NOT_FOUND') statusCode = 404
 
-            return jsonError(res, result.error || 'UPDATE_FAILED', statusCode, result.message)
+            return jsonError(res, result.error || 'UPDATE_FAILED', statusCode)
         }
 
         return jsonSuccess(res, {

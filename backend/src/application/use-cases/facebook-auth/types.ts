@@ -2,8 +2,6 @@
  * Types for Facebook Auth Use Cases
  */
 
-import { Account } from '../../../domain'
-
 export interface InitiateConnectionRequest {
     userId?: string
 }
