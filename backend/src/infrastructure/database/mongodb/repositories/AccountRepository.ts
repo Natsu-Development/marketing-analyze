@@ -81,6 +81,7 @@ const deleteByAccountId = async (accountId: string): Promise<void> => {
     await AccountSchema.deleteOne({ accountId })
 }
 
+// optimize this follow aggregate pattern
 const findAdAccountNameById = async (adAccountId: string): Promise<string | null> => {
     const doc = await AccountSchema.findOne(
         { 'adAccounts.adAccountId': adAccountId },

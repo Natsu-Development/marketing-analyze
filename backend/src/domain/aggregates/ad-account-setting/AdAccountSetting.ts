@@ -6,16 +6,20 @@
  */
 
 // Configurable metrics constant - aligns with ADSET_INSIGHT_FIELDS
-export const CONFIGURABLE_METRICS = [
+export const CONFIGURABLE_SETTINGS = [
     'cpm',
     'ctr',
     'frequency',
     'inlineLinkCtr',
     'costPerInlineLinkClick',
     'purchaseRoas',
+    'scalePercent',
+    'initScaleDay',
+    'recurScaleDay',
+    'note',
 ] as const
 
-export type MetricFieldName = typeof CONFIGURABLE_METRICS[number]
+export type SettingFieldName = typeof CONFIGURABLE_SETTINGS[number]
 
 export interface AdAccountSetting {
     readonly id?: string
@@ -84,15 +88,8 @@ export function createDefaultAdAccountSetting(adAccountId: string): AdAccountSet
 /**
  * Check if a metric field name is valid
  */
-export function isValidMetricField(fieldName: string): boolean {
-    return CONFIGURABLE_METRICS.includes(fieldName as MetricFieldName)
-}
-
-/**
- * Get all configurable metric names
- */
-export function getConfigurableMetrics(): readonly string[] {
-    return CONFIGURABLE_METRICS
+export function isValidSetting(fieldName: string): boolean {
+    return CONFIGURABLE_SETTINGS.includes(fieldName as SettingFieldName)
 }
 
 /**
@@ -163,8 +160,7 @@ export function meetsRecurringScaleThreshold(
 export const AdAccountSettingDomain = {
     createAdAccountSetting,
     createDefaultAdAccountSetting,
-    isValidMetricField,
-    getConfigurableMetrics,
+    isValidSetting,
     meetsInitialScaleThreshold,
     meetsRecurringScaleThreshold,
 }

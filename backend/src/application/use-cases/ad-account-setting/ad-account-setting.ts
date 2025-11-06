@@ -3,7 +3,7 @@
  * Manages ad account settings including metric thresholds and suggestion parameters
  */
 
-import { AdAccountSetting, AdAccountSettingDomain, IAdAccountSettingRepository } from '../../../domain'
+import { AdAccountSettingDomain, IAdAccountSettingRepository } from '../../../domain'
 import { adAccountSettingRepository } from '../../../infrastructure/database/mongodb/repositories/AdAccountSettingRepository'
 import { logger } from '../../../infrastructure/shared/logger'
 import { UpsertInput, UpsertResult, RetrieveInput, RetrieveResult } from './types'
@@ -18,7 +18,7 @@ export async function upsert(
     try {
         // Validate metric field names
         const invalidFields = Object.keys(input.settings).filter(
-            (field) => field !== 'scalePercent' && field !== 'note' && !AdAccountSettingDomain.isValidMetricField(field)
+            (field) => !AdAccountSettingDomain.isValidSetting(field)
         )
 
         if (invalidFields.length > 0) {
@@ -38,17 +38,7 @@ export async function upsert(
             adAccountId: input.adAccountId,
             ...input.settings,
         })
-
         const result = await repository.upsert(config)
-
-        const metricsCount = AdAccountSettingDomain.getConfigurableMetrics().filter(
-            (metric) => result[metric as keyof AdAccountSetting] !== undefined
-        ).length
-
-        logger.info(`Ad account setting upserted for ${input.adAccountId}`, {
-            adAccountId: input.adAccountId,
-            metricsCount,
-        })
 
         return { success: true, data: result }
     } catch (error: any) {

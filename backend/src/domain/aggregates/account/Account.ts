@@ -218,6 +218,7 @@ export function validateTimeRange(timeRange: AdInsightsTimeRange): {
         errors.push('Invalid until date format')
     }
 
+    // Allow time range to be the same
     if (sinceDate > untilDate) {
         errors.push('Since date must be before until date')
     }

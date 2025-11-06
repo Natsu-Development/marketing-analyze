@@ -270,12 +270,11 @@ const fetchAdSets = async (params: FetchAdSetsParams): Promise<any[]> => {
  */
 const updateAdsetBudget = async (params: UpdateAdsetBudgetParams): Promise<UpdateAdsetBudgetResponse> => {
     try {
-        // Facebook expects budget in cents
-        const budgetInCents = Math.round(params.dailyBudget * 100)
+        const budgetValue = params.dailyBudget
 
         const url = `${baseUrl}/${params.adsetId}`
         await axios.post(url, {
-            daily_budget: budgetInCents,
+            daily_budget: budgetValue,
             access_token: params.accessToken,
         })
 
