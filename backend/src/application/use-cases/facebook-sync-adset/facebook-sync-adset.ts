@@ -69,15 +69,13 @@ export async function sync(): Promise<SyncResponse> {
 }
 
 async function syncForAccount(account: Account, adAccountId: string): Promise<number> {
-    const timeRange = AccountDomain.getAdAccountAdSetSyncTimeRange(account, adAccountId)
-
-    logger.info(`Syncing adsets for ${adAccountId} from ${timeRange.since} to ${timeRange.until}`)
+    // Get currency from ad account using domain logic
+    const currency = AccountDomain.getAdAccountCurrency(account, adAccountId)
 
     // Fetch adsets from Facebook via infrastructure client
     const adsetsData = await facebookClient.fetchAdSets({
         accessToken: account.accessToken,
         adAccountId,
-        updatedSince: timeRange.since,
     })
 
     if (adsetsData.length === 0) {
@@ -85,7 +83,8 @@ async function syncForAccount(account: Account, adAccountId: string): Promise<nu
         return 0
     }
 
-    const adsets = adsetsData.map((data: any) => AdSetDomain.createAdSet(data))
+    // Create adsets with proper currency parsing
+    const adsets = adsetsData.map((data: any) => AdSetDomain.createAdSet(data, account.accountId, adAccountId, currency))
     const result = await adSetRepository.saveBatch(adsets)
 
     logger.info(`Saved ${result.upsertedCount + result.modifiedCount} adsets for ${adAccountId}`)

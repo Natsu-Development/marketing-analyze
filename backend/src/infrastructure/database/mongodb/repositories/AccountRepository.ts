@@ -20,7 +20,6 @@ const toDomain = (doc: any): Account => {
         connectedAt: plainDoc.connectedAt,
         expiresAt: plainDoc.expiresAt,
         lastErrorCode: plainDoc.lastErrorCode,
-        lastSyncAt: plainDoc.lastSyncAt,
         // Convert subdocuments to plain objects
         adAccounts: (plainDoc.adAccounts || []).map((account: any) => ({
             name: account.name,
@@ -47,7 +46,6 @@ const fromDomain = (account: Account) => ({
     connectedAt: account.connectedAt,
     expiresAt: account.expiresAt,
     lastErrorCode: account.lastErrorCode,
-    lastSyncAt: account.lastSyncAt,
     adAccounts: account.adAccounts || [],
     createdAt: account.createdAt,
     updatedAt: account.updatedAt,
@@ -83,10 +81,25 @@ const deleteByAccountId = async (accountId: string): Promise<void> => {
     await AccountSchema.deleteOne({ accountId })
 }
 
+// optimize this follow aggregate pattern
+const findAdAccountNameById = async (adAccountId: string): Promise<string | null> => {
+    const doc = await AccountSchema.findOne(
+        { 'adAccounts.adAccountId': adAccountId },
+        { 'adAccounts.$': 1 }
+    )
+
+    if (!doc || !doc.adAccounts || doc.adAccounts.length === 0) {
+        return null
+    }
+
+    return doc.adAccounts[0].name
+}
+
 export const accountRepository: IAccountRepository = {
     save,
     findByAccountId,
     findAllConnected,
     deleteByAccountId,
     findById,
+    findAdAccountNameById,
 }

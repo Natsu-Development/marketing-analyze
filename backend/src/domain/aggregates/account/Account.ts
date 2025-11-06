@@ -6,6 +6,7 @@
  */
 
 import { AdAccount, updateAdAccountLastSyncAdSet, updateAdAccountLastSyncInsight } from '../../value-objects/AdAccount'
+import { AdInsightsTimeRange } from '../../value-objects/TimeRange'
 
 export enum AccountStatus {
     CONNECTED = 'connected',
@@ -22,7 +23,6 @@ export interface Account {
     readonly connectedAt: Date
     readonly expiresAt: Date
     readonly lastErrorCode?: string
-    readonly lastSyncAt?: Date
     readonly adAccounts: readonly AdAccount[]
     readonly createdAt: Date
     readonly updatedAt: Date
@@ -143,17 +143,6 @@ export function disconnectAccount(account: Account): Account {
 }
 
 /**
- * Update last sync timestamp
- */
-export function updateAccountLastSync(account: Account): Account {
-    return {
-        ...account,
-        lastSyncAt: new Date(),
-        updatedAt: new Date(),
-    }
-}
-
-/**
  * Update lastSyncAdSet for specific ad account by ID
  */
 export function updateAdAccountSyncAdSet(account: Account, adAccountId: string, timestamp: Date): Account {
@@ -188,26 +177,61 @@ export function updateAdAccountSyncInsight(account: Account, adAccountId: string
 }
 
 /**
- * Calculate adset sync time range for specific ad account
- * Returns two-tier fallback: per-account lastSyncAdSet → 90 days default
+ * Find ad account by ID
+ * Returns the ad account if found, undefined otherwise
  */
-export function getAdAccountAdSetSyncTimeRange(account: Account, adAccountId: string): { since: string; until: string } {
-    const adAccount = account.adAccounts.find(aa => aa.adAccountId === adAccountId)
-    const until = new Date()
-    let since: Date
+export function findAdAccount(account: Account, adAccountId: string): AdAccount | undefined {
+    return account.adAccounts.find(aa => aa.adAccountId === adAccountId)
+}
 
-    if (adAccount?.lastSyncAdSet) {
-        // Use per-account adset sync timestamp
-        since = new Date(adAccount.lastSyncAdSet)
-    } else {
-        // Default to 90 days for initial sync
-        since = new Date(until)
-        since.setDate(since.getDate() - 90)
+/**
+ * Get ad account currency
+ * Returns the currency code for the specified ad account
+ * Throws error if ad account not found
+ */
+export function getAdAccountCurrency(account: Account, adAccountId: string): string {
+    const adAccount = findAdAccount(account, adAccountId)
+    if (!adAccount) {
+        throw new Error(`Ad account ${adAccountId} not found in account ${account.accountId}`)
+    }
+    return adAccount.currency
+}
+
+/**
+ * Validate export time range
+ * Domain logic: business rules for valid time ranges
+ */
+export function validateTimeRange(timeRange: AdInsightsTimeRange): {
+    valid: boolean
+    errors: string[]
+} {
+    const errors: string[] = []
+
+    const sinceDate = new Date(timeRange.since)
+    const untilDate = new Date(timeRange.until)
+
+    if (isNaN(sinceDate.getTime())) {
+        errors.push('Invalid since date format')
+    }
+
+    if (isNaN(untilDate.getTime())) {
+        errors.push('Invalid until date format')
+    }
+
+    // Allow time range to be the same
+    if (sinceDate > untilDate) {
+        errors.push('Since date must be before until date')
+    }
+
+    // Check maximum range (business rule: max 90 days)
+    const maxRangeMs = 90 * 24 * 60 * 60 * 1000 // 90 days
+    if (untilDate.getTime() - sinceDate.getTime() > maxRangeMs) {
+        errors.push('Time range cannot exceed 90 days')
     }
 
     return {
-        since: since.toISOString().split('T')[0], // YYYY-MM-DD format
-        until: until.toISOString().split('T')[0]
+        valid: errors.length === 0,
+        errors,
     }
 }
 
@@ -216,7 +240,7 @@ export function getAdAccountAdSetSyncTimeRange(account: Account, adAccountId: st
  * Returns two-tier fallback: per-account lastSyncInsight → 90 days default
  */
 export function getAdAccountInsightSyncTimeRange(account: Account, adAccountId: string): { since: string; until: string } {
-    const adAccount = account.adAccounts.find(aa => aa.adAccountId === adAccountId)
+    const adAccount = findAdAccount(account, adAccountId)
     const until = new Date()
     let since: Date
 
@@ -244,12 +268,13 @@ export const AccountDomain = {
     isAccountExpired,
     canAccountExport,
     getActiveAdAccounts,
+    findAdAccount,
+    getAdAccountCurrency,
     updateAdAccounts,
     setAdAccountActive,
     disconnectAccount,
-    updateAccountLastSync,
     updateAdAccountSyncAdSet,
     updateAdAccountSyncInsight,
-    getAdAccountAdSetSyncTimeRange,
+    validateTimeRange,
     getAdAccountInsightSyncTimeRange,
 }

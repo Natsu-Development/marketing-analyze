@@ -57,7 +57,16 @@ export interface CSVExportResult {
 export interface FetchAdSetsParams {
     accessToken: string
     adAccountId: string
-    updatedSince: string
+}
+
+export interface UpdateAdsetBudgetParams {
+    accessToken: string
+    adsetId: string
+    dailyBudget: number
+}
+
+export interface UpdateAdsetBudgetResponse {
+    success: boolean
 }
 
 /**
@@ -78,4 +87,5 @@ export interface IFacebookClient {
 
     // AdSet operations
     fetchAdSets(params: FetchAdSetsParams): Promise<any[]>
+    updateAdsetBudget(params: UpdateAdsetBudgetParams): Promise<UpdateAdsetBudgetResponse>
 }

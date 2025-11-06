@@ -3,7 +3,7 @@
  * Defines contract for persistence operations on ExportResult entities
  */
 
-import { ExportResult } from '../aggregates/ad-insights'
+import { ExportResult } from '../aggregates/adset-insights'
 
 export interface IExportResultRepository {
     save(exportResult: ExportResult): Promise<ExportResult>

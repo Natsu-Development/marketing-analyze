@@ -14,34 +14,39 @@ const toDomain = (doc: any): AdSet => {
 
     return {
         id: plainDoc._id.toString(),
+        accountId: plainDoc.accountId,
         adAccountId: plainDoc.adAccountId,
         adsetId: plainDoc.adsetId,
         adsetName: plainDoc.adsetName,
         campaignId: plainDoc.campaignId,
         campaignName: plainDoc.campaignName,
         status: plainDoc.status,
+        currency: plainDoc.currency,
         dailyBudget: plainDoc.dailyBudget,
         lifetimeBudget: plainDoc.lifetimeBudget,
         startTime: plainDoc.startTime,
         endTime: plainDoc.endTime,
+        lastScaledAt: plainDoc.lastScaledAt,
         updatedTime: plainDoc.updatedTime,
-        createdAt: plainDoc.createdAt,
         syncedAt: plainDoc.syncedAt,
     }
 }
 
 // Convert domain object to database format
 const fromDomain = (adset: AdSet) => ({
+    accountId: adset.accountId,
     adAccountId: adset.adAccountId,
     adsetId: adset.adsetId,
     adsetName: adset.adsetName,
     campaignId: adset.campaignId,
     campaignName: adset.campaignName,
     status: adset.status,
+    currency: adset.currency,
     dailyBudget: adset.dailyBudget,
     lifetimeBudget: adset.lifetimeBudget,
     startTime: adset.startTime,
     endTime: adset.endTime,
+    lastScaledAt: adset.lastScaledAt,
     updatedTime: adset.updatedTime,
     syncedAt: adset.syncedAt,
 })
@@ -50,7 +55,7 @@ const save = async (adset: AdSet): Promise<AdSet> => {
     const doc = fromDomain(adset)
     const result = await AdSetSchema.findOneAndUpdate(
         { adAccountId: adset.adAccountId, adsetId: adset.adsetId },
-        { ...doc, $setOnInsert: { createdAt: adset.createdAt } },
+        doc,
         {
             upsert: true,
             new: true,
@@ -71,7 +76,6 @@ const saveBatch = async (adsets: AdSet[]): Promise<{ upsertedCount: number; modi
             filter: { adAccountId: adset.adAccountId, adsetId: adset.adsetId },
             update: {
                 $set: fromDomain(adset),
-                $setOnInsert: { createdAt: adset.createdAt },
             },
             upsert: true,
         },
@@ -83,6 +87,16 @@ const saveBatch = async (adsets: AdSet[]): Promise<{ upsertedCount: number; modi
         upsertedCount: result.upsertedCount || 0,
         modifiedCount: result.modifiedCount || 0,
     }
+}
+
+const findAll = async (): Promise<AdSet[]> => {
+    const docs = await AdSetSchema.find().sort({ updatedTime: -1 })
+    return docs.map(toDomain)
+}
+
+const findAllActive = async (): Promise<AdSet[]> => {
+    const docs = await AdSetSchema.find({ status: 'ACTIVE' }).sort({ updatedTime: -1 })
+    return docs.map(toDomain)
 }
 
 const findByAdAccountId = async (adAccountId: string): Promise<AdSet[]> => {
@@ -108,6 +122,8 @@ const findByCampaignId = async (campaignId: string): Promise<AdSet[]> => {
 export const adSetRepository: IAdSetRepository = {
     save,
     saveBatch,
+    findAll,
+    findAllActive,
     findByAdAccountId,
     findActiveByAdAccountId,
     findByAdSetId,

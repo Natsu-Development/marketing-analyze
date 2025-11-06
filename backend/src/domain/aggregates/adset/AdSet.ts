@@ -7,49 +7,54 @@
 
 export interface AdSet {
     readonly id?: string
+    readonly accountId: string
     readonly adAccountId: string
     readonly adsetId: string
     readonly adsetName: string
     readonly campaignId: string
     readonly campaignName: string
     readonly status: string
+    readonly currency: string
     readonly dailyBudget?: number
     readonly lifetimeBudget?: number
     readonly startTime?: Date
     readonly endTime?: Date
+    readonly lastScaledAt?: Date // Last time budget was scaled (for recurring scale threshold)
     readonly updatedTime: Date
-    readonly createdAt: Date
     readonly syncedAt: Date
 }
 
 // Pure functions that operate on the AdSet data
 
 /**
- * Create a new AdSet
+ * Create AdSet from Facebook API response
+ * Handles nested campaign object and data transformation
+ * Currency must be provided from parent AdAccount
+ * Budget values are stored as raw data from Facebook API for easy tracking and calculation
  */
-export function createAdSet(props: AdSet): AdSet {
-    const now = new Date()
+export function createAdSet(data: any, accountId: string, adAccountId: string, currency: string): AdSet {
     return {
-        adAccountId: props.adAccountId,
-        adsetId: props.adsetId,
-        adsetName: props.adsetName,
-        campaignId: props.campaignId,
-        campaignName: props.campaignName,
-        status: props.status,
-        dailyBudget: props.dailyBudget,
-        lifetimeBudget: props.lifetimeBudget,
-        startTime: props.startTime,
-        endTime: props.endTime,
-        updatedTime: props.updatedTime,
-        createdAt: now,
-        syncedAt: now,
+        accountId,
+        adAccountId,
+        adsetId: data.id,
+        adsetName: data.name,
+        campaignId: data.campaign?.id || '',
+        campaignName: data.campaign?.name || '',
+        status: data.status,
+        currency,
+        dailyBudget: data.daily_budget ? Number(data.daily_budget) : undefined,
+        lifetimeBudget: data.lifetime_budget ? Number(data.lifetime_budget) : undefined,
+        startTime: data.start_time ? new Date(data.start_time) : undefined,
+        endTime: data.end_time ? new Date(data.end_time) : undefined,
+        updatedTime: new Date(data.updated_time),
+        syncedAt: new Date(),
     }
 }
 
 /**
  * Update AdSet with new metadata returning new instance
  */
-export function updateAdSet(adset: AdSet, updates: Partial<Omit<AdSet, 'id' | 'adAccountId' | 'adsetId' | 'createdAt'>>): AdSet {
+export function updateAdSet(adset: AdSet, updates: Partial<Omit<AdSet, 'id' | 'accountId' | 'adAccountId' | 'adsetId'>>): AdSet {
     return {
         ...adset,
         ...updates,
@@ -58,16 +63,27 @@ export function updateAdSet(adset: AdSet, updates: Partial<Omit<AdSet, 'id' | 'a
 }
 
 /**
+ * Mark adset as scaled (set lastScaledAt to current time)
+ * Used when budget scale suggestion is approved
+ */
+export function markAsScaled(adset: AdSet): AdSet {
+    return {
+        ...adset,
+        lastScaledAt: new Date(),
+    }
+}
+
+/**
  * Check if adset is in active status
  */
-export function isAdSetActive(adset: AdSet): boolean {
+export function isActive(adset: AdSet): boolean {
     return adset.status === 'ACTIVE'
 }
 
 /**
  * Determine budget type (daily, lifetime, or none)
  */
-export function getAdSetBudgetType(adset: AdSet): 'daily' | 'lifetime' | 'none' {
+export function getBudgetType(adset: AdSet): 'daily' | 'lifetime' | 'none' {
     if (adset.dailyBudget !== undefined) {
         return 'daily'
     }
@@ -78,12 +94,50 @@ export function getAdSetBudgetType(adset: AdSet): 'daily' | 'lifetime' | 'none' 
 }
 
 /**
+ * Calculate campaign age in days
+ */
+export function getAgeInDays(adset: AdSet): number | null {
+    if (!adset.startTime) {
+        return null
+    }
+    const now = new Date()
+    const ageMs = now.getTime() - adset.startTime.getTime()
+    return ageMs / (1000 * 60 * 60 * 24)
+}
+
+/**
+ * Check if adset has basic eligibility for suggestion analysis
+ * Requirements:
+ * - Must be ACTIVE status
+ * - Must have daily budget defined
+ *
+ * Note: Scale timing eligibility (initScaleDay/recurScaleDay) should be checked separately
+ * using AdAccountSettingDomain functions when config is available
+ */
+export function isEligibleForAnalysis(adset: AdSet): boolean {
+    // Must be active
+    if (!isActive(adset)) {
+        return false
+    }
+
+    // Must have daily budget
+    if (adset.dailyBudget === undefined || adset.dailyBudget === null) {
+        return false
+    }
+
+    return true
+}
+
+/**
  * AdSet Domain - Grouped collection of all AdSet-related functions
  * Following DDD principles with functional programming style
  */
 export const AdSetDomain = {
     createAdSet,
     updateAdSet,
-    isAdSetActive,
-    getAdSetBudgetType,
+    markAsScaled,
+    isActive,
+    getBudgetType,
+    getAgeInDays,
+    isEligibleForAnalysis,
 }

@@ -11,13 +11,16 @@ src/
 ├── domain/              # Business entities and rules (innermost layer)
 │   ├── aggregates/      # Core business objects with identity
 │   │   ├── account/     # Account aggregate (Facebook connection)
-│   │   └── ad-insights/ # Ad insights aggregates (AdSetInsight, ExportResult)
+│   │   ├── adset-insights/ # AdSet insights aggregates (AdSetInsight, ExportResult)
+│   │   ├── ad-set/      # AdSet aggregate (metadata, status, budget)
+│   │   ├── ad-account-setting/ # Ad account threshold settings
+│   │   └── suggestion/  # Performance improvement suggestions
 │   ├── value-objects/   # Immutable objects without identity
 │   │   ├── AdAccount.ts
 │   │   └── TimeRange.ts
 │   ├── services/        # Core business logic
 │   │   ├── AccountService.ts
-│   │   └── AdInsightsService.ts
+│   │   └── SuggestionAnalyzer.ts
 │   └── repositories/    # Repository interfaces
 ├── application/         # Application business rules
 │   ├── entities/        # Application-layer entities
@@ -298,16 +301,77 @@ Response:
 }
 ```
 
-### Ad Insights Export
+### AdSet Insights Sync
 
-**Manually Trigger Export**
+**Manually Trigger AdSet Insights Sync**
 ```http
-POST /api/v1/ad-insights/export
+POST /api/v1/adset-insights/sync
 
 Response:
 {
   "success": true,
-  "message": "Ad insights export completed successfully"
+  "message": "AdSet insights sync completed successfully",
+  "exportsCreated": 2,
+  "adAccountIds": ["act_123456789", "act_987654321"]
+}
+```
+
+### AdSet Metadata Sync
+
+**Manually Trigger AdSet Metadata Sync**
+```http
+POST /api/v1/adset-sync/sync
+
+Response:
+{
+  "success": true,
+  "message": "AdSet metadata sync completed successfully",
+  "adAccountsSynced": 2,
+  "adsetsSynced": 45
+}
+```
+
+### Suggestion Analysis
+
+**Manually Trigger Suggestion Analysis**
+```http
+POST /api/v1/suggestions/analyze
+
+Response:
+{
+  "success": true,
+  "message": "Suggestion analysis completed successfully",
+  "suggestionsCreated": 5,
+  "adsetsProcessed": 20
+}
+```
+
+**Approve Suggestion**
+```http
+POST /api/v1/suggestions/:suggestionId/approve
+
+Response:
+{
+  "success": true,
+  "message": "Suggestion approved and budget updated successfully",
+  "suggestion": {...}
+}
+
+Note: When a suggestion is approved:
+1. Updates Facebook adset budget via API
+2. Marks adset as scaled by setting lastScaledAt to current time
+3. Enables recurring scale eligibility after recurScaleDay period
+```
+
+**Reject Suggestion**
+```http
+POST /api/v1/suggestions/:suggestionId/reject
+
+Response:
+{
+  "success": true,
+  "message": "Suggestion rejected successfully",
+  "suggestion": {...}
 }
 ```
 
@@ -428,25 +492,53 @@ Response:
 }
 ```
 
-## Ad Insights Cron Job
+## Automated Cron Jobs
 
-The system automatically exports ad insights on a scheduled basis using cron jobs.
+The system automatically executes three scheduled tasks using cron jobs:
 
-### Configuration
+### 1. AdSet Insights Sync
+Exports performance metrics for all active adsets.
 
-Set the cron schedule via environment variable:
-
+**Configuration:**
 ```bash
-AD_INSIGHTS_CRON_SCHEDULE=0 2 * * *  # Every day at 2 AM
+ADSET_INSIGHTS_CRON_SCHEDULE=0 2 * * *  # Every day at 2 AM (default)
 ```
 
-**Cron Format:** `second minute hour day month weekday` (node-cron format)
+### 2. AdSet Metadata Sync
+Syncs adset metadata (name, status, budget, targeting) from Facebook.
+
+**Configuration:**
+```bash
+ADSET_SYNC_CRON_SCHEDULE=0 1 * * 1  # Every Monday at 1 AM (default)
+```
+
+### 3. Suggestion Analysis
+Analyzes adset performance against thresholds and generates budget increase suggestions.
+
+**Scale Timing Logic:**
+- **Initial Scale**: Adset must be at least `initScaleDay` days old (from `startTime`) AND never scaled before
+- **Recurring Scale**: At least `recurScaleDay` days must pass since last scale (from `lastScaledAt`)
+- When a suggestion is approved, the adset's `lastScaledAt` is updated to track recurring scales
+
+**Configuration:**
+```bash
+SUGGESTION_ANALYSIS_CRON_SCHEDULE=0 3 * * *  # Every day at 3 AM (default)
+```
+
+**Cron Format:** `minute hour day month weekday` (node-cron format)
 
 **Examples:**
-- `0 2 * * *` - Every day at 2 AM (default)
+- `0 2 * * *` - Every day at 2 AM
 - `0 0 * * 0` - Every Sunday at midnight
 - `0 */6 * * *` - Every 6 hours
 - `*/30 * * * *` - Every 30 minutes
+
+### Manual Triggers
+
+All cron jobs can be manually triggered via API endpoints:
+- `POST /api/v1/adset-insights/sync` - Trigger adset insights sync
+- `POST /api/v1/adset-sync/sync` - Trigger adset metadata sync
+- `POST /api/v1/suggestions/analyze` - Trigger suggestion analysis
 
 ### How It Works
 
@@ -620,8 +712,7 @@ const toDomain = (doc: any): Account => {
   connectedAt: Date         // Initial connection timestamp
   expiresAt: Date          // Token expiration
   lastErrorCode?: string   // Last error encountered
-  lastSyncAt?: Date        // Last successful sync timestamp (for incremental syncs)
-  adAccounts: AdAccount[]  // User's ad accounts
+  adAccounts: AdAccount[]  // User's ad accounts (with per-account sync timestamps)
   createdAt: Date
   updatedAt: Date
 }
@@ -638,6 +729,77 @@ const toDomain = (doc: any): Account => {
   spendCap?: string       // Spending cap
   adAccountId: string     // Facebook ad account ID
   isActive: boolean       // Whether account is active in our system
+  lastSyncAdSet?: Date    // Last adset metadata sync timestamp
+  lastSyncInsight?: Date  // Last adset insights sync timestamp
+}
+```
+
+### AdSet Collection
+
+```typescript
+{
+  accountId: string        // Our internal account ID
+  adAccountId: string      // Facebook ad account ID
+  adsetId: string          // Facebook adset ID (unique)
+  adsetName: string        // AdSet name
+  campaignId: string       // Facebook campaign ID
+  campaignName: string     // Campaign name
+  status: string           // ACTIVE | PAUSED | ARCHIVED
+  currency: string         // Currency code
+  dailyBudget?: number     // Daily budget in cents (raw from Facebook API)
+  lifetimeBudget?: number  // Lifetime budget in cents (raw from Facebook API)
+  startTime?: Date         // Adset start time
+  endTime?: Date           // Adset end time
+  lastScaledAt?: Date      // Last time budget was scaled (for recurring scale threshold)
+  updatedTime: Date        // Last updated from Facebook
+  syncedAt: Date           // Last sync timestamp
+}
+```
+
+### AdAccountSetting Collection
+
+```typescript
+{
+  adAccountId: string      // Facebook ad account ID (unique)
+  scalePercent?: number    // Budget increase percentage (e.g., 20 for 20%)
+  initScaleDay?: number    // Minimum adset age (from startTime) before first budget scale
+  recurScaleDay?: number   // Days since last scale (from lastScaledAt) before recurring scale
+  note?: string           // Optional notes
+  // Threshold settings (6 configurable metrics)
+  cpm?: number            // Cost per 1000 impressions threshold
+  ctr?: number            // Click-through rate threshold (%)
+  frequency?: number      // Frequency threshold
+  inlineLinkCtr?: number  // Inline link CTR threshold (%)
+  costPerInlineLinkClick?: number  // Cost per inline link click threshold
+  purchaseRoas?: number   // Purchase ROAS threshold
+  createdAt: Date
+  updatedAt: Date
+}
+```
+
+### Suggestion Collection
+
+```typescript
+{
+  accountId: string        // Our internal account ID
+  adAccountId: string      // Facebook ad account ID
+  adAccountName: string    // Ad account name
+  campaignName: string     // Campaign name
+  adsetId: string          // Facebook adset ID
+  adsetName: string        // AdSet name
+  dailyBudget: number      // Current daily budget in cents
+  suggestedBudget: number  // Suggested daily budget in cents
+  scalePercent: number     // Budget increase percentage applied
+  note?: string           // Optional notes from settings
+  metrics: Array<{        // Metrics that exceeded thresholds
+    name: string          // Metric name (e.g., "cpm", "ctr")
+    actual: number        // Actual metric value
+    threshold: number     // Threshold value that was exceeded
+  }>
+  status: string          // pending | approved | rejected
+  createdAt: Date
+  approvedAt?: Date       // When suggestion was approved
+  rejectedAt?: Date       // When suggestion was rejected
 }
 ```
 
@@ -705,13 +867,16 @@ The CSV data is parsed and stored in two collections:
   campaignName?: string
   adsetId: string
   adsetName?: string
-  adsetObjective?: string  // Different from ad insights
+  adsetObjective?: string
   impressions?: number
   clicks?: number
-  spend?: number
+  amountSpent?: number
   cpm?: number
-  cpc?: number
   ctr?: number
+  frequency?: number
+  inlineLinkCtr?: number        // Renamed from linkCtr
+  costPerInlineLinkClick?: number
+  purchaseRoas?: number          // Renamed from roas
   reach?: number
   actions?: string
   actionValues?: string

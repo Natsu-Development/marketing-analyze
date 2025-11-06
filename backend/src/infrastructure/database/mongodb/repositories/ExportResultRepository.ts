@@ -3,7 +3,7 @@
  */
 
 import { IExportResultRepository } from '../../../../domain/repositories/IExportResultRepository'
-import { ExportResult } from '../../../../domain/aggregates/ad-insights'
+import { ExportResult } from '../../../../domain/aggregates/adset-insights'
 import { ExportResultModel } from '../schemas/ExportResultSchema'
 
 const toDomain = (doc: any): ExportResult => {

@@ -15,6 +15,8 @@ import {
     AsyncReportStatus,
     CSVExportResult,
     FetchAdSetsParams,
+    UpdateAdsetBudgetParams,
+    UpdateAdsetBudgetResponse,
 } from '../../../application/ports/IFacebookClient'
 import { AdAccount } from '../../../domain'
 import { appConfig } from '../../../config/env'
@@ -249,7 +251,7 @@ const fetchAdSets = async (params: FetchAdSetsParams): Promise<any[]> => {
         const queryParams = new URLSearchParams({
             access_token: params.accessToken,
             fields: 'id,name,campaign{id,name},status,daily_budget,lifetime_budget,start_time,end_time,updated_time',
-            filtering: JSON.stringify([{ field: 'updated_time', operator: 'GREATER_THAN', value: params.updatedSince }]),
+            filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE'] }]),
             limit: '500',
         })
 
@@ -259,6 +261,26 @@ const fetchAdSets = async (params: FetchAdSetsParams): Promise<any[]> => {
         return response.data.data || []
     } catch (error: any) {
         return handleError('fetchAdSets', error)
+    }
+}
+
+/**
+ * Update adset daily budget
+ * Updates the daily_budget field for an adset via Facebook Marketing API
+ */
+const updateAdsetBudget = async (params: UpdateAdsetBudgetParams): Promise<UpdateAdsetBudgetResponse> => {
+    try {
+        const budgetValue = params.dailyBudget
+
+        const url = `${baseUrl}/${params.adsetId}`
+        await axios.post(url, {
+            daily_budget: budgetValue,
+            access_token: params.accessToken,
+        })
+
+        return { success: true }
+    } catch (error: any) {
+        return handleError('updateAdsetBudget', error)
     }
 }
 
@@ -276,4 +298,5 @@ export const facebookClient: IFacebookClient = {
     pollReportStatus,
     getReportCSV,
     fetchAdSets,
+    updateAdsetBudget,
 }
