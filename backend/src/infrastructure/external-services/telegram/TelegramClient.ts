@@ -127,13 +127,13 @@ async function notifySuggestionCreated(
             },
         )
 
-        // Success
+        // API error
         if (!response.data.ok) {
             logger.warn(`Telegram failed: ${response.data.description}`)
             return { success: false, error: response.data.description }
         }
 
-        // API error
+        // Success
         logger.info(`Telegram sent (msg_id: ${response.data.result.message_id})`)
         return { success: true, messageId: response.data.result.message_id }
 
