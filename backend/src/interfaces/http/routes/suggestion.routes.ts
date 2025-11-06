@@ -13,11 +13,15 @@ import { jsonSuccess, jsonError } from '../helpers/response-helpers'
  * Suggestion routes
  *
  * Routes:
+ * - GET    ?status=applied          - Get suggestions by status, sorted by exceeding count
  * - POST   /analyze                 - Manually trigger suggestion analysis
  * - POST   /:suggestionId/approve   - Approve suggestion and update Facebook budget
  * - POST   /:suggestionId/reject    - Reject suggestion
  */
 export const suggestionRoutes = Router()
+
+// Get suggestions by status (sorted by exceeding count)
+suggestionRoutes.get('/', suggestionController.getSuggestionsByStatus)
 
 // Analyze suggestions
 suggestionRoutes.post('/analyze', async (_req, res) => {

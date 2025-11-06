@@ -102,14 +102,6 @@ const findByAdsetId = async (adsetId: string): Promise<Suggestion[]> => {
 }
 
 /**
- * Find all suggestions with pending status
- */
-const findPending = async (): Promise<Suggestion[]> => {
-    const docs = await SuggestionSchema.find({ status: 'pending' }).sort({ createdAt: -1 })
-    return docs.map(toDomain)
-}
-
-/**
  * Update suggestion status
  */
 const updateStatus = async (id: string, status: 'pending' | 'rejected' | 'applied'): Promise<Suggestion | null> => {
@@ -122,11 +114,20 @@ const updateStatus = async (id: string, status: 'pending' | 'rejected' | 'applie
     return result ? toDomain(result) : null
 }
 
+/**
+ * Find all suggestions by status, sorted by exceeding count (descending)
+ */
+const findByStatus = async (status: 'pending' | 'rejected' | 'applied'): Promise<Suggestion[]> => {
+    const docs = await SuggestionSchema.find({ status })
+        .sort({ metricsExceededCount: -1 })
+    return docs.map(toDomain)
+}
+
 export const suggestionRepository: ISuggestionRepository = {
     save,
     findById,
     findByAdAccountId,
     findByAdsetId,
-    findPending,
     updateStatus,
+    findByStatus,
 }

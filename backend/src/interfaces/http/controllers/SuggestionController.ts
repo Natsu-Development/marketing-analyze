@@ -6,6 +6,7 @@
 import { Request, Response } from 'express'
 import { z } from 'zod'
 import { ApproveSuggestionUseCase, RejectSuggestionUseCase } from '../../../application/use-cases/suggestion'
+import { suggestionRepository } from '../../../config/dependencies'
 import {
     jsonSuccess,
     jsonError,
@@ -19,6 +20,12 @@ import {
 
 const SuggestionIdParamSchema = z.object({
     suggestionId: z.string().min(1, 'Suggestion ID is required'),
+})
+
+const SuggestionStatusQuerySchema = z.object({
+    status: z.enum(['pending', 'rejected', 'applied'], {
+        errorMap: () => ({ message: 'Status must be one of: pending, rejected, applied' }),
+    }),
 })
 
 // ============================================================================
@@ -75,6 +82,31 @@ export async function rejectSuggestion(req: Request, res: Response): Promise<voi
         }
 
         return jsonSuccess(res, result.data)
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error)
+        }
+        return handleInternalError(res, error)
+    }
+}
+
+/**
+ * GET /api/suggestions?status=applied
+ * Retrieves suggestions by status, sorted by exceeding count (descending)
+ */
+export async function getSuggestionsByStatus(req: Request, res: Response): Promise<void> {
+    try {
+        // Validate query parameter
+        const { status } = SuggestionStatusQuerySchema.parse(req.query)
+
+        // Fetch suggestions from repository
+        const suggestions = await suggestionRepository.findByStatus(status)
+
+        return jsonSuccess(res, {
+            status,
+            count: suggestions.length,
+            suggestions,
+        })
     } catch (error: any) {
         if (error instanceof z.ZodError) {
             return handleValidationError(res, error)

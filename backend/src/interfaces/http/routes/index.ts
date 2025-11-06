@@ -9,6 +9,7 @@ import { adsetInsightsRoutes } from './adset-insights.routes'
 import { adsetSyncRoutes } from './adset-sync.routes'
 import { adAccountSettingRoutes } from './ad-account-setting.routes'
 import { suggestionRoutes } from './suggestion.routes'
+import { accountRoutes } from './account.routes'
 
 /**
  * Creates v1 API router with all sub-routes
@@ -29,6 +30,9 @@ v1Router.use('/ad-account-settings', adAccountSettingRoutes)
 
 // Suggestion routes
 v1Router.use('/suggestions', suggestionRoutes)
+
+// Account routes
+v1Router.use('/accounts', accountRoutes)
 
 /**
  * Main API router with versioning

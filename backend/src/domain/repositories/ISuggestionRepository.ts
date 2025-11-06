@@ -35,15 +35,16 @@ export interface ISuggestionRepository {
     findByAdsetId(adsetId: string): Promise<Suggestion[]>
 
     /**
-     * Find all suggestions with pending status
-     * Postcondition: Returns array of pending suggestions (empty if none found)
-     */
-    findPending(): Promise<Suggestion[]>
-
-    /**
      * Update suggestion status
      * Precondition: id must be valid MongoDB ObjectId
      * Postcondition: Returns updated Suggestion with new status and updatedAt timestamp
      */
     updateStatus(id: string, status: 'pending' | 'rejected' | 'applied'): Promise<Suggestion | null>
+
+    /**
+     * Find all suggestions by status, sorted by exceeding count (descending)
+     * Precondition: status must be one of 'pending', 'rejected', or 'applied'
+     * Postcondition: Returns array of suggestions sorted by metricsExceededCount descending
+     */
+    findByStatus(status: 'pending' | 'rejected' | 'applied'): Promise<Suggestion[]>
 }
