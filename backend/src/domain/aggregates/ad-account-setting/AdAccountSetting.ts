@@ -6,20 +6,24 @@
  */
 
 // Configurable metrics constant - aligns with ADSET_INSIGHT_FIELDS
-export const CONFIGURABLE_SETTINGS = [
+export const METRIC_FIELDS = [
     'cpm',
     'ctr',
     'frequency',
     'inlineLinkCtr',
     'costPerInlineLinkClick',
     'purchaseRoas',
+] as const
+
+export const SUGGESTION_FIELDS = [
     'scalePercent',
     'initScaleDay',
     'recurScaleDay',
     'note',
 ] as const
 
-export type SettingFieldName = typeof CONFIGURABLE_SETTINGS[number]
+export type MetricFieldName = typeof METRIC_FIELDS[number]
+export type SuggestionFieldName = typeof SUGGESTION_FIELDS[number]
 
 export interface AdAccountSetting {
     readonly id?: string
@@ -89,7 +93,7 @@ export function createDefaultAdAccountSetting(adAccountId: string): AdAccountSet
  * Check if a metric field name is valid
  */
 export function isValidSetting(fieldName: string): boolean {
-    return CONFIGURABLE_SETTINGS.includes(fieldName as SettingFieldName)
+    return METRIC_FIELDS.includes(fieldName as MetricFieldName) || SUGGESTION_FIELDS.includes(fieldName as SuggestionFieldName)
 }
 
 /**

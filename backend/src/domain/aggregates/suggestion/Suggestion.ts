@@ -5,7 +5,7 @@
  * Implemented using functional programming style following DDD principles
  */
 
-import { CONFIGURABLE_METRICS, MetricFieldName } from '../ad-account-setting/AdAccountSetting'
+import { METRIC_FIELDS, MetricFieldName } from '../ad-account-setting/AdAccountSetting'
 
 /**
  * Exceeding metric data structure
@@ -56,7 +56,7 @@ function isValidStatus(status: string): status is SuggestionStatus {
  * Validate metric name
  */
 function isValidMetricName(metricName: string): metricName is MetricFieldName {
-    return CONFIGURABLE_METRICS.includes(metricName as MetricFieldName)
+    return METRIC_FIELDS.includes(metricName as MetricFieldName)
 }
 
 /**
