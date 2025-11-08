@@ -7,12 +7,7 @@ import { Request, Response } from 'express'
 import { z } from 'zod'
 import { ApproveSuggestionUseCase, RejectSuggestionUseCase } from '../../../application/use-cases/suggestion'
 import { suggestionRepository } from '../../../config/dependencies'
-import {
-    jsonSuccess,
-    jsonError,
-    handleValidationError,
-    handleInternalError,
-} from '../helpers'
+import { jsonSuccess, jsonError, handleValidationError, handleInternalError } from '../helpers'
 
 // ============================================================================
 // Validation Schemas
@@ -46,9 +41,14 @@ export async function approveSuggestion(req: Request, res: Response): Promise<vo
 
         // Handle use case result
         if (!result.success) {
-            const statusCode = result.error === 'NOT_FOUND' ? 404 :
-                              result.error === 'ACCOUNT_NOT_FOUND' ? 404 :
-                              result.error === 'VALIDATION_ERROR' ? 400 : 500
+            const statusCode =
+                result.error === 'NOT_FOUND'
+                    ? 404
+                    : result.error === 'ACCOUNT_NOT_FOUND'
+                      ? 404
+                      : result.error === 'VALIDATION_ERROR'
+                        ? 400
+                        : 500
 
             return jsonError(res, result.error || 'APPROVAL_FAILED', statusCode, result.message)
         }
@@ -75,8 +75,7 @@ export async function rejectSuggestion(req: Request, res: Response): Promise<voi
         const result = await RejectSuggestionUseCase.execute({ suggestionId })
 
         if (!result.success) {
-            const statusCode = result.error === 'NOT_FOUND' ? 404 :
-                              result.error === 'VALIDATION_ERROR' ? 400 : 500
+            const statusCode = result.error === 'NOT_FOUND' ? 404 : result.error === 'VALIDATION_ERROR' ? 400 : 500
 
             return jsonError(res, result.error || 'REJECTION_FAILED', statusCode, result.message)
         }

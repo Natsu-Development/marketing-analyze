@@ -12,7 +12,7 @@ export function Navigation() {
 
   const links = [
     { href: '/', label: t('navigation.dashboard'), icon: Home },
-    { href: '/sync', label: t('navigation.adAccounts'), icon: RefreshCw },
+    { href: '/account', label: t('navigation.adAccounts'), icon: RefreshCw },
     { href: '/suggestions', label: t('navigation.recommendations'), icon: Lightbulb },
   ]
 

@@ -21,10 +21,24 @@
     "stoppedAt": "Stopped At",
     "roas": "ROAS",
     "viewSettings": "View Settings",
+    "retry": "Retry",
+    "appliedSuggestions": "Applied Suggestions",
+    "totalBudgetIncreased": "Total Budget Increased",
+    "appliedScaling": "Applied Scaling",
+    "appliedScalingSubtitle": "Ad sets with approved budget increases",
+    "noAppliedSuggestions": "No applied suggestions yet",
+    "viewSuggestions": "View Suggestions",
+    "viewInFacebook": "View in Facebook",
+    "appliedAt": "Applied At",
+    "currentBudget": "Current Budget",
+    "newBudget": "New Budget",
+    "budgetIncrease": "Budget Increase",
+    "metricsExceeded": "Metrics Exceeded",
     "status": {
       "active": "active",
       "paused": "paused",
-      "stopped": "stopped"
+      "stopped": "stopped",
+      "applied": "applied"
     }
   },
   "sync": {
@@ -116,10 +130,16 @@
     "campaign": "Campaign",
     "adSet": "Ad Set",
     "currentABO": "Current ABO:",
+    "currentBudget": "Current Budget",
+    "suggestedBudget": "Suggested Budget",
     "scalePercent": "Scale Percent:",
     "reject": "Reject",
     "approve": "Approve",
     "recentlyReviewed": "Recently Reviewed",
+    "retry": "Retry",
+    "approveFailed": "Failed to approve suggestion",
+    "rejectFailed": "Failed to reject suggestion",
+    "metricsExceeded": "Metrics Exceeded",
     "impactLevels": {
       "high": "high",
       "medium": "medium",
@@ -127,8 +147,106 @@
     },
     "status": {
       "approved": "approved",
-      "rejected": "rejected"
+      "rejected": "rejected",
+      "applied": "applied"
     }
+  },
+  "account": {
+    "title": "Accounts",
+    "subtitle": "Manage your advertising accounts and sync settings",
+    "fbConnectedSuccess": "Facebook connected successfully",
+    "authFailedError": "Authentication failed",
+    "fbDisconnectedSuccess": "Facebook disconnected successfully",
+    "refreshSuccess": "Refreshed {{count}} ad accounts",
+    "accountToggled": "Ad account {{status}}",
+    "activated": "activated",
+    "deactivated": "deactivated",
+    "analyze": "Analyze",
+    "connectionCard": {
+      "title": "Facebook Connection",
+      "statusLabel": "Status:",
+      "disconnect": "Disconnect"
+    },
+    "adAccountCard": {
+      "settingsButton": "Settings",
+      "lastInsightSync": "Last Insight Sync",
+      "lastMetadataSync": "Last Metadata Sync"
+    },
+    "adAccountsList": {
+      "title": "Ad Accounts"
+    },
+    "noConnection": {
+      "title": "No Facebook Connection",
+      "description": "Connect your Facebook account to sync ad accounts and campaigns",
+      "connectButton": "Connect Facebook"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "analysis": {
+      "title": "Running Analysis",
+      "inProgress": "Analyzing your ad accounts and generating suggestions...",
+      "completed": "Analysis completed successfully!",
+      "failed": "Analysis failed. Please try again.",
+      "progress": "Progress",
+      "insightsExported": "Insights exported",
+      "adsetsSynced": "AdSets synced",
+      "suggestionsCreated": "Suggestions created",
+      "successMessage": "Analysis completed! Created {{count}} new suggestions",
+      "errorMessage": "Analysis failed",
+      "unknownError": "An unknown error occurred"
+    }
+  },
+  "pages": {
+    "account": {
+      "title": "Accounts",
+      "subtitle": "Manage your advertising accounts and sync settings"
+    },
+    "adAccountConfig": {
+      "title": "Ad Account Settings",
+      "noAccountSelected": "No Ad Account Selected",
+      "selectAccountText": "Please select an ad account from the Accounts page.",
+      "goToAccounts": "Go to Accounts"
+    }
+  },
+  "settings": {
+    "performanceThresholds": {
+      "title": "Performance Thresholds",
+      "description": "Define minimum performance thresholds for scaling",
+      "cpmLabel": "CPM (Cost per 1K Impressions)",
+      "cpmPlaceholder": "Enter CPM threshold",
+      "ctrLabel": "CTR (Click Through Rate %)",
+      "ctrPlaceholder": "Enter CTR threshold",
+      "frequencyLabel": "Frequency",
+      "frequencyPlaceholder": "Enter frequency threshold",
+      "inlineLinkCtrLabel": "Inline Link CTR (%)",
+      "inlineLinkCtrPlaceholder": "Enter inline link CTR",
+      "costPerLinkLabel": "Cost Per Inline Link Click",
+      "costPlaceholder": "Enter cost threshold",
+      "purchaseRoasLabel": "Purchase ROAS",
+      "purchaseRoasPlaceholder": "e.g., 2.5",
+      "purchaseRoasHint": "Enter as decimal (e.g., 2.5 not 2.5x)"
+    },
+    "scalingConfig": {
+      "title": "Scaling Configuration",
+      "description": "Configure how and when to scale budgets",
+      "scalePercentLabel": "Scale Percent (%)",
+      "scalePercentPlaceholder": "e.g., 20",
+      "scalePercentHint": "Budget increase percentage",
+      "initScaleDayLabel": "Initial Scale Day",
+      "initScaleDayPlaceholder": "e.g., 3",
+      "initScaleDayHint": "Days before first scale (from start time)",
+      "recurScaleDayLabel": "Recurring Scale Day",
+      "recurScaleDayPlaceholder": "e.g., 7",
+      "recurScaleDayHint": "Days between scales (from last scaled time)"
+    },
+    "notes": {
+      "title": "Notes",
+      "description": "Add any additional notes or instructions",
+      "placeholder": "Add notes for this ad account configuration..."
+    },
+    "savedSuccessfully": "Settings saved successfully"
   },
   "common": {
     "save": "Save",
@@ -137,8 +255,15 @@
     "delete": "Delete",
     "confirm": "Confirm",
     "back": "Back",
+    "close": "Close",
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "saving": "Saving...",
+    "saveSettings": "Save Settings",
+    "refresh": "Refresh",
+    "backToAccounts": "Back to Accounts",
+    "neverSynced": "Never",
+    "unknownError": "Unknown"
   }
 }
