@@ -8,6 +8,8 @@ import { getSuggestions, approveSuggestion, rejectSuggestion } from '@/api/sugge
 import type { Suggestion } from '@/api/types'
 import { formatCurrency } from '@/lib/currency'
 
+const PAGE_SIZE = 20
+
 export function SuggestionsList() {
   const { t } = useTranslation()
 
@@ -15,17 +17,21 @@ export function SuggestionsList() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalSuggestions, setTotalSuggestions] = useState(0)
 
   useEffect(() => {
     fetchSuggestions()
-  }, [])
+  }, [currentPage])
 
   async function fetchSuggestions() {
     try {
       setLoading(true)
       setError(null)
-      const response = await getSuggestions('pending')
+      const offset = (currentPage - 1) * PAGE_SIZE
+      const response = await getSuggestions('pending', PAGE_SIZE, offset)
       setSuggestions(response.suggestions)
+      setTotalSuggestions(response.total)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load suggestions')
     } finally {
@@ -67,6 +73,7 @@ export function SuggestionsList() {
     return { label: 'low', color: 'bg-gray-500/20 text-gray-600 dark:text-gray-400' }
   }
 
+  const totalPages = Math.ceil(totalSuggestions / PAGE_SIZE)
   const pendingSuggestions = suggestions.filter((s) => s.status === 'pending')
   const reviewedSuggestions = suggestions.filter((s) => s.status !== 'pending')
 
@@ -103,8 +110,13 @@ export function SuggestionsList() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <Badge variant="secondary" className="text-sm">
-              {pendingSuggestions.length} {t('suggestions.pending')}
+              {totalSuggestions} {t('suggestions.pending')} {totalSuggestions !== pendingSuggestions.length && `(${t('suggestions.showing')} ${pendingSuggestions.length})`}
             </Badge>
+            {totalPages > 1 && (
+              <div className="text-sm text-muted-foreground">
+                {t('suggestions.page')} {currentPage} {t('suggestions.of')} {totalPages}
+              </div>
+            )}
           </div>
 
           {pendingSuggestions.length === 0 ? (
@@ -197,6 +209,63 @@ export function SuggestionsList() {
                   </div>
                 )
               })}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1 || loading}
+              >
+                {t('suggestions.previous')}
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  // Show first page, last page, current page, and pages around current
+                  const showPage =
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+
+                  if (!showPage) {
+                    // Show ellipsis for skipped pages
+                    if (page === currentPage - 2 || page === currentPage + 2) {
+                      return (
+                        <span key={page} className="px-2 text-muted-foreground">
+                          ...
+                        </span>
+                      )
+                    }
+                    return null
+                  }
+
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      disabled={loading}
+                      className="min-w-[40px]"
+                    >
+                      {page}
+                    </Button>
+                  )
+                })}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages || loading}
+              >
+                {t('suggestions.next')}
+              </Button>
             </div>
           )}
         </div>

@@ -1,11 +1,14 @@
 import { get, post } from './client'
 import { Suggestion, SuggestionStatus } from './types'
 
-interface SuggestionsResponse {
+export interface SuggestionsResponse {
   success: true
   status: SuggestionStatus
   suggestions: Suggestion[]
   count: number
+  total: number
+  limit?: number
+  offset?: number
 }
 
 interface ActionResponse {
@@ -14,11 +17,20 @@ interface ActionResponse {
 }
 
 export async function getSuggestions(
-  status: SuggestionStatus
+  status: SuggestionStatus,
+  limit?: number,
+  offset?: number
 ): Promise<SuggestionsResponse> {
-  const response = await get<SuggestionsResponse>(
-    `/api/v1/suggestions?status=${status}`
-  )
+  let url = `/api/v1/suggestions?status=${status}`
+
+  if (limit !== undefined) {
+    url += `&limit=${limit}`
+  }
+  if (offset !== undefined) {
+    url += `&offset=${offset}`
+  }
+
+  const response = await get<SuggestionsResponse>(url)
 
   return response
 }

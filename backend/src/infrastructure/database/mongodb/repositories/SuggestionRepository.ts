@@ -3,7 +3,7 @@
  * Uses plain functional approach following existing repository patterns
  */
 
-import { ISuggestionRepository, Suggestion, ExceedingMetric } from '../../../../domain'
+import { ISuggestionRepository, Suggestion, ExceedingMetric, PaginatedSuggestions } from '../../../../domain'
 import { SuggestionSchema } from '../schemas/SuggestionSchema'
 
 // Convert Mongoose document to plain domain object
@@ -116,11 +116,34 @@ const updateStatus = async (id: string, status: 'pending' | 'rejected' | 'applie
 
 /**
  * Find all suggestions by status, sorted by exceeding count (descending)
+ * Supports pagination with limit and offset
  */
-const findByStatus = async (status: 'pending' | 'rejected' | 'applied'): Promise<Suggestion[]> => {
-    const docs = await SuggestionSchema.find({ status })
+const findByStatus = async (
+    status: 'pending' | 'rejected' | 'applied',
+    limit?: number,
+    offset?: number
+): Promise<PaginatedSuggestions> => {
+    const query = SuggestionSchema.find({ status })
         .sort({ metricsExceededCount: -1 })
-    return docs.map(toDomain)
+
+    // Apply pagination if limit is provided
+    if (offset !== undefined && offset > 0) {
+        query.skip(offset)
+    }
+    if (limit !== undefined && limit > 0) {
+        query.limit(limit)
+    }
+
+    // Execute query and get total count in parallel
+    const [docs, total] = await Promise.all([
+        query.exec(),
+        SuggestionSchema.countDocuments({ status })
+    ])
+
+    return {
+        suggestions: docs.map(toDomain),
+        total
+    }
 }
 
 export const suggestionRepository: ISuggestionRepository = {
