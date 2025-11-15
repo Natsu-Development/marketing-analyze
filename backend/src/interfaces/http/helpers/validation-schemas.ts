@@ -34,13 +34,17 @@ export const AdAccountIdParamSchema = z.object({
  * Schema for upsert ad account setting request body
  * All metric threshold fields and suggestion parameters are optional
  */
-export const UpsertAdAccountSettingSchema = z.object({
-    cpm: z.number().optional(),
-    ctr: z.number().optional(),
-    frequency: z.number().optional(),
-    inlineLinkCtr: z.number().optional(),
-    costPerInlineLinkClick: z.number().optional(),
-    purchaseRoas: z.number().optional(),
-    scalePercent: z.number().optional(),
-    note: z.string().optional(),
-}).strict() // Reject unknown fields
+export const UpsertAdAccountSettingSchema = z
+    .object({
+        cpm: z.number().optional(),
+        ctr: z.number().optional(),
+        frequency: z.number().optional(),
+        inlineLinkCtr: z.number().optional(),
+        costPerInlineLinkClick: z.number().optional(),
+        purchaseRoas: z.number().optional(),
+        scalePercent: z.number().optional(),
+        note: z.string().optional(),
+        initScaleDay: z.number().optional(),
+        recurScaleDay: z.number().optional(),
+    })
+    .strict() // Reject unknown fields

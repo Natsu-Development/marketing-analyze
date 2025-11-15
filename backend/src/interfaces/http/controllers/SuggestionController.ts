@@ -7,12 +7,7 @@ import { Request, Response } from 'express'
 import { z } from 'zod'
 import { ApproveSuggestionUseCase, RejectSuggestionUseCase } from '../../../application/use-cases/suggestion'
 import { suggestionRepository } from '../../../config/dependencies'
-import {
-    jsonSuccess,
-    jsonError,
-    handleValidationError,
-    handleInternalError,
-} from '../helpers'
+import { jsonSuccess, jsonError, handleValidationError, handleInternalError } from '../helpers'
 
 // ============================================================================
 // Validation Schemas
@@ -26,6 +21,8 @@ const SuggestionStatusQuerySchema = z.object({
     status: z.enum(['pending', 'rejected', 'applied'], {
         errorMap: () => ({ message: 'Status must be one of: pending, rejected, applied' }),
     }),
+    limit: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
+    offset: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
 })
 
 // ============================================================================
@@ -46,9 +43,14 @@ export async function approveSuggestion(req: Request, res: Response): Promise<vo
 
         // Handle use case result
         if (!result.success) {
-            const statusCode = result.error === 'NOT_FOUND' ? 404 :
-                              result.error === 'ACCOUNT_NOT_FOUND' ? 404 :
-                              result.error === 'VALIDATION_ERROR' ? 400 : 500
+            const statusCode =
+                result.error === 'NOT_FOUND'
+                    ? 404
+                    : result.error === 'ACCOUNT_NOT_FOUND'
+                      ? 404
+                      : result.error === 'VALIDATION_ERROR'
+                        ? 400
+                        : 500
 
             return jsonError(res, result.error || 'APPROVAL_FAILED', statusCode, result.message)
         }
@@ -75,8 +77,7 @@ export async function rejectSuggestion(req: Request, res: Response): Promise<voi
         const result = await RejectSuggestionUseCase.execute({ suggestionId })
 
         if (!result.success) {
-            const statusCode = result.error === 'NOT_FOUND' ? 404 :
-                              result.error === 'VALIDATION_ERROR' ? 400 : 500
+            const statusCode = result.error === 'NOT_FOUND' ? 404 : result.error === 'VALIDATION_ERROR' ? 400 : 500
 
             return jsonError(res, result.error || 'REJECTION_FAILED', statusCode, result.message)
         }
@@ -91,21 +92,25 @@ export async function rejectSuggestion(req: Request, res: Response): Promise<voi
 }
 
 /**
- * GET /api/suggestions?status=applied
+ * GET /api/suggestions?status=applied&limit=20&offset=0
  * Retrieves suggestions by status, sorted by exceeding count (descending)
+ * Supports pagination with limit and offset parameters
  */
 export async function getSuggestionsByStatus(req: Request, res: Response): Promise<void> {
     try {
-        // Validate query parameter
-        const { status } = SuggestionStatusQuerySchema.parse(req.query)
+        // Validate query parameters
+        const { status, limit, offset } = SuggestionStatusQuerySchema.parse(req.query)
 
-        // Fetch suggestions from repository
-        const suggestions = await suggestionRepository.findByStatus(status)
+        // Fetch paginated suggestions from repository
+        const result = await suggestionRepository.findByStatus(status, limit, offset)
 
         return jsonSuccess(res, {
             status,
-            count: suggestions.length,
-            suggestions,
+            count: result.suggestions.length,
+            total: result.total,
+            limit,
+            offset,
+            suggestions: result.suggestions,
         })
     } catch (error: any) {
         if (error instanceof z.ZodError) {

@@ -1,0 +1,804 @@
+{
+  "info": {
+    "name": "Marketing Analytics Backend API",
+    "description": "Comprehensive API collection for Facebook Advertising Analytics Backend. This API manages Facebook ad accounts, AdSets, insights, and provides automated suggestion system based on performance metrics.\n\n**Base URL:** `http://localhost:3001/api/v1`\n\n**Authentication:** Facebook OAuth 2.0\n\n**Version:** 1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the API server is healthy and running."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"healthy\",\n  \"timestamp\": \"2025-11-07T12:00:00.000Z\",\n  \"service\": \"marketing-analytics-backend\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Health check endpoint for monitoring server status."
+    },
+    {
+      "name": "Facebook Authentication",
+      "item": [
+        {
+          "name": "Create Session (Connect)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"connect\",\n  \"accountId\": \"optional-account-id\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "session"]
+            },
+            "description": "Initiate Facebook OAuth connection. Returns redirect URL for Facebook login.\n\n**Request Body:**\n- `action`: \"connect\" | \"disconnect\"\n- `accountId` (optional): Account ID to reconnect"
+          },
+          "response": [
+            {
+              "name": "Connect Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"connect\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/session",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "session"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"redirectUrl\": \"https://www.facebook.com/v23.0/dialog/oauth?client_id=...\",\n  \"state\": \"random-state-string\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Disconnect Session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"disconnect\",\n  \"accountId\": \"123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/session",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "session"]
+            },
+            "description": "Disconnect Facebook account.\n\n**Request Body:**\n- `action`: \"disconnect\"\n- `accountId`: Account ID to disconnect"
+          },
+          "response": [
+            {
+              "name": "Disconnect Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"disconnect\",\n  \"accountId\": \"123456789\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/facebook/session",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "facebook", "session"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Account disconnected successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "OAuth Callback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/facebook/callback?code=AUTH_CODE&state=STATE_STRING",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "facebook", "callback"],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "AUTH_CODE",
+                  "description": "Authorization code from Facebook"
+                },
+                {
+                  "key": "state",
+                  "value": "STATE_STRING",
+                  "description": "State parameter for CSRF protection"
+                }
+              ]
+            },
+            "description": "OAuth callback endpoint. Facebook redirects here after user authorizes the app. This endpoint exchanges the code for an access token and redirects to frontend."
+          },
+          "response": []
+        }
+      ],
+      "description": "Facebook OAuth 2.0 authentication endpoints. Manages account connection and disconnection."
+    },
+    {
+      "name": "Account Management",
+      "item": [
+        {
+          "name": "Get Account Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/:accountId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "accounts", ":accountId"],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "123456789",
+                  "description": "Facebook Account ID"
+                }
+              ]
+            },
+            "description": "Retrieve account information including connected ad accounts (excludes sensitive data like access tokens)."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "accounts", ":accountId"],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "123456789"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accountId\": \"123456789\",\n  \"status\": \"connected\",\n  \"connectedAt\": \"2025-11-01T10:00:00.000Z\",\n  \"expiresAt\": \"2025-12-30T10:00:00.000Z\",\n  \"adAccounts\": [\n    {\n      \"adAccountId\": \"act_987654321\",\n      \"name\": \"My Ad Account\",\n      \"status\": 1,\n      \"currency\": \"USD\",\n      \"timezone\": \"America/New_York\",\n      \"isActive\": true,\n      \"lastSyncAdSet\": \"2025-11-07T01:00:00.000Z\",\n      \"lastSyncInsight\": \"2025-11-07T02:00:00.000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh Ad Accounts",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/:accountId/refresh-ad-accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "accounts", ":accountId", "refresh-ad-accounts"],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "123456789",
+                  "description": "Facebook Account ID"
+                }
+              ]
+            },
+            "description": "Fetch and update the list of ad accounts from Facebook for this account."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/refresh-ad-accounts",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "accounts", ":accountId", "refresh-ad-accounts"],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "123456789"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Ad accounts refreshed successfully\",\n  \"adAccountsCount\": 3,\n  \"account\": {\n    \"accountId\": \"123456789\",\n    \"adAccounts\": [...]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Toggle Ad Account Active Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/:accountId/ad-accounts/:adAccountId/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "accounts", ":accountId", "ad-accounts", ":adAccountId", "active"],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "123456789",
+                  "description": "Facebook Account ID"
+                },
+                {
+                  "key": "adAccountId",
+                  "value": "act_987654321",
+                  "description": "Ad Account ID"
+                }
+              ]
+            },
+            "description": "Enable or disable an ad account for syncing and analysis.\n\n**Request Body:**\n- `isActive`: boolean - Set to true to activate, false to deactivate"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/ad-accounts/:adAccountId/active",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "accounts", ":accountId", "ad-accounts", ":adAccountId", "active"],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "123456789"
+                    },
+                    {
+                      "key": "adAccountId",
+                      "value": "act_987654321"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Ad account status updated successfully\",\n  \"account\": {\n    \"accountId\": \"123456789\",\n    \"adAccounts\": [...]\n  }\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Manage Facebook accounts and their associated ad accounts."
+    },
+    {
+      "name": "Ad Account Settings",
+      "item": [
+        {
+          "name": "Get Ad Account Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ad-account-settings/:adAccountId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ad-account-settings", ":adAccountId"],
+              "variable": [
+                {
+                  "key": "adAccountId",
+                  "value": "act_987654321",
+                  "description": "Ad Account ID"
+                }
+              ]
+            },
+            "description": "Retrieve configuration settings for an ad account. Returns default values if no custom settings exist."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ad-account-settings/:adAccountId",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "ad-account-settings", ":adAccountId"],
+                  "variable": [
+                    {
+                      "key": "adAccountId",
+                      "value": "act_987654321"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"adAccountId\": \"act_987654321\",\n  \"cpm\": 10,\n  \"ctr\": 2,\n  \"frequency\": 3,\n  \"inlineLinkCtr\": 1.5,\n  \"costPerInlineLinkClick\": 0.5,\n  \"purchaseRoas\": 2.5,\n  \"scalePercent\": 20,\n  \"initScaleDay\": 3,\n  \"recurScaleDay\": 7,\n  \"note\": \"Custom thresholds for this account\",\n  \"createdAt\": \"2025-11-01T10:00:00.000Z\",\n  \"updatedAt\": \"2025-11-05T14:30:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Ad Account Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cpm\": 10,\n  \"ctr\": 2,\n  \"frequency\": 3,\n  \"inlineLinkCtr\": 1.5,\n  \"costPerInlineLinkClick\": 0.5,\n  \"purchaseRoas\": 2.5,\n  \"scalePercent\": 20,\n  \"initScaleDay\": 3,\n  \"recurScaleDay\": 7,\n  \"note\": \"Custom thresholds for high-performing campaigns\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ad-account-settings/:adAccountId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ad-account-settings", ":adAccountId"],
+              "variable": [
+                {
+                  "key": "adAccountId",
+                  "value": "act_987654321",
+                  "description": "Ad Account ID"
+                }
+              ]
+            },
+            "description": "Update metric thresholds and suggestion parameters for an ad account.\n\n**Request Body (all fields optional):**\n- `cpm`: CPM threshold\n- `ctr`: CTR threshold (%)\n- `frequency`: Frequency threshold\n- `inlineLinkCtr`: Inline Link CTR threshold (%)\n- `costPerInlineLinkClick`: Cost per inline link click threshold\n- `purchaseRoas`: Purchase ROAS threshold\n- `scalePercent`: Budget scale percentage (default: 20%)\n- `initScaleDay`: Minimum campaign age before first scale (default: 3 days)\n- `recurScaleDay`: Minimum days between scales (default: 7 days)\n- `note`: Custom notes"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"cpm\": 10,\n  \"scalePercent\": 20,\n  \"note\": \"Updated settings\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ad-account-settings/:adAccountId",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "ad-account-settings", ":adAccountId"],
+                  "variable": [
+                    {
+                      "key": "adAccountId",
+                      "value": "act_987654321"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"adAccountId\": \"act_987654321\",\n  \"cpm\": 10,\n  \"scalePercent\": 20,\n  \"note\": \"Updated settings\",\n  \"updatedAt\": \"2025-11-07T12:00:00.000Z\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Configure metric thresholds and suggestion parameters for ad accounts."
+    },
+    {
+      "name": "AdSet Sync",
+      "item": [
+        {
+          "name": "Sync AdSets",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/adset-sync/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "adset-sync", "sync"]
+            },
+            "description": "Manually trigger AdSet synchronization for all connected ad accounts. Fetches AdSet metadata including name, status, budget, and campaign information.\n\n**Note:** This is also run automatically via cron job daily at 1 AM."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/adset-sync/sync",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "adset-sync", "sync"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"AdSet sync completed successfully\",\n  \"adAccountsSynced\": 3,\n  \"adsetsSynced\": 150\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Synchronize AdSet metadata from Facebook Ad Accounts."
+    },
+    {
+      "name": "AdSet Insights",
+      "item": [
+        {
+          "name": "Sync Insights",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/adset-insights/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "adset-insights", "sync"]
+            },
+            "description": "Manually trigger AdSet insights export for all active ad accounts. Fetches performance metrics including impressions, clicks, spend, CPM, CTR, ROAS, etc.\n\n**Note:** This is also run automatically via cron job daily at 2 AM."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/adset-insights/sync",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "adset-insights", "sync"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Insights sync completed successfully\",\n  \"exportsCreated\": 3,\n  \"adAccountIds\": [\n    \"act_123\",\n    \"act_456\",\n    \"act_789\"\n  ]\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Export and synchronize AdSet performance insights from Facebook."
+    },
+    {
+      "name": "Suggestions",
+      "item": [
+        {
+          "name": "Get Suggestions (All)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/suggestions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "suggestions"]
+            },
+            "description": "Get all suggestions without filtering by status."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/suggestions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "suggestions"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"all\",\n  \"count\": 25,\n  \"suggestions\": [\n    {\n      \"_id\": \"673c1234567890abcdef\",\n      \"accountId\": \"123456789\",\n      \"adAccountId\": \"act_987654321\",\n      \"adAccountName\": \"My Ad Account\",\n      \"campaignName\": \"Summer Campaign 2025\",\n      \"adsetId\": \"23851234567890\",\n      \"adsetName\": \"Adset - Lookalike Audience\",\n      \"adsetLink\": \"https://adsmanager.facebook.com/...\",\n      \"currency\": \"USD\",\n      \"dailyBudget\": 100,\n      \"budgetScaled\": 120,\n      \"scalePercent\": 20,\n      \"metrics\": [\n        {\n          \"metricName\": \"cpm\",\n          \"value\": 8.5\n        },\n        {\n          \"metricName\": \"ctr\",\n          \"value\": 2.5\n        }\n      ],\n      \"metricsExceededCount\": 2,\n      \"status\": \"pending\",\n      \"note\": \"Strong performance metrics\",\n      \"createdAt\": \"2025-11-07T08:00:00.000Z\",\n      \"updatedAt\": \"2025-11-07T08:00:00.000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Pending Suggestions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/suggestions?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "suggestions"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Filter by status: pending, rejected, or applied"
+                }
+              ]
+            },
+            "description": "Get suggestions filtered by status.\n\n**Query Parameters:**\n- `status` (optional): \"pending\" | \"rejected\" | \"applied\""
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/suggestions?status=pending",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "suggestions"],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "pending"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"pending\",\n  \"count\": 10,\n  \"suggestions\": [...]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Analyze and Generate Suggestions",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/suggestions/analyze",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "suggestions", "analyze"]
+            },
+            "description": "Analyze AdSets against configured thresholds and generate budget scaling suggestions for high-performing AdSets.\n\n**Analysis Criteria:**\n- AdSet must be ACTIVE\n- Campaign must meet minimum age (initScaleDay)\n- Must meet minimum time since last scale (recurScaleDay)\n- Metrics must exceed configured thresholds"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/suggestions/analyze",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "suggestions", "analyze"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Suggestion analysis completed successfully\",\n  \"suggestionsCreated\": 15,\n  \"adsetsProcessed\": 150\n}"
+            }
+          ]
+        },
+        {
+          "name": "Approve Suggestion",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/suggestions/:suggestionId/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "suggestions", ":suggestionId", "approve"],
+              "variable": [
+                {
+                  "key": "suggestionId",
+                  "value": "673c1234567890abcdef",
+                  "description": "Suggestion MongoDB ObjectId"
+                }
+              ]
+            },
+            "description": "Approve a pending suggestion and mark it as applied. This updates the suggestion status to 'applied'.\n\n**Note:** This endpoint does NOT automatically scale the budget on Facebook. It only marks the suggestion as approved for tracking purposes."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/suggestions/:suggestionId/approve",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "suggestions", ":suggestionId", "approve"],
+                  "variable": [
+                    {
+                      "key": "suggestionId",
+                      "value": "673c1234567890abcdef"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"_id\": \"673c1234567890abcdef\",\n  \"status\": \"applied\",\n  \"updatedAt\": \"2025-11-07T12:30:00.000Z\",\n  ...\n}"
+            }
+          ]
+        },
+        {
+          "name": "Reject Suggestion",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/suggestions/:suggestionId/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "suggestions", ":suggestionId", "reject"],
+              "variable": [
+                {
+                  "key": "suggestionId",
+                  "value": "673c1234567890abcdef",
+                  "description": "Suggestion MongoDB ObjectId"
+                }
+              ]
+            },
+            "description": "Reject a pending suggestion. This updates the suggestion status to 'rejected'."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/suggestions/:suggestionId/reject",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "suggestions", ":suggestionId", "reject"],
+                  "variable": [
+                    {
+                      "key": "suggestionId",
+                      "value": "673c1234567890abcdef"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"_id\": \"673c1234567890abcdef\",\n  \"status\": \"rejected\",\n  \"updatedAt\": \"2025-11-07T12:30:00.000Z\",\n  ...\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Manage automated budget scaling suggestions based on AdSet performance analysis."
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    }
+  ]
+}

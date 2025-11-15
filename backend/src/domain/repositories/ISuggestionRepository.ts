@@ -5,6 +5,11 @@
 
 import { Suggestion } from '../aggregates/suggestion'
 
+export interface PaginatedSuggestions {
+    suggestions: Suggestion[]
+    total: number
+}
+
 export interface ISuggestionRepository {
     /**
      * Save a suggestion with upsert logic for duplicate handling
@@ -44,7 +49,9 @@ export interface ISuggestionRepository {
     /**
      * Find all suggestions by status, sorted by exceeding count (descending)
      * Precondition: status must be one of 'pending', 'rejected', or 'applied'
-     * Postcondition: Returns array of suggestions sorted by metricsExceededCount descending
+     * Postcondition: Returns paginated suggestions sorted by metricsExceededCount descending
+     * @param limit - Maximum number of suggestions to return (optional)
+     * @param offset - Number of suggestions to skip (optional)
      */
-    findByStatus(status: 'pending' | 'rejected' | 'applied'): Promise<Suggestion[]>
+    findByStatus(status: 'pending' | 'rejected' | 'applied', limit?: number, offset?: number): Promise<PaginatedSuggestions>
 }
