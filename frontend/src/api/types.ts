@@ -6,12 +6,6 @@ export interface ApiResponse<T> {
   data: T
 }
 
-export interface ApiError {
-  success: false
-  error: string
-  message: string
-}
-
 export interface AdAccount {
   adAccountId: string
   name: string

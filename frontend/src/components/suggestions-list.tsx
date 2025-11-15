@@ -1,71 +1,28 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Check, X, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getSuggestions, approveSuggestion, rejectSuggestion } from '@/api/suggestions'
-import type { Suggestion } from '@/api/types'
 import { formatCurrency } from '@/lib/currency'
+import { useSuggestions } from '@/hooks/use-suggestions'
 
 const PAGE_SIZE = 20
 
 export function SuggestionsList() {
   const { t } = useTranslation()
-
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalSuggestions, setTotalSuggestions] = useState(0)
 
-  useEffect(() => {
-    fetchSuggestions()
-  }, [currentPage])
-
-  async function fetchSuggestions() {
-    try {
-      setLoading(true)
-      setError(null)
-      const offset = (currentPage - 1) * PAGE_SIZE
-      const response = await getSuggestions('pending', PAGE_SIZE, offset)
-      setSuggestions(response.suggestions)
-      setTotalSuggestions(response.total)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load suggestions')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function handleApprove(id: string) {
-    try {
-      setActionLoading(id)
-      await approveSuggestion(id)
-      // Update local state to reflect the change
-      setSuggestions(suggestions.map((s) => (s.id === id ? { ...s, status: 'applied' as const } : s)))
-    } catch (err) {
-      console.error('Failed to approve suggestion:', err)
-      alert(t('suggestions.approveFailed') || 'Failed to approve suggestion')
-    } finally {
-      setActionLoading(null)
-    }
-  }
-
-  async function handleReject(id: string) {
-    try {
-      setActionLoading(id)
-      await rejectSuggestion(id)
-      // Update local state to reflect the change
-      setSuggestions(suggestions.map((s) => (s.id === id ? { ...s, status: 'rejected' as const } : s)))
-    } catch (err) {
-      console.error('Failed to reject suggestion:', err)
-      alert(t('suggestions.rejectFailed') || 'Failed to reject suggestion')
-    } finally {
-      setActionLoading(null)
-    }
-  }
+  const {
+    suggestions,
+    total: totalSuggestions,
+    loading,
+    error,
+    actionLoading,
+    refetch,
+    handleApprove,
+    handleReject,
+  } = useSuggestions(currentPage)
 
   const getMetricImpact = (metricsCount: number) => {
     if (metricsCount >= 3) return { label: 'high', color: 'bg-red-500/20 text-red-600 dark:text-red-400' }
@@ -95,7 +52,7 @@ export function SuggestionsList() {
         <Card className="bg-card p-6">
           <div className="space-y-4 text-center">
             <p className="text-red-600 dark:text-red-400">{error}</p>
-            <Button onClick={fetchSuggestions} variant="outline">
+            <Button onClick={refetch} variant="outline">
               {t('suggestions.retry') || 'Retry'}
             </Button>
           </div>

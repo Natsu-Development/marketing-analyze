@@ -1,17 +1,7 @@
-import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
-import {
-  getSettings,
-  upsertSettings,
-  ApiError,
-  mapErrorToMessage,
-  logError,
-  type SettingsFormData,
-} from '@/api'
 import { getCurrencySymbol } from '@/lib/currency'
 import {
   PerformanceThresholdsSection,
@@ -19,90 +9,14 @@ import {
   NotesSection,
   FormActions,
 } from '@/components/ad-account-config'
+import { useAdAccountConfig } from '@/hooks/use-ad-account-config'
 
 export default function AdAccountConfigPage() {
   const [searchParams] = useSearchParams()
   const adAccountId = searchParams.get('adAccountId')
 
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [currency, setCurrency] = useState('VND')
-  const [settings, setSettings] = useState<SettingsFormData>({
-    scalePercent: undefined,
-    initScaleDay: undefined,
-    recurScaleDay: undefined,
-    cpm: undefined,
-    ctr: undefined,
-    frequency: undefined,
-    inlineLinkCtr: undefined,
-    costPerInlineLinkClick: undefined,
-    purchaseRoas: undefined,
-    note: undefined,
-  })
-
-  useEffect(() => {
-    if (adAccountId) {
-      loadSettings()
-    } else {
-      setLoading(false)
-    }
-  }, [adAccountId])
-
-  const loadSettings = async () => {
-    if (!adAccountId) return
-
-    try {
-      const data = await getSettings(adAccountId)
-      setSettings({
-        scalePercent: data.scalePercent ?? undefined,
-        initScaleDay: data.initScaleDay ?? undefined,
-        recurScaleDay: data.recurScaleDay ?? undefined,
-        cpm: data.cpm ?? undefined,
-        ctr: data.ctr ?? undefined,
-        frequency: data.frequency ?? undefined,
-        inlineLinkCtr: data.inlineLinkCtr ?? undefined,
-        costPerInlineLinkClick: data.costPerInlineLinkClick ?? undefined,
-        purchaseRoas: data.purchaseRoas ?? undefined,
-        note: data.note ?? undefined,
-      })
-    } catch (error) {
-      if (error instanceof ApiError) {
-        const errorMsg = mapErrorToMessage(error)
-        logError(error, 'Load Settings')
-        toast.error(errorMsg.title, { description: errorMsg.description })
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!adAccountId) return
-
-    setSaving(true)
-
-    try {
-      await upsertSettings(adAccountId, settings)
-      toast.success('Settings saved successfully')
-    } catch (error) {
-      if (error instanceof ApiError) {
-        const errorMsg = mapErrorToMessage(error)
-        logError(error, 'Save Settings')
-        toast.error(errorMsg.title, { description: errorMsg.description })
-      }
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const updateField = (field: keyof SettingsFormData, value: string) => {
-    const numValue = value.trim() === '' ? undefined : parseFloat(value)
-    setSettings({ ...settings, [field]: numValue })
-  }
-
-  const updateNote = (value: string) => {
-    setSettings({ ...settings, note: value })
-  }
+  const { loading, saving, currency, settings, handleSave, updateField, updateNote } =
+    useAdAccountConfig(adAccountId)
 
   if (!adAccountId) {
     return (

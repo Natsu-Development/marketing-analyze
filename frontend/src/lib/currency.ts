@@ -45,10 +45,7 @@ export function formatCurrency(
   }
 }
 
-export function formatCurrencyInput(
-  value: string,
-  currencyCode: string
-): number | null {
+export function formatCurrencyInput(value: string): number | null {
   const cleaned = value.replace(/[^0-9.-]/g, '')
   const parsed = parseFloat(cleaned)
 

@@ -1,36 +1,15 @@
-import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { TrendingUp, Target, Calendar, ExternalLink, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getSuggestions } from '@/api/suggestions'
-import type { Suggestion } from '@/api/types'
 import { formatCurrency } from '@/lib/currency'
+import { useAppliedSuggestions } from '@/hooks/use-applied-suggestions'
 
 export default function Home() {
   const { t } = useTranslation()
-  const [appliedSuggestions, setAppliedSuggestions] = useState<Suggestion[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchAppliedSuggestions()
-  }, [])
-
-  async function fetchAppliedSuggestions() {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await getSuggestions('applied')
-      setAppliedSuggestions(response.suggestions)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load applied suggestions')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { suggestions: appliedSuggestions, loading, error, refetch } = useAppliedSuggestions()
 
   const totalApplied = appliedSuggestions.length
   const totalScaleBudget = appliedSuggestions.reduce(
@@ -56,7 +35,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-6 py-12">
           <div className="space-y-4 text-center">
             <p className="text-red-600 dark:text-red-400">{error}</p>
-            <Button onClick={fetchAppliedSuggestions} variant="outline">
+            <Button onClick={refetch} variant="outline">
               {t('home.retry') || 'Retry'}
             </Button>
           </div>

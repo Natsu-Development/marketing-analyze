@@ -167,7 +167,10 @@ const createAsyncReport = async (accessToken: string, request: AsyncReportReques
         params.append('format', 'csv')
         params.append('locale', 'en_US')
         params.append('time_increment', '1')
-        // params.append('filtering', JSON.stringify([{ field: 'adset.effective_status', operator: 'IN', value: ['ACTIVE'] }]))
+        params.append(
+            'filtering',
+            JSON.stringify([{ field: 'adset.effective_status', operator: 'IN', value: ['ACTIVE'] }])
+        )
 
         const response = await httpClient.post(`/${adAccountId}/insights`, params.toString(), {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -251,14 +254,14 @@ const fetchAdSets = async (params: FetchAdSetsParams): Promise<any[]> => {
         const queryParams = new URLSearchParams({
             access_token: params.accessToken,
             fields: 'id,name,campaign{id,name},status,daily_budget,lifetime_budget,start_time,end_time,updated_time',
-            // filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE'] }]),
+            filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE'] }]),
             limit: '500',
         })
 
         const url = `${baseUrl}/${adAccountIdWithPrefix}/adsets?${queryParams.toString()}`
         const response = await axios.get(url)
 
-        return response.data.data || []
+        return response.data.data
     } catch (error: any) {
         return handleError('fetchAdSets', error)
     }
