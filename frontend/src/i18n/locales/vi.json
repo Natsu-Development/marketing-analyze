@@ -21,10 +21,24 @@
     "stoppedAt": "Dừng Lúc",
     "roas": "ROAS",
     "viewSettings": "Xem Cài Đặt",
+    "retry": "Thử Lại",
+    "appliedSuggestions": "Đề Xuất Đã Áp Dụng",
+    "totalBudgetIncreased": "Tổng Ngân Sách Tăng",
+    "appliedScaling": "Scale Đã Áp Dụng",
+    "appliedScalingSubtitle": "Các bộ quảng cáo đã được phê duyệt tăng ngân sách",
+    "noAppliedSuggestions": "Chưa có đề xuất nào được áp dụng",
+    "viewSuggestions": "Xem Đề Xuất",
+    "viewInFacebook": "Xem trên Facebook",
+    "appliedAt": "Áp Dụng Lúc",
+    "currentBudget": "Ngân Sách Hiện Tại",
+    "newBudget": "Ngân Sách Mới",
+    "budgetIncrease": "Tăng Ngân Sách",
+    "metricsExceeded": "Chỉ Số Vượt Ngưỡng",
     "status": {
       "active": "hoạt động",
       "paused": "tạm dừng",
-      "stopped": "đã dừng"
+      "stopped": "đã dừng",
+      "applied": "đã áp dụng"
     }
   },
   "sync": {
@@ -110,16 +124,27 @@
     "title": "Đề Xuất",
     "subtitle": "Xem xét và phê duyệt các đề xuất tối ưu hóa",
     "pending": "Đang Chờ",
+    "showing": "hiển thị",
+    "page": "Trang",
+    "of": "của",
+    "previous": "Trước",
+    "next": "Tiếp",
     "noPendingSuggestions": "Hiện không có đề xuất nào đang chờ xử lý",
     "impact": "tác động",
     "adAccount": "Tài Khoản Quảng Cáo",
     "campaign": "Chiến Dịch",
     "adSet": "Bộ Quảng Cáo",
     "currentABO": "ABO Hiện Tại:",
+    "currentBudget": "Ngân Sách Hiện Tại",
+    "suggestedBudget": "Ngân Sách Đề Xuất",
     "scalePercent": "Phần Trăm Scale:",
     "reject": "Từ Chối",
     "approve": "Phê Duyệt",
     "recentlyReviewed": "Đã Xem Xét Gần Đây",
+    "retry": "Thử Lại",
+    "approveFailed": "Không thể phê duyệt đề xuất",
+    "rejectFailed": "Không thể từ chối đề xuất",
+    "metricsExceeded": "Chỉ Số Vượt Ngưỡng",
     "impactLevels": {
       "high": "cao",
       "medium": "trung bình",
@@ -127,8 +152,106 @@
     },
     "status": {
       "approved": "đã phê duyệt",
-      "rejected": "đã từ chối"
+      "rejected": "đã từ chối",
+      "applied": "đã áp dụng"
     }
+  },
+  "account": {
+    "title": "Tài Khoản",
+    "subtitle": "Quản lý tài khoản quảng cáo và cài đặt đồng bộ",
+    "fbConnectedSuccess": "Đã kết nối Facebook thành công",
+    "authFailedError": "Xác thực thất bại",
+    "fbDisconnectedSuccess": "Đã ngắt kết nối Facebook thành công",
+    "refreshSuccess": "Đã làm mới {{count}} tài khoản quảng cáo",
+    "accountToggled": "Tài khoản quảng cáo {{status}}",
+    "activated": "đã kích hoạt",
+    "deactivated": "đã vô hiệu hóa",
+    "analyze": "Phân Tích",
+    "connectionCard": {
+      "title": "Kết Nối Facebook",
+      "statusLabel": "Trạng thái:",
+      "disconnect": "Ngắt Kết Nối"
+    },
+    "adAccountCard": {
+      "settingsButton": "Cài Đặt",
+      "lastInsightSync": "Đồng Bộ Insight Lần Cuối",
+      "lastMetadataSync": "Đồng Bộ Metadata Lần Cuối"
+    },
+    "adAccountsList": {
+      "title": "Tài Khoản Quảng Cáo"
+    },
+    "noConnection": {
+      "title": "Chưa Kết Nối Facebook",
+      "description": "Kết nối tài khoản Facebook của bạn để đồng bộ tài khoản quảng cáo và chiến dịch",
+      "connectButton": "Kết Nối Facebook"
+    },
+    "status": {
+      "active": "Hoạt Động",
+      "inactive": "Không Hoạt Động"
+    },
+    "analysis": {
+      "title": "Đang Phân Tích",
+      "inProgress": "Đang phân tích tài khoản quảng cáo và tạo đề xuất...",
+      "completed": "Phân tích hoàn tất thành công!",
+      "failed": "Phân tích thất bại. Vui lòng thử lại.",
+      "progress": "Tiến Độ",
+      "insightsExported": "Insights đã xuất",
+      "adsetsSynced": "AdSets đã đồng bộ",
+      "suggestionsCreated": "Đề xuất đã tạo",
+      "successMessage": "Phân tích hoàn tất! Đã tạo {{count}} đề xuất mới",
+      "errorMessage": "Phân tích thất bại",
+      "unknownError": "Đã xảy ra lỗi không xác định"
+    }
+  },
+  "pages": {
+    "account": {
+      "title": "Tài Khoản",
+      "subtitle": "Quản lý tài khoản quảng cáo và cài đặt đồng bộ"
+    },
+    "adAccountConfig": {
+      "title": "Cài Đặt Tài Khoản Quảng Cáo",
+      "noAccountSelected": "Chưa Chọn Tài Khoản Quảng Cáo",
+      "selectAccountText": "Vui lòng chọn một tài khoản quảng cáo từ trang Tài Khoản.",
+      "goToAccounts": "Đi Đến Tài Khoản"
+    }
+  },
+  "settings": {
+    "performanceThresholds": {
+      "title": "Ngưỡng Hiệu Suất",
+      "description": "Xác định ngưỡng hiệu suất tối thiểu để scale",
+      "cpmLabel": "CPM (Chi Phí Mỗi 1K Lượt Hiển Thị)",
+      "cpmPlaceholder": "Nhập ngưỡng CPM",
+      "ctrLabel": "CTR (Tỷ Lệ Click %)",
+      "ctrPlaceholder": "Nhập ngưỡng CTR",
+      "frequencyLabel": "Tần Suất",
+      "frequencyPlaceholder": "Nhập ngưỡng tần suất",
+      "inlineLinkCtrLabel": "CTR Link Nội Tuyến (%)",
+      "inlineLinkCtrPlaceholder": "Nhập CTR link nội tuyến",
+      "costPerLinkLabel": "Chi Phí Mỗi Click Link Nội Tuyến",
+      "costPlaceholder": "Nhập ngưỡng chi phí",
+      "purchaseRoasLabel": "ROAS Mua Hàng",
+      "purchaseRoasPlaceholder": "ví dụ: 2.5",
+      "purchaseRoasHint": "Nhập dưới dạng số thập phân (ví dụ: 2.5 chứ không phải 2.5x)"
+    },
+    "scalingConfig": {
+      "title": "Cấu Hình Scale",
+      "description": "Cấu hình cách thức và thời điểm scale ngân sách",
+      "scalePercentLabel": "Phần Trăm Scale (%)",
+      "scalePercentPlaceholder": "ví dụ: 20",
+      "scalePercentHint": "Phần trăm tăng ngân sách",
+      "initScaleDayLabel": "Ngày Scale Đầu Tiên",
+      "initScaleDayPlaceholder": "ví dụ: 3",
+      "initScaleDayHint": "Số ngày trước khi scale lần đầu (từ thời gian bắt đầu)",
+      "recurScaleDayLabel": "Ngày Scale Định Kỳ",
+      "recurScaleDayPlaceholder": "ví dụ: 7",
+      "recurScaleDayHint": "Số ngày giữa các lần scale (từ lần scale cuối)"
+    },
+    "notes": {
+      "title": "Ghi Chú",
+      "description": "Thêm ghi chú hoặc hướng dẫn bổ sung",
+      "placeholder": "Thêm ghi chú cho cấu hình tài khoản quảng cáo này..."
+    },
+    "savedSuccessfully": "Đã lưu cài đặt thành công"
   },
   "common": {
     "save": "Lưu",
@@ -137,8 +260,15 @@
     "delete": "Xóa",
     "confirm": "Xác Nhận",
     "back": "Quay Lại",
+    "close": "Đóng",
     "loading": "Đang tải...",
     "error": "Lỗi",
-    "success": "Thành Công"
+    "success": "Thành Công",
+    "saving": "Đang lưu...",
+    "saveSettings": "Lưu Cài Đặt",
+    "refresh": "Làm Mới",
+    "backToAccounts": "Quay Lại Tài Khoản",
+    "neverSynced": "Chưa bao giờ",
+    "unknownError": "Không rõ"
   }
 }

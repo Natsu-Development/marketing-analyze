@@ -24,7 +24,7 @@ export const getFrontendUrl = (): string => process.env.FRONTEND_URL || 'http://
 
 // Redirect URL builder for OAuth callback
 export const buildRedirectUrl = (status: string, reason?: string): string => {
-    const url = new URL('/sync', getFrontendUrl())
+    const url = new URL('/account', getFrontendUrl())
     url.searchParams.set('auth', 'facebook')
     url.searchParams.set('status', status)
     if (reason) url.searchParams.set('reason', reason)
