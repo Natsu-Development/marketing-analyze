@@ -169,7 +169,10 @@ const createAsyncReport = async (accessToken: string, request: AsyncReportReques
         params.append('time_increment', '1')
         params.append(
             'filtering',
-            JSON.stringify([{ field: 'adset.effective_status', operator: 'IN', value: ['ACTIVE'] }])
+            JSON.stringify([
+                { field: 'adset.effective_status', operator: 'IN', value: ['ACTIVE'] },
+                { field: 'action_type', operator: 'IN', value: ['omni_purchase', 'comment', 'onsite_conversion.total_messaging_connection'] },
+            ])
         )
 
         const response = await httpClient.post(`/${adAccountId}/insights`, params.toString(), {

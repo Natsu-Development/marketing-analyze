@@ -24,6 +24,15 @@ export interface AdSetInsight {
     readonly inlineLinkCtr?: number
     readonly costPerInlineLinkClick?: number
     readonly purchaseRoas?: number
+    readonly postComments?: number
+    readonly costPerResult?: number
+    readonly purchases?: number
+    readonly totalMessagingContacts?: number
+    readonly purchasesConversionValue?: number
+    // Calculated fields
+    readonly costPerPurchase?: number
+    readonly costPerInteract?: number
+    readonly costDivideRevenue?: number
 }
 
 // Pure functions that operate on the data
@@ -55,7 +64,10 @@ export const ADSET_INSIGHT_FIELDS = [
     'frequency',
     'inline_link_click_ctr',
     'cost_per_inline_link_click',
-    'purchase_roas',
+    'purchase_roas',    
+    'actions',
+    'action_values',
+    'cost_per_result'
 ] as const
 
 /**
@@ -88,6 +100,24 @@ export function mapRecordToAdSetInsight(
         )
     }
 
+    // Parse base metric fields
+    const amountSpent = parseNumeric(record.amount_spent)
+    const purchases = parseNumeric(record.purchases)
+    const postComments = parseNumeric(record.post_comments)
+    const totalMessagingContacts = parseNumeric(record.total_messaging_contacts)
+    const purchasesConversionValue = parseNumeric(record.purchases_conversion_value)
+
+    // Calculate derived fields
+    const costPerPurchase = amountSpent && purchases && purchases > 0 ? amountSpent / purchases : undefined
+    const costPerInteract =
+        amountSpent && (postComments && postComments > 0 || totalMessagingContacts && totalMessagingContacts > 0)
+            ? amountSpent / ((postComments || 0) + (totalMessagingContacts || 0))
+            : undefined
+    const costDivideRevenue =
+        amountSpent && purchasesConversionValue && purchasesConversionValue > 0
+            ? amountSpent / purchasesConversionValue
+            : undefined
+
     return {
         adAccountId,
         accountId,
@@ -99,7 +129,7 @@ export function mapRecordToAdSetInsight(
         date: normalizeInsightDate(dateStr),
         impressions: parseNumeric(record.impressions),
         clicks: parseNumeric(record.clicks),
-        amountSpent: parseNumeric(record.amount_spent),
+        amountSpent,
         cpm: parseNumeric(record.cpm),
         cpc: parseNumeric(record.cpc),
         ctr: parseNumeric(record.ctr),
@@ -108,6 +138,15 @@ export function mapRecordToAdSetInsight(
         inlineLinkCtr: parseNumeric(record.inline_link_ctr),
         costPerInlineLinkClick: parseNumeric(record.cost_per_inline_link_click),
         purchaseRoas: parseNumeric(record.purchase_roas),
+        postComments,
+        costPerResult: parseNumeric(record.cost_per_results),
+        purchases,
+        totalMessagingContacts,
+        purchasesConversionValue,
+        // Calculated fields
+        costPerPurchase,
+        costPerInteract,
+        costDivideRevenue,
     }
 }
 
