@@ -25,6 +25,15 @@ export interface IAdSetInsightDataDocument extends Document {
     inlineLinkCtr?: number
     costPerInlineLinkClick?: number
     purchaseRoas?: number
+    postComments?: number
+    costPerResult?: number
+    purchases?: number
+    totalMessagingContacts?: number
+    purchasesConversionValue?: number
+    // Calculated fields
+    costPerPurchase?: number
+    costPerInteract?: number
+    costDivideRevenue?: number
 }
 
 const AdSetInsightDataSchema = new Schema<IAdSetInsightDataDocument>(
@@ -48,6 +57,15 @@ const AdSetInsightDataSchema = new Schema<IAdSetInsightDataDocument>(
         inlineLinkCtr: { type: Number },
         costPerInlineLinkClick: { type: Number },
         purchaseRoas: { type: Number },
+        postComments: { type: Number },
+        costPerResult: { type: Number },
+        purchases: { type: Number },
+        totalMessagingContacts: { type: Number },
+        purchasesConversionValue: { type: Number },
+        // Calculated fields
+        costPerPurchase: { type: Number },
+        costPerInteract: { type: Number },
+        costDivideRevenue: { type: Number },
     },
     {
         collection: 'adset_insights',
