@@ -110,7 +110,7 @@ export function mapRecordToAdSetInsight(
     // Calculate derived fields
     const costPerPurchase = amountSpent && purchases && purchases > 0 ? amountSpent / purchases : undefined
     const costPerInteract =
-        amountSpent && (postComments || totalMessagingContacts)
+        amountSpent && (postComments && postComments > 0 || totalMessagingContacts && totalMessagingContacts > 0)
             ? amountSpent / ((postComments || 0) + (totalMessagingContacts || 0))
             : undefined
     const costDivideRevenue =
