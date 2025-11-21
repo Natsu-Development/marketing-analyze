@@ -11,7 +11,6 @@ import {
     adAccountSettingRepository,
     adsetInsightDataRepository,
     suggestionRepository,
-    telegramClient,
 } from '../../../config/dependencies'
 import { logger } from '../../../infrastructure/shared/logger'
 import { AdsetProcessingResult } from './types'
@@ -113,7 +112,7 @@ export async function analyzeAdsetMetrics(
 }
 
 /**
- * Create a new suggestion
+ * Create a new suggestion (no longer sends Telegram notification)
  */
 export async function createSuggestion(
     adset: AdSet,
@@ -121,7 +120,7 @@ export async function createSuggestion(
     config: AdAccountSetting,
     accountId: string,
     adAccountName: string
-): Promise<void> {
+): Promise<any> {
     const suggestion = SuggestionDomain.createSuggestion({
         accountId,
         adAccountId: adset.adAccountId,
@@ -138,21 +137,21 @@ export async function createSuggestion(
     })
 
     await suggestionRepository.save(suggestion)
-    await telegramClient.notifySuggestionCreated({ suggestion, accountId })
 
     logger.info(`Created suggestion for ${adset.adsetName}: budget ${adset.dailyBudget} → ${suggestion.budgetAfterScale}`)
+
+    return suggestion
 }
 
 /**
- * Update pending suggestion and cleanup duplicates
+ * Update pending suggestion and cleanup duplicates (no longer sends Telegram notification)
  */
 export async function updateSuggestion(
     pendingSuggestions: any[],
     adset: AdSet,
     exceedingMetrics: ExceedingMetric[],
-    config: AdAccountSetting,
-    accountId: string
-): Promise<void> {
+    config: AdAccountSetting
+): Promise<any> {
     const mostRecent = pendingSuggestions[0]
     const suggestion = SuggestionDomain.updatePendingSuggestion(mostRecent, {
         budget: adset.dailyBudget!,
@@ -163,7 +162,6 @@ export async function updateSuggestion(
     })
 
     await suggestionRepository.save(suggestion)
-    await telegramClient.notifySuggestionCreated({ suggestion, accountId })
 
     logger.info(`Updated pending suggestion for ${adset.adsetName}: ${mostRecent.budget} → ${adset.dailyBudget}`)
 
@@ -173,10 +171,13 @@ export async function updateSuggestion(
         const deletedCount = await suggestionRepository.deleteBulk(duplicateIds)
         logger.warn(`Deleted ${deletedCount} duplicate pending suggestions for ${adset.adsetId}`)
     }
+
+    return suggestion
 }
 
 /**
  * Process a single adset through the analysis pipeline
+ * Returns suggestion if created/updated for batch notification
  */
 export async function processSingleAdset(
     adset: AdSet,
@@ -197,12 +198,12 @@ export async function processSingleAdset(
         const pendingSuggestions = await suggestionRepository.findPendingByAdsetId(adset.adsetId)
 
         if (pendingSuggestions.length === 0) {
-            await createSuggestion(adset, exceedingMetrics, config, accountId, adAccountName)
-            return { processed: true, created: true, updated: false }
+            const suggestion = await createSuggestion(adset, exceedingMetrics, config, accountId, adAccountName)
+            return { processed: true, created: true, updated: false, suggestion }
         }
 
-        await updateSuggestion(pendingSuggestions, adset, exceedingMetrics, config, accountId)
-        return { processed: true, created: false, updated: true }
+        const suggestion = await updateSuggestion(pendingSuggestions, adset, exceedingMetrics, config)
+        return { processed: true, created: false, updated: true, suggestion }
     } catch (error) {
         const errorMsg = `Error processing adset ${adset.adsetId}: ${(error as Error).message}`
         logger.error(errorMsg)

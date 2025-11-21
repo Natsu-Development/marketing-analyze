@@ -5,8 +5,8 @@
 
 import { Suggestion } from '../../domain/aggregates/suggestion/Suggestion'
 
-export interface SuggestionNotificationParams {
-    suggestion: Suggestion
+export interface NotifyParams {
+    suggestions: Suggestion[]
     accountId: string
 }
 
@@ -21,7 +21,7 @@ export interface SendMessageResponse {
  */
 export interface ITelegramClient {
     /**
-     * Send notification when a new suggestion is created
+     * Send grouped notification for suggestions
      */
-    notifySuggestionCreated(params: SuggestionNotificationParams): Promise<SendMessageResponse>
+    notify(params: NotifyParams): Promise<SendMessageResponse>
 }
