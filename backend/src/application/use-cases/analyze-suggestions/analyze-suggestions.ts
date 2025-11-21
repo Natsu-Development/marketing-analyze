@@ -1,61 +1,47 @@
 /**
  * Analyze Suggestions Use Case
  * Orchestrates automated adset performance analysis and suggestion generation
- * KISS: Simple, direct, minimal abstractions
+ * KISS: Main workflow only, helpers in separate file
  */
 
-import { AdSetDomain, SuggestionDomain, SuggestionAnalyzer, AdAccountSettingDomain } from '../../../domain'
-import {
-    accountRepository,
-    adSetRepository,
-    adsetInsightDataRepository,
-    adAccountSettingRepository,
-    suggestionRepository,
-    telegramClient,
-} from '../../../config/dependencies'
+import { AdSetDomain } from '../../../domain'
+import { accountRepository, adSetRepository } from '../../../config/dependencies'
 import { logger } from '../../../infrastructure/shared/logger'
 import { AnalysisResult } from './types'
+import { groupAdsetsByAccount, validateAccountConfig, processSingleAdset } from './helpers'
 
 /**
  * Execute suggestion analysis for all eligible adsets
- * KISS: Direct implementation without unnecessary helper functions
+ * KISS: Clean main workflow with focused helper functions
  */
 export async function execute(): Promise<AnalysisResult> {
     logger.info('Starting suggestion analysis')
 
     let adsetsProcessed = 0
     let suggestionsCreated = 0
+    let suggestionsUpdated = 0
     const errorMessages: string[] = []
 
     try {
-        // Query only ACTIVE adsets and filter using domain logic
+        // Get eligible adsets
         const activeAdsets = await adSetRepository.findAllActive()
         const eligibleAdsets = activeAdsets.filter(AdSetDomain.isEligibleForAnalysis)
 
-        logger.info(`Found ${eligibleAdsets.length} eligible adsets out of ${activeAdsets.length} active adsets`)
+        logger.info(`Found ${eligibleAdsets.length} eligible adsets out of ${activeAdsets.length} active`)
 
-        // Group adsets by ad account (inline - KISS)
-        const adsetsByAccount = new Map<string, typeof eligibleAdsets>()
-        for (const adset of eligibleAdsets) {
-            const existing = adsetsByAccount.get(adset.adAccountId) || []
-            existing.push(adset)
-            adsetsByAccount.set(adset.adAccountId, existing)
-        }
+        // Group by ad account
+        const adsetsByAccount = groupAdsetsByAccount(eligibleAdsets)
 
         // Process each ad account
         for (const [adAccountId, adsets] of adsetsByAccount.entries()) {
-            // Get and validate threshold config (inline - KISS)
-            const config = await adAccountSettingRepository.findByAdAccountId(adAccountId)
-
-            if (!config || !SuggestionAnalyzer.hasValidThresholds(config)) {
-                logger.debug(`Skipping ${adsets.length} adsets for ${adAccountId}: no valid threshold configuration`)
+            // Validate account config
+            const config = await validateAccountConfig(adAccountId)
+            if (!config) {
                 continue
             }
 
-            // Get account ID from first adset (all adsets in group share same accountId)
+            // Get account details
             const accountId = adsets[0].accountId
-
-            // Get ad account name using repository
             const adAccountName = await accountRepository.findAdAccountNameById(adAccountId)
 
             if (!adAccountName) {
@@ -65,84 +51,24 @@ export async function execute(): Promise<AnalysisResult> {
 
             // Process each adset
             for (const adset of adsets) {
-                try {
-                    // Check scale timing eligibility
-                    const adsetAge = AdSetDomain.getAgeInDays(adset)
-                    const meetsInitial = AdAccountSettingDomain.meetsInitialScaleThreshold(adsetAge, adset.lastScaledAt, config)
+                const result = await processSingleAdset(adset, config, accountId, adAccountName)
 
-                    if (!meetsInitial) {
-                        logger.debug(`Skipping ${adset.adsetId}: does not meet scale timing threshold (age: ${adsetAge}, initScaleDay: ${config.initScaleDay})`)
-                        continue
-                    }
-
-                    // Fetch insights
-                    const insights = await adsetInsightDataRepository.findByAdsetId(adset.adsetId)
-
-                    if (insights.length === 0) {
-                        logger.debug(`Skipping ${adset.adsetId}: no insight data`)
-                        continue
-                    }
-
-                    // Aggregate metrics using domain service
-                    const aggregated = SuggestionAnalyzer.aggregateInsightMetrics(insights)
-                    if (!aggregated) {
-                        continue
-                    }
-
-                    // Find exceeding metrics using domain service
-                    const exceedingMetrics = SuggestionAnalyzer.findExceedingMetrics(aggregated, config)
-
-                    if (exceedingMetrics.length === 0) {
-                        logger.debug(`Skipping ${adset.adsetId}: no metrics exceed thresholds`)
-                        continue
-                    }
-
-                    // Create and save suggestion using domain factory
-                    const suggestion = SuggestionDomain.createSuggestion({
-                        accountId,
-                        adAccountId: adset.adAccountId,
-                        adAccountName,
-                        campaignName: adset.campaignName,
-                        adsetId: adset.adsetId,
-                        adsetName: adset.adsetName,
-                        currency: adset.currency,
-                        dailyBudget: adset.dailyBudget!,
-                        scalePercent: config.scalePercent,
-                        note: config.note,
-                        metrics: exceedingMetrics,
-                    })
-
-                    await suggestionRepository.save(suggestion)
-
-                    logger.info(
-                        `Created suggestion for ${adset.adsetName} (${adset.adsetId}) with ${exceedingMetrics.length} exceeding metrics`
-                    )
-
-                    // Send Telegram notification (errors handled internally)
-                    await telegramClient.notifySuggestionCreated({
-                        suggestion,
-                        accountId,
-                    })
-
-                    adsetsProcessed++
-                    suggestionsCreated++
-                } catch (error) {
-                    adsetsProcessed++
-                    const errorMsg = `Error processing adset ${adset.adsetId}: ${(error as Error).message}`
-                    errorMessages.push(errorMsg)
-                    logger.error(errorMsg)
-                }
+                if (result.processed) adsetsProcessed++
+                if (result.created) suggestionsCreated++
+                if (result.updated) suggestionsUpdated++
+                if (result.error) errorMessages.push(result.error)
             }
         }
 
         logger.info(
-            `Suggestion analysis completed: ${adsetsProcessed} adsets processed, ${suggestionsCreated} suggestions created, ${errorMessages.length} errors`
+            `Analysis complete: ${adsetsProcessed} processed, ${suggestionsCreated} created, ${suggestionsUpdated} updated, ${errorMessages.length} errors`
         )
 
         return {
             success: errorMessages.length === 0,
             adsetsProcessed,
             suggestionsCreated,
+            suggestionsUpdated,
             errors: errorMessages.length,
             errorMessages: errorMessages.length > 0 ? errorMessages : undefined,
         }
@@ -154,6 +80,7 @@ export async function execute(): Promise<AnalysisResult> {
             success: false,
             adsetsProcessed,
             suggestionsCreated,
+            suggestionsUpdated,
             errors: 1,
             errorMessages: [errorMsg],
         }

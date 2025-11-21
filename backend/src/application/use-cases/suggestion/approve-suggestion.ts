@@ -44,7 +44,7 @@ export async function execute(input: ApproveSuggestionInput): Promise<ApproveSug
     await facebookClient.updateAdsetBudget({
         accessToken: account.accessToken,
         adsetId: suggestion.adsetId,
-        dailyBudget: suggestion.budgetScaled,
+        dailyBudget: suggestion.budgetAfterScale,
     })
 
     // 5. Mark adset as scaled (update lastScaledAt for recurring scale threshold)
@@ -60,7 +60,7 @@ export async function execute(input: ApproveSuggestionInput): Promise<ApproveSug
     // 6. Save approved suggestion
     const result = await suggestionRepository.save(approvedSuggestion)
 
-    logger.info(`Approved suggestion ${suggestionId} and updated adset ${suggestion.adsetId} budget to ${suggestion.budgetScaled}`)
+    logger.info(`Approved suggestion ${suggestionId} and updated adset ${suggestion.adsetId} budget to ${suggestion.budgetAfterScale}`)
 
     return {
         success: true,
