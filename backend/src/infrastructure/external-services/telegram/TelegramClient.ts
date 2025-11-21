@@ -24,6 +24,8 @@ const METRIC_NAMES: Record<MetricFieldName, string> = {
     inlineLinkCtr: 'Inline Link CTR',
     costPerInlineLinkClick: 'Cost per Link Click',
     purchaseRoas: 'Purchase ROAS',
+    purchases: 'Purchases',
+    costPerPurchase: 'Cost per Purchase',
 }
 
 /**
@@ -41,7 +43,7 @@ function formatNumber(value: number, decimals: number = 0): string {
  */
 function formatMetric(metric: MetricFieldName, value: number): string {
     // Currency
-    if (metric === 'costPerInlineLinkClick' || metric === 'cpm') {
+    if (metric === 'costPerInlineLinkClick' || metric === 'cpm' || metric === 'costPerPurchase') {
         return `$${formatNumber(value, 2)}`
     }
 
@@ -53,6 +55,11 @@ function formatMetric(metric: MetricFieldName, value: number): string {
     // ROAS
     if (metric === 'purchaseRoas') {
         return `${formatNumber(value, 2)}x`
+    }
+
+    // Count (purchases)
+    if (metric === 'purchases') {
+        return formatNumber(value, 0)
     }
 
     // Default: 2 decimals (frequency)

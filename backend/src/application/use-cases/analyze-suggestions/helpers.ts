@@ -44,15 +44,18 @@ export async function validateAccountConfig(adAccountId: string): Promise<AdAcco
 }
 
 /**
- * Check if adset meets scale timing requirements
+ * Check if adset meets initial scale timing requirement
+ * Only checks initScaleDay threshold (no recurring scale)
  */
 export function checkScaleTiming(adset: AdSet, config: AdAccountSetting): boolean {
     const adsetAge = AdSetDomain.getAgeInDays(adset)
-    const meetsInitial = AdAccountSettingDomain.meetsInitialScaleThreshold(adsetAge, adset.lastScaledAt, config)
 
-    if (!meetsInitial) {
+    // Check if adset meets initial scale threshold
+    const meetsInitialThreshold = AdAccountSettingDomain.meetsInitialScaleThreshold(adsetAge, adset.lastScaledAt, config)
+
+    if (!meetsInitialThreshold) {
         logger.debug(
-            `Skipping ${adset.adsetId}: timing threshold not met (age: ${adsetAge}, initScaleDay: ${config.initScaleDay})`
+            `Skipping ${adset.adsetId}: initial scale timing not met (age: ${adsetAge} days, required: ${config.initScaleDay} days, lastScaledAt: ${adset.lastScaledAt?.toISOString() || 'never'})`
         )
         return false
     }
@@ -61,8 +64,10 @@ export function checkScaleTiming(adset: AdSet, config: AdAccountSetting): boolea
 }
 
 /**
- * Analyze adset metrics and find exceeding ones
+ * Analyze adset metrics and check if ALL conditions are met
  * Uses the latest aggregated insight record from Facebook (time_increment: 'all_day')
+ *
+ * Returns qualifying metrics only if ALL configured conditions are satisfied
  */
 export async function analyzeAdsetMetrics(
     adsetId: string,
@@ -75,7 +80,7 @@ export async function analyzeAdsetMetrics(
         return null
     }
 
-    // Use only the latest aggregated record (already sorted by date desc)
+    // Use only the latest aggregated record (already sorted by updatedAt desc)
     // Facebook provides aggregated data with time_increment: 'all_day'
     const latestInsight = insights[0]
 
@@ -92,16 +97,19 @@ export async function analyzeAdsetMetrics(
         inlineLinkCtr: latestInsight.inlineLinkCtr || 0,
         costPerInlineLinkClick: latestInsight.costPerInlineLinkClick || 0,
         purchaseRoas: latestInsight.purchaseRoas || 0,
+        purchases: latestInsight.purchases || 0,
+        costPerPurchase: latestInsight.costPerPurchase || 0,
     }
 
-    const exceedingMetrics = SuggestionAnalyzer.findExceedingMetrics(aggregated, config)
+    const { qualifyingMetrics, allConditionsMet } = SuggestionAnalyzer.findQualifyingMetrics(aggregated, config)
 
-    if (exceedingMetrics.length === 0) {
-        logger.debug(`Skipping ${adsetId}: no metrics exceed thresholds`)
+    // Only return metrics if ALL configured conditions are met
+    if (!allConditionsMet) {
+        logger.debug(`Skipping ${adsetId}: not all conditions met`)
         return null
     }
 
-    return exceedingMetrics
+    return qualifyingMetrics
 }
 
 /**

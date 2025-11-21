@@ -4,7 +4,7 @@
  * Pure domain logic without infrastructure dependencies
  */
 
-import { AdAccountSetting, MetricFieldName, METRIC_FIELDS } from '../aggregates/ad-account-setting/AdAccountSetting'
+import { AdAccountSetting, MetricFieldName, METRIC_FIELDS, COST_METRICS, PERFORMANCE_METRICS } from '../aggregates/ad-account-setting/AdAccountSetting'
 import { ExceedingMetric } from '../aggregates/suggestion/Suggestion'
 
 /**
@@ -23,41 +23,75 @@ export interface AggregatedMetrics {
     inlineLinkCtr: number
     costPerInlineLinkClick: number
     purchaseRoas: number
+    purchases: number
+    costPerPurchase: number
 }
 
 /**
- * Compare aggregated metrics against thresholds
- * Returns list of metrics that exceed their configured thresholds
+ * Compare aggregated metrics against thresholds using KISS principle
+ *
+ * Cost metrics (cpm, frequency, costPerInlineLinkClick, costPerPurchase):
+ *   - Lower is better → must be LESS THAN threshold to qualify
+ *
+ * Performance metrics (ctr, inlineLinkCtr, purchaseRoas, purchases):
+ *   - Higher is better → must be GREATER THAN threshold to qualify
+ *
+ * ALL configured conditions must be met to create a suggestion
+ *
+ * Returns:
+ *   - qualifyingMetrics: array of metrics that meet their conditions (for display)
+ *   - allConditionsMet: true if ALL configured thresholds are satisfied
  */
-export function findExceedingMetrics(
+export function findQualifyingMetrics(
     aggregated: AggregatedMetrics,
     thresholds: AdAccountSetting
-): ExceedingMetric[] {
-    const exceedingMetrics: ExceedingMetric[] = []
+): { qualifyingMetrics: ExceedingMetric[]; allConditionsMet: boolean } {
+    const qualifyingMetrics: ExceedingMetric[] = []
+    let configuredConditions = 0
+    let metConditions = 0
 
     for (const metricName of METRIC_FIELDS) {
         const threshold = thresholds[metricName]
         const value = aggregated[metricName]
 
-        // Skip if threshold not set or value is zero/undefined
+        // Skip if threshold not configured (0, undefined, or null means not configured)
         if (threshold === undefined || threshold === null || threshold === 0) {
             continue
         }
 
+        configuredConditions++
+
+        // Skip if value is missing
         if (value === undefined || value === null) {
             continue
         }
 
-        // Check if metric exceeds threshold
-        if (value > threshold) {
-            exceedingMetrics.push({
+        const isCostMetric = COST_METRICS.includes(metricName as any)
+        const isPerformanceMetric = PERFORMANCE_METRICS.includes(metricName as any)
+
+        let meetsCondition = false
+
+        if (isCostMetric) {
+            // Cost metrics: value must be LESS THAN threshold (lower cost is better)
+            meetsCondition = value < threshold
+        } else if (isPerformanceMetric) {
+            // Performance metrics: value must be GREATER THAN threshold (higher performance is better)
+            meetsCondition = value > threshold
+        }
+
+        if (meetsCondition) {
+            metConditions++
+            qualifyingMetrics.push({
                 metricName: metricName as MetricFieldName,
                 value,
             })
         }
     }
 
-    return exceedingMetrics
+    // ALL configured conditions must be met
+    const allConditionsMet = configuredConditions > 0 && metConditions === configuredConditions
+
+    return { qualifyingMetrics, allConditionsMet }
 }
 
 /**
@@ -76,6 +110,6 @@ export function hasValidThresholds(config: AdAccountSetting): boolean {
  * Groups all suggestion analysis domain logic
  */
 export const SuggestionAnalyzer = {
-    findExceedingMetrics,
+    findQualifyingMetrics,
     hasValidThresholds,
 }

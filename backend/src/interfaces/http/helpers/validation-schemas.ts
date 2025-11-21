@@ -42,9 +42,10 @@ export const UpsertAdAccountSettingSchema = z
         inlineLinkCtr: z.number().optional(),
         costPerInlineLinkClick: z.number().optional(),
         purchaseRoas: z.number().optional(),
+        purchases: z.number().optional(),
+        costPerPurchase: z.number().optional(),
         scalePercent: z.number().optional(),
         note: z.string().optional(),
         initScaleDay: z.number().optional(),
-        recurScaleDay: z.number().optional(),
     })
     .strict() // Reject unknown fields

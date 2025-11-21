@@ -13,12 +13,29 @@ export const METRIC_FIELDS = [
     'inlineLinkCtr',
     'costPerInlineLinkClick',
     'purchaseRoas',
+    'purchases',
+    'costPerPurchase',
+] as const
+
+// Cost metrics: lower is better (must be LESS THAN threshold)
+export const COST_METRICS = [
+    'cpm',
+    'frequency',
+    'costPerInlineLinkClick',
+    'costPerPurchase',
+] as const
+
+// Performance metrics: higher is better (must be GREATER THAN threshold)
+export const PERFORMANCE_METRICS = [
+    'ctr',
+    'inlineLinkCtr',
+    'purchaseRoas',
+    'purchases',
 ] as const
 
 export const SUGGESTION_FIELDS = [
     'scalePercent',
     'initScaleDay',
-    'recurScaleDay',
     'note',
 ] as const
 
@@ -28,17 +45,18 @@ export type SuggestionFieldName = typeof SUGGESTION_FIELDS[number]
 export interface AdAccountSetting {
     readonly id?: string
     readonly adAccountId: string
-    // 6 optional metric threshold fields
+    // Metric threshold fields
     readonly cpm?: number
     readonly ctr?: number
     readonly frequency?: number
     readonly inlineLinkCtr?: number
     readonly costPerInlineLinkClick?: number
     readonly purchaseRoas?: number
+    readonly purchases?: number
+    readonly costPerPurchase?: number
     // Suggestion parameters
     readonly scalePercent?: number
     readonly initScaleDay?: number // Minimum adset age (from startTime) before first budget scale
-    readonly recurScaleDay?: number // Days since last scale (from lastScaledAt) before recurring scale
     readonly note?: string
     // Timestamps (undefined for default configs)
     readonly createdAt?: Date
@@ -60,9 +78,10 @@ export function createAdAccountSetting(props: AdAccountSetting): AdAccountSettin
         inlineLinkCtr: props.inlineLinkCtr,
         costPerInlineLinkClick: props.costPerInlineLinkClick,
         purchaseRoas: props.purchaseRoas,
+        purchases: props.purchases,
+        costPerPurchase: props.costPerPurchase,
         scalePercent: props.scalePercent,
         initScaleDay: props.initScaleDay,
-        recurScaleDay: props.recurScaleDay,
         note: props.note,
         createdAt: now,
         updatedAt: now,
@@ -81,9 +100,10 @@ export function createDefaultAdAccountSetting(adAccountId: string): AdAccountSet
         inlineLinkCtr: 0,
         costPerInlineLinkClick: 0,
         purchaseRoas: 0,
+        purchases: 0,
+        costPerPurchase: 0,
         scalePercent: 0,
         initScaleDay: 0, // Default: 0 days minimum age before first budget scale
-        recurScaleDay: 0, // Default: 0 days between recurring budget scales
         note: '',
         // No createdAt/updatedAt for default configs
     }
@@ -129,35 +149,6 @@ export function meetsInitialScaleThreshold(
 }
 
 /**
- * Check if an adset meets recurring scale threshold (subsequent scales)
- * Returns true if days since last scale (from lastScaledAt to now) >= recurScaleDay
- *
- * @param lastScaledAt - Last time the adset was scaled (undefined if never scaled)
- * @param setting - Ad account setting containing the threshold
- * @returns boolean indicating if adset meets recurring scale threshold
- */
-export function meetsRecurringScaleThreshold(
-    lastScaledAt: Date | undefined,
-    setting: AdAccountSetting
-): boolean {
-    // If never scaled before, not eligible for recurring scale
-    if (lastScaledAt === undefined) {
-        return false
-    }
-
-    // If no threshold is set, cannot meet threshold
-    if (setting.recurScaleDay === undefined || setting.recurScaleDay === null) {
-        return false
-    }
-
-    // Calculate days since last scale
-    const now = new Date()
-    const daysSinceLastScale = (now.getTime() - lastScaledAt.getTime()) / (1000 * 60 * 60 * 24)
-
-    return daysSinceLastScale >= setting.recurScaleDay
-}
-
-/**
  * AdAccountSetting Domain - Grouped collection of all AdAccountSetting-related functions
  * Following DDD principles with functional programming style
  */
@@ -166,5 +157,4 @@ export const AdAccountSettingDomain = {
     createDefaultAdAccountSetting,
     isValidSetting,
     meetsInitialScaleThreshold,
-    meetsRecurringScaleThreshold,
 }
