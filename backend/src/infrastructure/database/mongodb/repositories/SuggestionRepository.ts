@@ -6,7 +6,7 @@
 import { ISuggestionRepository, Suggestion, ExceedingMetric, PaginatedSuggestions } from '../../../../domain'
 import { SuggestionSchema } from '../schemas/SuggestionSchema'
 
-// Convert Mongoose document to plain domain object
+// Convert Mongoose document to plain domain object with backward compatibility
 const toDomain = (doc: any): Suggestion => {
     // Convert Mongoose document to plain object to avoid document pollution
     const plainDoc = doc.toObject ? doc.toObject() : doc
@@ -21,13 +21,15 @@ const toDomain = (doc: any): Suggestion => {
         adsetName: plainDoc.adsetName,
         adsetLink: plainDoc.adsetLink,
         currency: plainDoc.currency,
-        dailyBudget: plainDoc.dailyBudget,
-        budgetScaled: plainDoc.budgetScaled,
+        // Handle both old and new field names for backward compatibility
+        budget: plainDoc.budget ?? plainDoc.dailyBudget,
+        budgetAfterScale: plainDoc.budgetAfterScale ?? plainDoc.budgetScaled,
         scalePercent: plainDoc.scalePercent,
         note: plainDoc.note,
         metrics: plainDoc.metrics as ReadonlyArray<ExceedingMetric>,
         metricsExceededCount: plainDoc.metricsExceededCount,
-        status: plainDoc.status,
+        status: plainDoc.status === 'applied' ? 'approved' : plainDoc.status, // Map old 'applied' to 'approved'
+        recentScaleAt: plainDoc.recentScaleAt ?? null,
         createdAt: plainDoc.createdAt,
         updatedAt: plainDoc.updatedAt,
     }
@@ -43,13 +45,14 @@ const fromDomain = (suggestion: Suggestion) => ({
     adsetName: suggestion.adsetName,
     adsetLink: suggestion.adsetLink,
     currency: suggestion.currency,
-    dailyBudget: suggestion.dailyBudget,
-    budgetScaled: suggestion.budgetScaled,
+    budget: suggestion.budget,
+    budgetAfterScale: suggestion.budgetAfterScale,
     scalePercent: suggestion.scalePercent,
     note: suggestion.note,
     metrics: suggestion.metrics,
     metricsExceededCount: suggestion.metricsExceededCount,
     status: suggestion.status,
+    recentScaleAt: suggestion.recentScaleAt,
 })
 
 /**
@@ -86,32 +89,66 @@ const findById = async (id: string): Promise<Suggestion | null> => {
 }
 
 /**
- * Find all suggestions for a specific ad account
- */
-const findByAdAccountId = async (adAccountId: string): Promise<Suggestion[]> => {
-    const docs = await SuggestionSchema.find({ adAccountId }).sort({ createdAt: -1 })
-    return docs.map(toDomain)
-}
-
-/**
- * Find all suggestions for a specific adset
+ * Find all suggestions for a specific adset (excluding pending)
  */
 const findByAdsetId = async (adsetId: string): Promise<Suggestion[]> => {
-    const docs = await SuggestionSchema.find({ adsetId }).sort({ createdAt: -1 })
+    const docs = await SuggestionSchema.find({
+        adsetId,
+        status: { $in: ['approved', 'rejected', 'applied'] } // Include 'applied' for backward compatibility
+    }).sort({ createdAt: -1 })
     return docs.map(toDomain)
 }
 
 /**
- * Update suggestion status
+ * Find only pending suggestions for specific adset
  */
-const updateStatus = async (id: string, status: 'pending' | 'rejected' | 'applied'): Promise<Suggestion | null> => {
-    const result = await SuggestionSchema.findByIdAndUpdate(
-        id,
-        { status, updatedAt: new Date() },
-        { new: true, runValidators: true }
-    )
+const findPendingByAdsetId = async (adsetId: string): Promise<Suggestion[]> => {
+    const docs = await SuggestionSchema.find({
+        adsetId,
+        status: 'pending'
+    }).sort({ createdAt: -1 })
+    return docs.map(toDomain)
+}
 
-    return result ? toDomain(result) : null
+/**
+ * Bulk delete suggestions by IDs
+ */
+const deleteBulk = async (ids: string[]): Promise<number> => {
+    const result = await SuggestionSchema.deleteMany({
+        _id: { $in: ids }
+    })
+    return result.deletedCount || 0
+}
+
+/**
+ * Find suggestions by adset ID and status with pagination
+ */
+const findByAdsetIdAndStatus = async (
+    adsetId: string,
+    status: 'approved' | 'rejected',
+    limit?: number,
+    offset?: number
+): Promise<PaginatedSuggestions> => {
+    const query = SuggestionSchema.find({ adsetId, status }).sort({ createdAt: -1 })
+
+    // Apply pagination if parameters provided
+    if (offset !== undefined && offset > 0) {
+        query.skip(offset)
+    }
+    if (limit !== undefined && limit > 0) {
+        query.limit(limit)
+    }
+
+    // Execute query and get total count in parallel
+    const [docs, total] = await Promise.all([
+        query.exec(),
+        SuggestionSchema.countDocuments({ adsetId, status })
+    ])
+
+    return {
+        suggestions: docs.map(toDomain),
+        total
+    }
 }
 
 /**
@@ -119,11 +156,16 @@ const updateStatus = async (id: string, status: 'pending' | 'rejected' | 'applie
  * Supports pagination with limit and offset
  */
 const findByStatus = async (
-    status: 'pending' | 'rejected' | 'applied',
+    status: 'pending' | 'approved' | 'rejected',
     limit?: number,
     offset?: number
 ): Promise<PaginatedSuggestions> => {
-    const query = SuggestionSchema.find({ status })
+    // For backward compatibility, include 'applied' when searching for 'approved'
+    const statusFilter = status === 'approved'
+        ? { $in: ['approved', 'applied'] }
+        : status
+
+    const query = SuggestionSchema.find({ status: statusFilter })
         .sort({ metricsExceededCount: -1 })
 
     // Apply pagination if limit is provided
@@ -137,7 +179,7 @@ const findByStatus = async (
     // Execute query and get total count in parallel
     const [docs, total] = await Promise.all([
         query.exec(),
-        SuggestionSchema.countDocuments({ status })
+        SuggestionSchema.countDocuments({ status: statusFilter })
     ])
 
     return {
@@ -149,8 +191,9 @@ const findByStatus = async (
 export const suggestionRepository: ISuggestionRepository = {
     save,
     findById,
-    findByAdAccountId,
     findByAdsetId,
-    updateStatus,
+    findPendingByAdsetId,
+    deleteBulk,
+    findByAdsetIdAndStatus,
     findByStatus,
 }

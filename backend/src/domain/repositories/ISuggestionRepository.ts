@@ -26,32 +26,44 @@ export interface ISuggestionRepository {
     findById(id: string): Promise<Suggestion | null>
 
     /**
-     * Find all suggestions for a specific ad account
-     * Precondition: adAccountId must be non-empty string
-     * Postcondition: Returns array of suggestions (empty if none found)
-     */
-    findByAdAccountId(adAccountId: string): Promise<Suggestion[]>
-
-    /**
-     * Find all suggestions for a specific adset
+     * Find all suggestions for a specific adset (excluding pending)
      * Precondition: adsetId must be non-empty string
-     * Postcondition: Returns array of suggestions (empty if none found)
+     * Postcondition: Returns array of approved + rejected suggestions (empty if none found)
      */
     findByAdsetId(adsetId: string): Promise<Suggestion[]>
 
     /**
-     * Update suggestion status
-     * Precondition: id must be valid MongoDB ObjectId
-     * Postcondition: Returns updated Suggestion with new status and updatedAt timestamp
+     * Find only pending suggestions for specific adset
+     * Precondition: adsetId must be non-empty string
+     * Postcondition: Returns array of pending suggestions sorted by createdAt descending
      */
-    updateStatus(id: string, status: 'pending' | 'rejected' | 'applied'): Promise<Suggestion | null>
+    findPendingByAdsetId(adsetId: string): Promise<Suggestion[]>
+
+    /**
+     * Bulk delete suggestions by IDs
+     * Precondition: ids array must contain valid MongoDB ObjectIds
+     * Postcondition: Returns count of deleted documents
+     */
+    deleteBulk(ids: string[]): Promise<number>
+
+    /**
+     * Find suggestions by adset ID and status with pagination
+     * Precondition: adsetId must be non-empty string, status must be 'approved' or 'rejected'
+     * Postcondition: Returns paginated suggestions sorted by createdAt descending
+     */
+    findByAdsetIdAndStatus(
+        adsetId: string,
+        status: 'approved' | 'rejected',
+        limit?: number,
+        offset?: number
+    ): Promise<PaginatedSuggestions>
 
     /**
      * Find all suggestions by status, sorted by exceeding count (descending)
-     * Precondition: status must be one of 'pending', 'rejected', or 'applied'
+     * Precondition: status must be one of 'pending', 'approved', or 'rejected'
      * Postcondition: Returns paginated suggestions sorted by metricsExceededCount descending
      * @param limit - Maximum number of suggestions to return (optional)
      * @param offset - Number of suggestions to skip (optional)
      */
-    findByStatus(status: 'pending' | 'rejected' | 'applied', limit?: number, offset?: number): Promise<PaginatedSuggestions>
+    findByStatus(status: 'pending' | 'approved' | 'rejected', limit?: number, offset?: number): Promise<PaginatedSuggestions>
 }

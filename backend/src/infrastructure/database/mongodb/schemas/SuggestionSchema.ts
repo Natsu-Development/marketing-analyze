@@ -26,13 +26,14 @@ export interface ISuggestionDocument extends Document {
     adsetName: string
     adsetLink: string
     currency: string
-    dailyBudget: number
-    budgetScaled: number
+    budget: number
+    budgetAfterScale: number
     scalePercent?: number
     note?: string
     metrics: IExceedingMetricDocument[]
     metricsExceededCount: number
-    status: 'pending' | 'rejected' | 'applied'
+    status: 'pending' | 'approved' | 'rejected'
+    recentScaleAt?: Date | null
     createdAt: Date
     updatedAt: Date
 }
@@ -99,12 +100,12 @@ const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
             type: String,
             required: true,
         },
-        dailyBudget: {
+        budget: {
             type: Number,
             required: true,
             min: 0,
         },
-        budgetScaled: {
+        budgetAfterScale: {
             type: Number,
             required: true,
             min: 0,
@@ -133,8 +134,13 @@ const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
         status: {
             type: String,
             required: true,
-            enum: ['pending', 'rejected', 'applied'],
+            enum: ['pending', 'approved', 'rejected'],
             default: 'pending',
+        },
+        recentScaleAt: {
+            type: Date,
+            required: false,
+            default: null,
         },
     },
     {
@@ -146,9 +152,12 @@ const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
 // Composite unique index to prevent duplicate suggestions (one per adset per timestamp)
 SuggestionSchemaInstance.index({ adAccountId: 1, adsetId: 1, createdAt: 1 }, { unique: true })
 
-// Indexes for common queries
+// Optimized indexes following KISS principle
+// Status-only queries (most common)
 SuggestionSchemaInstance.index({ status: 1 })
-SuggestionSchemaInstance.index({ adAccountId: 1, status: 1 })
-SuggestionSchemaInstance.index({ adsetId: 1 })
+
+// Compound index for adset + status historical queries
+// This index also covers adsetId-only queries via prefix matching
+SuggestionSchemaInstance.index({ adsetId: 1, status: 1, createdAt: -1 })
 
 export const SuggestionSchema = model<ISuggestionDocument>('Suggestion', SuggestionSchemaInstance)

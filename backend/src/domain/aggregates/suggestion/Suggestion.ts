@@ -19,7 +19,7 @@ export interface ExceedingMetric {
 /**
  * Suggestion status lifecycle states
  */
-export type SuggestionStatus = 'pending' | 'rejected' | 'applied'
+export type SuggestionStatus = 'pending' | 'approved' | 'rejected'
 
 /**
  * Suggestion aggregate entity
@@ -34,22 +34,16 @@ export interface Suggestion {
     readonly adsetName: string
     readonly adsetLink: string
     readonly currency: string
-    readonly dailyBudget: number
-    readonly budgetScaled: number
+    readonly budget: number
+    readonly budgetAfterScale: number
     readonly scalePercent?: number
     readonly note?: string
     readonly metrics: ReadonlyArray<ExceedingMetric>
     readonly metricsExceededCount: number
     readonly status: SuggestionStatus
+    readonly recentScaleAt: Date | null
     readonly createdAt: Date
     readonly updatedAt: Date
-}
-
-/**
- * Validate suggestion status value
- */
-function isValidStatus(status: string): status is SuggestionStatus {
-    return status === 'pending' || status === 'rejected' || status === 'applied'
 }
 
 /**
@@ -78,10 +72,11 @@ export function createSuggestion(props: {
     adsetId: string
     adsetName: string
     currency: string
-    dailyBudget: number
+    budget: number
     scalePercent?: number
     note?: string
     metrics: ReadonlyArray<ExceedingMetric>
+    recentScaleAt: Date | null
 }): Suggestion {
     const now = new Date()
 
@@ -92,14 +87,14 @@ export function createSuggestion(props: {
         }
     }
 
-    // Validate daily budget
-    if (props.dailyBudget <= 0) {
-        throw new Error('Daily budget must be greater than 0')
+    // Validate budget
+    if (props.budget <= 0) {
+        throw new Error('Budget must be greater than 0')
     }
 
     // Calculate scaled budget
     const scalePercent = props.scalePercent || 0
-    const budgetScaled = props.dailyBudget * (1 + scalePercent / 100)
+    const budgetAfterScale = props.budget * (1 + scalePercent / 100)
 
     return {
         accountId: props.accountId,
@@ -110,57 +105,100 @@ export function createSuggestion(props: {
         adsetName: props.adsetName,
         adsetLink: generateAdsetLink(props.adAccountId, props.adsetId),
         currency: props.currency,
-        dailyBudget: props.dailyBudget,
-        budgetScaled,
+        budget: props.budget,
+        budgetAfterScale,
         scalePercent: props.scalePercent,
         note: props.note,
         metrics: props.metrics,
         metricsExceededCount: props.metrics.length,
         status: 'pending',
+        recentScaleAt: props.recentScaleAt,
         createdAt: now,
         updatedAt: now,
     }
 }
 
 /**
- * Update suggestion status with valid transition
- * Returns new suggestion instance with updated status and timestamp
- * Ensures immutability by creating new instance
+ * Update pending suggestion with new analysis data
+ * Returns new suggestion instance with updated fields
+ * Preserves id and createdAt from existing suggestion
  */
-export function updateSuggestionStatus(suggestion: Suggestion, newStatus: SuggestionStatus): Suggestion {
-    if (!isValidStatus(newStatus)) {
-        throw new Error(`Invalid suggestion status: ${newStatus}`)
+export function updatePendingSuggestion(
+    existingSuggestion: Suggestion,
+    newData: {
+        budget: number
+        scalePercent?: number
+        note?: string
+        metrics: ReadonlyArray<ExceedingMetric>
+        recentScaleAt: Date | null
+    }
+): Suggestion {
+    // Validate that suggestion is pending
+    if (existingSuggestion.status !== 'pending') {
+        throw new Error(`Cannot update suggestion with status: ${existingSuggestion.status}. Only pending suggestions can be updated.`)
     }
 
+    // Validate budget
+    if (newData.budget <= 0) {
+        throw new Error('Budget must be greater than 0')
+    }
+
+    // Validate all metric names
+    for (const metric of newData.metrics) {
+        if (!isValidMetricName(metric.metricName)) {
+            throw new Error(`Invalid metric name: ${metric.metricName}`)
+        }
+    }
+
+    // Calculate scaled budget
+    const scalePercent = newData.scalePercent || 0
+    const budgetAfterScale = newData.budget * (1 + scalePercent / 100)
+
     return {
-        ...suggestion,
-        status: newStatus,
+        ...existingSuggestion,
+        budget: newData.budget,
+        budgetAfterScale,
+        scalePercent: newData.scalePercent,
+        note: newData.note,
+        metrics: newData.metrics,
+        metricsExceededCount: newData.metrics.length,
+        recentScaleAt: newData.recentScaleAt,
         updatedAt: new Date(),
     }
 }
 
 /**
  * Approve suggestion
- * Validates suggestion can be approved and transitions to 'applied' status
+ * Validates suggestion is pending and transitions to 'approved' status
+ * KISS: Direct status update without intermediate function
  */
 export function approveSuggestion(suggestion: Suggestion): Suggestion {
     if (suggestion.status !== 'pending') {
         throw new Error(`Cannot approve suggestion with status: ${suggestion.status}. Only pending suggestions can be approved.`)
     }
 
-    return updateSuggestionStatus(suggestion, 'applied')
+    return {
+        ...suggestion,
+        status: 'approved',
+        updatedAt: new Date(),
+    }
 }
 
 /**
  * Reject suggestion
- * Validates suggestion can be rejected and transitions to 'rejected' status
+ * Validates suggestion is pending and transitions to 'rejected' status
+ * KISS: Direct status update without intermediate function
  */
 export function rejectSuggestion(suggestion: Suggestion): Suggestion {
     if (suggestion.status !== 'pending') {
         throw new Error(`Cannot reject suggestion with status: ${suggestion.status}. Only pending suggestions can be rejected.`)
     }
 
-    return updateSuggestionStatus(suggestion, 'rejected')
+    return {
+        ...suggestion,
+        status: 'rejected',
+        updatedAt: new Date(),
+    }
 }
 
 /**
@@ -169,7 +207,7 @@ export function rejectSuggestion(suggestion: Suggestion): Suggestion {
  */
 export const SuggestionDomain = {
     createSuggestion,
-    updateSuggestionStatus,
+    updatePendingSuggestion,
     approveSuggestion,
     rejectSuggestion,
 }

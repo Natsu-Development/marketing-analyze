@@ -4,6 +4,16 @@
  */
 
 /**
+ * Result of processing a single adset
+ */
+export interface AdsetProcessingResult {
+    readonly processed: boolean
+    readonly created: boolean
+    readonly updated: boolean
+    readonly error?: string
+}
+
+/**
  * Analysis execution summary
  * Reports results of suggestion analysis workflow
  */
@@ -11,6 +21,7 @@ export interface AnalysisResult {
     readonly success: boolean
     readonly adsetsProcessed: number
     readonly suggestionsCreated: number
+    readonly suggestionsUpdated: number
     readonly errors: number
     readonly errorMessages?: readonly string[]
 }

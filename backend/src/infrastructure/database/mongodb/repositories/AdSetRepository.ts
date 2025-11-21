@@ -3,7 +3,7 @@
  * Uses plain functional approach for AdSet persistence
  */
 
-import { IAdSetRepository } from '../../../../domain/repositories/IAdSetRepository'
+import { IAdSetRepository, PaginatedAdSets } from '../../../../domain/repositories/IAdSetRepository'
 import { AdSet } from '../../../../domain/aggregates/adset'
 import { AdSetSchema } from '../schemas/AdSetSchema'
 
@@ -89,23 +89,8 @@ const saveBatch = async (adsets: AdSet[]): Promise<{ upsertedCount: number; modi
     }
 }
 
-const findAll = async (): Promise<AdSet[]> => {
-    const docs = await AdSetSchema.find().sort({ updatedTime: -1 })
-    return docs.map(toDomain)
-}
-
 const findAllActive = async (): Promise<AdSet[]> => {
     const docs = await AdSetSchema.find({ status: 'ACTIVE' }).sort({ updatedTime: -1 })
-    return docs.map(toDomain)
-}
-
-const findByAdAccountId = async (adAccountId: string): Promise<AdSet[]> => {
-    const docs = await AdSetSchema.find({ adAccountId }).sort({ updatedTime: -1 })
-    return docs.map(toDomain)
-}
-
-const findActiveByAdAccountId = async (adAccountId: string): Promise<AdSet[]> => {
-    const docs = await AdSetSchema.find({ adAccountId, status: 'ACTIVE' }).sort({ updatedTime: -1 })
     return docs.map(toDomain)
 }
 
@@ -114,18 +99,30 @@ const findByAdSetId = async (adAccountId: string, adsetId: string): Promise<AdSe
     return doc ? toDomain(doc) : null
 }
 
-const findByCampaignId = async (campaignId: string): Promise<AdSet[]> => {
-    const docs = await AdSetSchema.find({ campaignId }).sort({ updatedTime: -1 })
-    return docs.map(toDomain)
+const findAllWithPagination = async (limit?: number, offset?: number): Promise<PaginatedAdSets> => {
+    const query = AdSetSchema.find().sort({ lastScaledAt: -1, updatedTime: -1 })
+
+    if (offset !== undefined) {
+        query.skip(offset)
+    }
+
+    if (limit !== undefined) {
+        query.limit(limit)
+    }
+
+    const docs = await query.exec()
+    const total = await AdSetSchema.countDocuments()
+
+    return {
+        adsets: docs.map(toDomain),
+        total,
+    }
 }
 
 export const adSetRepository: IAdSetRepository = {
     save,
     saveBatch,
-    findAll,
     findAllActive,
-    findByAdAccountId,
-    findActiveByAdAccountId,
     findByAdSetId,
-    findByCampaignId,
+    findAllWithPagination,
 }
