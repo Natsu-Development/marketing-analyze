@@ -166,7 +166,7 @@ const createAsyncReport = async (accessToken: string, request: AsyncReportReques
         params.append('time_range', JSON.stringify({ since: request.timeRange.since, until: request.timeRange.until }))
         params.append('format', 'csv')
         params.append('locale', 'en_US')
-        params.append('time_increment', '1')
+        params.append('time_increment', 'all_day')
         params.append(
             'filtering',
             JSON.stringify([

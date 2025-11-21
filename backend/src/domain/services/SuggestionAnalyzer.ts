@@ -6,11 +6,10 @@
 
 import { AdAccountSetting, MetricFieldName, METRIC_FIELDS } from '../aggregates/ad-account-setting/AdAccountSetting'
 import { ExceedingMetric } from '../aggregates/suggestion/Suggestion'
-import { AdSetInsight } from '../aggregates/adset-insights/AdSetInsight'
 
 /**
  * Aggregated metrics structure for performance analysis
- * Represents calculated metrics from historical insight data
+ * Represents calculated metrics from aggregated insight data
  */
 export interface AggregatedMetrics {
     impressions: number
@@ -24,59 +23,6 @@ export interface AggregatedMetrics {
     inlineLinkCtr: number
     costPerInlineLinkClick: number
     purchaseRoas: number
-}
-
-/**
- * Aggregate performance metrics from daily insight data
- * Simple summation since Facebook provides daily breakdown
- * KISS principle: just sum all fields
- */
-export function aggregateInsightMetrics(insights: readonly AdSetInsight[]): AggregatedMetrics | null {
-    if (insights.length === 0) {
-        return null
-    }
-
-    // Initialize aggregators
-    let totalImpressions = 0
-    let totalClicks = 0
-    let totalAmountSpent = 0
-    let totalCpm = 0
-    let totalCpc = 0
-    let totalCtr = 0
-    let totalReach = 0
-    let totalFrequency = 0
-    let totalInlineLinkCtr = 0
-    let totalCostPerInlineLinkClick = 0
-    let totalPurchaseRoas = 0
-
-    // Sum all metrics from daily insights
-    for (const insight of insights) {
-        totalImpressions += insight.impressions || 0
-        totalClicks += insight.clicks || 0
-        totalAmountSpent += insight.amountSpent || 0
-        totalCpm += insight.cpm || 0
-        totalCpc += insight.cpc || 0
-        totalCtr += insight.ctr || 0
-        totalReach += insight.reach || 0
-        totalFrequency += insight.frequency || 0
-        totalInlineLinkCtr += insight.inlineLinkCtr || 0
-        totalCostPerInlineLinkClick += insight.costPerInlineLinkClick || 0
-        totalPurchaseRoas += insight.purchaseRoas || 0
-    }
-
-    return {
-        impressions: totalImpressions,
-        clicks: totalClicks,
-        amountSpent: totalAmountSpent,
-        cpm: totalCpm,
-        cpc: totalCpc,
-        ctr: totalCtr,
-        reach: totalReach,
-        frequency: totalFrequency,
-        inlineLinkCtr: totalInlineLinkCtr,
-        costPerInlineLinkClick: totalCostPerInlineLinkClick,
-        purchaseRoas: totalPurchaseRoas,
-    }
 }
 
 /**
@@ -130,7 +76,6 @@ export function hasValidThresholds(config: AdAccountSetting): boolean {
  * Groups all suggestion analysis domain logic
  */
 export const SuggestionAnalyzer = {
-    aggregateInsightMetrics,
     findExceedingMetrics,
     hasValidThresholds,
 }

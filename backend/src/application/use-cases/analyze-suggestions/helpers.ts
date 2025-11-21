@@ -62,6 +62,7 @@ export function checkScaleTiming(adset: AdSet, config: AdAccountSetting): boolea
 
 /**
  * Analyze adset metrics and find exceeding ones
+ * Uses the latest aggregated insight record from Facebook (time_increment: 'all_day')
  */
 export async function analyzeAdsetMetrics(
     adsetId: string,
@@ -74,9 +75,23 @@ export async function analyzeAdsetMetrics(
         return null
     }
 
-    const aggregated = SuggestionAnalyzer.aggregateInsightMetrics(insights)
-    if (!aggregated) {
-        return null
+    // Use only the latest aggregated record (already sorted by date desc)
+    // Facebook provides aggregated data with time_increment: 'all_day'
+    const latestInsight = insights[0]
+
+    // Map insight fields to aggregated metrics format
+    const aggregated = {
+        impressions: latestInsight.impressions || 0,
+        clicks: latestInsight.clicks || 0,
+        amountSpent: latestInsight.amountSpent || 0,
+        cpm: latestInsight.cpm || 0,
+        cpc: latestInsight.cpc || 0,
+        ctr: latestInsight.ctr || 0,
+        reach: latestInsight.reach || 0,
+        frequency: latestInsight.frequency || 0,
+        inlineLinkCtr: latestInsight.inlineLinkCtr || 0,
+        costPerInlineLinkClick: latestInsight.costPerInlineLinkClick || 0,
+        purchaseRoas: latestInsight.purchaseRoas || 0,
     }
 
     const exceedingMetrics = SuggestionAnalyzer.findExceedingMetrics(aggregated, config)
