@@ -64,7 +64,7 @@ export function checkScaleTiming(adset: AdSet, config: AdAccountSetting): boolea
 
 /**
  * Analyze adset metrics and check if ALL conditions are met
- * Uses the latest aggregated insight record from Facebook (time_increment: 'all_day')
+ * Uses the latest aggregated insight record from Facebook (time_increment: 'all_days')
  *
  * Returns qualifying metrics only if ALL configured conditions are satisfied
  */
@@ -80,7 +80,7 @@ export async function analyzeAdsetMetrics(
     }
 
     // Use only the latest aggregated record (already sorted by updatedAt desc)
-    // Facebook provides aggregated data with time_increment: 'all_day'
+    // Facebook provides aggregated data with time_increment: 'all_days'
     const latestInsight = insights[0]
 
     // Map insight fields to aggregated metrics format
@@ -136,11 +136,11 @@ export async function createSuggestion(
         recentScaleAt: adset.lastScaledAt ?? null,
     })
 
-    await suggestionRepository.save(suggestion)
+    const savedSuggestion = await suggestionRepository.save(suggestion)
 
-    logger.info(`Created suggestion for ${adset.adsetName}: budget ${adset.dailyBudget} → ${suggestion.budgetAfterScale}`)
+    logger.info(`Created suggestion for ${adset.adsetName}: budget ${adset.dailyBudget} → ${savedSuggestion.budgetAfterScale}`)
 
-    return suggestion
+    return savedSuggestion
 }
 
 /**
