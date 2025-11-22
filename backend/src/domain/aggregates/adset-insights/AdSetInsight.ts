@@ -12,7 +12,6 @@ export interface AdSetInsight {
     readonly campaignName?: string
     readonly adsetId: string
     readonly adsetName?: string
-    readonly date: Date // Date from Facebook report for daily aggregation
     readonly impressions?: number
     readonly clicks?: number
     readonly amountSpent?: number
@@ -39,7 +38,7 @@ export interface AdSetInsight {
 
 // Create a new adset insight
 export function createAdSetInsight(
-    props: Partial<AdSetInsight> & Pick<AdSetInsight, 'adAccountId' | 'accountId' | 'campaignId' | 'adsetId' | 'date'>
+    props: Partial<AdSetInsight> & Pick<AdSetInsight, 'adAccountId' | 'accountId' | 'campaignId' | 'adsetId'>
 ): AdSetInsight {
     return {
         ...props,
@@ -71,32 +70,20 @@ export const ADSET_INSIGHT_FIELDS = [
 ] as const
 
 /**
- * Normalize insight date from Facebook API format to Date object
- * Facebook provides date_start and date_stop, we use date_start as the primary date
- */
-export function normalizeInsightDate(dateStr: string): Date {
-    const date = new Date(dateStr)
-    // Set to middle of the day for consistency
-    date.setHours(12, 0, 0, 0)
-    return date
-}
-
-/**
  * Map CSV record from Facebook async report to AdSetInsight properties
  * Transforms Facebook API field names to our domain entity properties
  */
 export function mapRecordToAdSetInsight(
     record: Record<string, any>,
     adAccountId: string
-): Partial<AdSetInsight> & Pick<AdSetInsight, 'adAccountId' | 'accountId' | 'campaignId' | 'adsetId' | 'date'> {
+): Partial<AdSetInsight> & Pick<AdSetInsight, 'adAccountId' | 'accountId' | 'campaignId' | 'adsetId'> {
     const accountId = record.account_id || ''
     const campaignId = record.campaign_id || ''
     const adsetId = record.ad_set_id || ''
-    const dateStr = record.reporting_starts || record.reporting_ends || ''
 
-    if (!accountId || !campaignId || !adsetId || !dateStr) {
+    if (!accountId || !campaignId || !adsetId) {
         throw new Error(
-            `Missing required fields in CSV record: account_id=${accountId}, campaign_id=${campaignId}, adset_id=${adsetId}, date=${dateStr}`
+            `Missing required fields in CSV record: account_id=${accountId}, campaign_id=${campaignId}, adset_id=${adsetId}`
         )
     }
 
@@ -126,7 +113,6 @@ export function mapRecordToAdSetInsight(
         campaignName: record.campaign_name,
         adsetId,
         adsetName: record.ad_set_name,
-        date: normalizeInsightDate(dateStr),
         impressions: parseNumeric(record.impressions),
         clicks: parseNumeric(record.clicks),
         amountSpent,
@@ -167,7 +153,6 @@ function parseNumeric(value: any): number | undefined {
  */
 export const AdSetInsightDomain = {
     createAdSetInsight,
-    normalizeInsightDate,
     mapRecordToAdSetInsight,
     ADSET_INSIGHT_FIELDS,
 }

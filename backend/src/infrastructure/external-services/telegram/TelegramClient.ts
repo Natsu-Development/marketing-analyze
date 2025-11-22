@@ -7,93 +7,51 @@
 import axios from 'axios'
 import { appConfig } from '../../../config/env'
 import { logger } from '../../shared/logger'
-import { MetricFieldName } from '../../../domain/aggregates/ad-account-setting/AdAccountSetting'
 import {
     ITelegramClient,
-    SuggestionNotificationParams,
+    NotifyParams,
     SendMessageResponse,
 } from '../../../application/ports/ITelegramClient'
+import { Suggestion } from '../../../domain/aggregates/suggestion/Suggestion'
 
 const TELEGRAM_API_BASE = 'https://api.telegram.org'
 
-// Simple metric display names
-const METRIC_NAMES: Record<MetricFieldName, string> = {
-    cpm: 'CPM',
-    ctr: 'CTR',
-    frequency: 'Frequency',
-    inlineLinkCtr: 'Inline Link CTR',
-    costPerInlineLinkClick: 'Cost per Link Click',
-    purchaseRoas: 'Purchase ROAS',
-}
 
 /**
- * Format number with thousand separators (KISS: use built-in toLocaleString)
+ * Build grouped message for suggestions (KISS: simple list with links)
  */
-function formatNumber(value: number, decimals: number = 0): string {
-    return value.toLocaleString('en-US', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals,
-    })
-}
-
-/**
- * Format metric value with appropriate unit (KISS: simple if-else)
- */
-function formatMetric(metric: MetricFieldName, value: number): string {
-    // Currency
-    if (metric === 'costPerInlineLinkClick' || metric === 'cpm') {
-        return `$${formatNumber(value, 2)}`
-    }
-
-    // Percentage
-    if (metric === 'ctr' || metric === 'inlineLinkCtr') {
-        return `${formatNumber(value, 2)}%`
-    }
-
-    // ROAS
-    if (metric === 'purchaseRoas') {
-        return `${formatNumber(value, 2)}x`
-    }
-
-    // Default: 2 decimals (frequency)
-    return formatNumber(value, 2)
-}
-
-/**
- * Build notification message (KISS: direct string building)
- */
-function buildMessage(params: SuggestionNotificationParams): string {
-    const { suggestion } = params
+function buildMessage(params: NotifyParams): string {
+    const { suggestions } = params
+    const frontendUrl = appConfig.frontend.url
 
     const lines = [
-        '🎯 <b>New Budget Suggestion</b>',
+        '🎯 <b>Budget Suggestions Created</b>',
         '',
-        `<b>Ad Account:</b> ${suggestion.adAccountName}`,
-        `<b>Campaign:</b> ${suggestion.campaignName}`,
-        `<b>AdSet:</b> ${suggestion.adsetName}`,
+        `📊 <b>${suggestions.length} AdSet${suggestions.length > 1 ? 's' : ''} Ready for Scaling</b>`,
         '',
-        '💰 <b>Budget Recommendation:</b>',
-        `   Current:    $${formatNumber(suggestion.budget)}`,
-        `   Suggested:  $${formatNumber(suggestion.budgetAfterScale)}`,
-        `   Increase:   <b>+${suggestion.scalePercent || 0}%</b>`,
-        '',
-        `📊 <b>Metrics Exceeded (${suggestion.metricsExceededCount}):</b>`,
     ]
 
-    // Add metrics
-    suggestion.metrics.forEach((m) => {
-        const name = METRIC_NAMES[m.metricName] || m.metricName
-        const value = formatMetric(m.metricName, m.value)
-        lines.push(`   • ${name}: ${value}`)
+    // Group by ad account
+    const byAccount = new Map<string, Suggestion[]>()
+    suggestions.forEach(s => {
+        const existing = byAccount.get(s.adAccountName) || []
+        existing.push(s)
+        byAccount.set(s.adAccountName, existing)
     })
 
-    // Add note if exists
-    if (suggestion.note) {
-        lines.push('', `💡 <i>${suggestion.note}</i>`)
-    }
+    // List each suggestion with link
+    byAccount.forEach((accountSuggestions, accountName) => {
+        lines.push(`<b>${accountName}</b> (${accountSuggestions.length})`)
 
-    // Add link
-    lines.push('', `<a href="${suggestion.adsetLink}">→ View in Ads Manager</a>`)
+        accountSuggestions.forEach(suggestion => {
+            const suggestionUrl = `${frontendUrl}/suggestions/${suggestion.id}`
+            lines.push(`  • <a href="${suggestionUrl}">${suggestion.adsetName}</a>`)
+        })
+
+        lines.push('')
+    })
+
+    lines.push('💡 <i>Click on each AdSet name to view details and apply changes</i>')
 
     return lines.join('\n')
 }
@@ -101,9 +59,7 @@ function buildMessage(params: SuggestionNotificationParams): string {
 /**
  * Send notification (KISS: simple error handling, never throw)
  */
-async function notifySuggestionCreated(
-    params: SuggestionNotificationParams,
-): Promise<SendMessageResponse> {
+async function notify(params: NotifyParams): Promise<SendMessageResponse> {
     try {
         const { botToken, chatId } = appConfig.telegram
 
@@ -113,9 +69,15 @@ async function notifySuggestionCreated(
             return { success: false, error: 'Not configured' }
         }
 
+        // Skip if no suggestions
+        if (params.suggestions.length === 0) {
+            logger.debug('No suggestions to notify')
+            return { success: true }
+        }
+
         // Build and send
         const message = buildMessage(params)
-        logger.info(`Sending Telegram notification for AdSet: ${params.suggestion.adsetId}`)
+        logger.info(`Sending Telegram notification for ${params.suggestions.length} suggestions`)
 
         const response = await axios.post(
             `${TELEGRAM_API_BASE}/bot${botToken}/sendMessage`,
@@ -123,7 +85,7 @@ async function notifySuggestionCreated(
                 chat_id: chatId,
                 text: message,
                 parse_mode: 'HTML',
-                disable_web_page_preview: false,
+                disable_web_page_preview: true,
             },
         )
 
@@ -149,5 +111,5 @@ async function notifySuggestionCreated(
  * Telegram Client implementation
  */
 export const telegramClient: ITelegramClient = {
-    notifySuggestionCreated,
+    notify,
 }

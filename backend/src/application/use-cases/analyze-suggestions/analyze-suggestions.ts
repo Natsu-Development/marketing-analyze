@@ -5,7 +5,7 @@
  */
 
 import { AdSetDomain } from '../../../domain'
-import { accountRepository, adSetRepository } from '../../../config/dependencies'
+import { accountRepository, adSetRepository, telegramClient } from '../../../config/dependencies'
 import { logger } from '../../../infrastructure/shared/logger'
 import { AnalysisResult } from './types'
 import { groupAdsetsByAccount, validateAccountConfig, processSingleAdset } from './helpers'
@@ -13,6 +13,7 @@ import { groupAdsetsByAccount, validateAccountConfig, processSingleAdset } from 
 /**
  * Execute suggestion analysis for all eligible adsets
  * KISS: Clean main workflow with focused helper functions
+ * Collects all suggestions and sends one grouped Telegram notification
  */
 export async function execute(): Promise<AnalysisResult> {
     logger.info('Starting suggestion analysis')
@@ -21,6 +22,7 @@ export async function execute(): Promise<AnalysisResult> {
     let suggestionsCreated = 0
     let suggestionsUpdated = 0
     const errorMessages: string[] = []
+    const createdSuggestions: any[] = []
 
     try {
         // Get eligible adsets
@@ -57,7 +59,22 @@ export async function execute(): Promise<AnalysisResult> {
                 if (result.created) suggestionsCreated++
                 if (result.updated) suggestionsUpdated++
                 if (result.error) errorMessages.push(result.error)
+
+                // Collect created/updated suggestions for batch notification
+                if (result.suggestion) {
+                    createdSuggestions.push(result.suggestion)
+                }
             }
+        }
+
+        // Send Telegram notification if any suggestions were created
+        if (createdSuggestions.length > 0) {
+            logger.info(`Sending Telegram notification for ${createdSuggestions.length} suggestions`)
+            const accountId = eligibleAdsets[0]?.accountId || 'unknown'
+            await telegramClient.notify({
+                suggestions: createdSuggestions,
+                accountId,
+            })
         }
 
         logger.info(

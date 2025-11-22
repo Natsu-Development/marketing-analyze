@@ -4,13 +4,12 @@
  * Pure domain logic without infrastructure dependencies
  */
 
-import { AdAccountSetting, MetricFieldName, METRIC_FIELDS } from '../aggregates/ad-account-setting/AdAccountSetting'
+import { AdAccountSetting, MetricFieldName, METRIC_FIELDS, COST_METRICS, PERFORMANCE_METRICS } from '../aggregates/ad-account-setting/AdAccountSetting'
 import { ExceedingMetric } from '../aggregates/suggestion/Suggestion'
-import { AdSetInsight } from '../aggregates/adset-insights/AdSetInsight'
 
 /**
  * Aggregated metrics structure for performance analysis
- * Represents calculated metrics from historical insight data
+ * Represents calculated metrics from aggregated insight data
  */
 export interface AggregatedMetrics {
     impressions: number
@@ -24,94 +23,75 @@ export interface AggregatedMetrics {
     inlineLinkCtr: number
     costPerInlineLinkClick: number
     purchaseRoas: number
+    purchases: number
+    costPerPurchase: number
 }
 
 /**
- * Aggregate performance metrics from daily insight data
- * Simple summation since Facebook provides daily breakdown
- * KISS principle: just sum all fields
+ * Compare aggregated metrics against thresholds using KISS principle
+ *
+ * Cost metrics (cpm, frequency, costPerInlineLinkClick, costPerPurchase):
+ *   - Lower is better → must be LESS THAN threshold to qualify
+ *
+ * Performance metrics (ctr, inlineLinkCtr, purchaseRoas, purchases):
+ *   - Higher is better → must be GREATER THAN threshold to qualify
+ *
+ * ALL configured conditions must be met to create a suggestion
+ *
+ * Returns:
+ *   - qualifyingMetrics: array of metrics that meet their conditions (for display)
+ *   - allConditionsMet: true if ALL configured thresholds are satisfied
  */
-export function aggregateInsightMetrics(insights: readonly AdSetInsight[]): AggregatedMetrics | null {
-    if (insights.length === 0) {
-        return null
-    }
-
-    // Initialize aggregators
-    let totalImpressions = 0
-    let totalClicks = 0
-    let totalAmountSpent = 0
-    let totalCpm = 0
-    let totalCpc = 0
-    let totalCtr = 0
-    let totalReach = 0
-    let totalFrequency = 0
-    let totalInlineLinkCtr = 0
-    let totalCostPerInlineLinkClick = 0
-    let totalPurchaseRoas = 0
-
-    // Sum all metrics from daily insights
-    for (const insight of insights) {
-        totalImpressions += insight.impressions || 0
-        totalClicks += insight.clicks || 0
-        totalAmountSpent += insight.amountSpent || 0
-        totalCpm += insight.cpm || 0
-        totalCpc += insight.cpc || 0
-        totalCtr += insight.ctr || 0
-        totalReach += insight.reach || 0
-        totalFrequency += insight.frequency || 0
-        totalInlineLinkCtr += insight.inlineLinkCtr || 0
-        totalCostPerInlineLinkClick += insight.costPerInlineLinkClick || 0
-        totalPurchaseRoas += insight.purchaseRoas || 0
-    }
-
-    return {
-        impressions: totalImpressions,
-        clicks: totalClicks,
-        amountSpent: totalAmountSpent,
-        cpm: totalCpm,
-        cpc: totalCpc,
-        ctr: totalCtr,
-        reach: totalReach,
-        frequency: totalFrequency,
-        inlineLinkCtr: totalInlineLinkCtr,
-        costPerInlineLinkClick: totalCostPerInlineLinkClick,
-        purchaseRoas: totalPurchaseRoas,
-    }
-}
-
-/**
- * Compare aggregated metrics against thresholds
- * Returns list of metrics that exceed their configured thresholds
- */
-export function findExceedingMetrics(
+export function findQualifyingMetrics(
     aggregated: AggregatedMetrics,
     thresholds: AdAccountSetting
-): ExceedingMetric[] {
-    const exceedingMetrics: ExceedingMetric[] = []
+): { qualifyingMetrics: ExceedingMetric[]; allConditionsMet: boolean } {
+    const qualifyingMetrics: ExceedingMetric[] = []
+    let configuredConditions = 0
+    let metConditions = 0
 
     for (const metricName of METRIC_FIELDS) {
         const threshold = thresholds[metricName]
         const value = aggregated[metricName]
 
-        // Skip if threshold not set or value is zero/undefined
+        // Skip if threshold not configured (0, undefined, or null means not configured)
         if (threshold === undefined || threshold === null || threshold === 0) {
             continue
         }
 
+        configuredConditions++
+
+        // Skip if value is missing
         if (value === undefined || value === null) {
             continue
         }
 
-        // Check if metric exceeds threshold
-        if (value > threshold) {
-            exceedingMetrics.push({
+        const isCostMetric = COST_METRICS.includes(metricName as any)
+        const isPerformanceMetric = PERFORMANCE_METRICS.includes(metricName as any)
+
+        let meetsCondition = false
+
+        if (isCostMetric) {
+            // Cost metrics: value must be LESS THAN threshold (lower cost is better)
+            meetsCondition = value < threshold
+        } else if (isPerformanceMetric) {
+            // Performance metrics: value must be GREATER THAN threshold (higher performance is better)
+            meetsCondition = value > threshold
+        }
+
+        if (meetsCondition) {
+            metConditions++
+            qualifyingMetrics.push({
                 metricName: metricName as MetricFieldName,
                 value,
             })
         }
     }
 
-    return exceedingMetrics
+    // ALL configured conditions must be met
+    const allConditionsMet = configuredConditions > 0 && metConditions === configuredConditions
+
+    return { qualifyingMetrics, allConditionsMet }
 }
 
 /**
@@ -130,7 +110,6 @@ export function hasValidThresholds(config: AdAccountSetting): boolean {
  * Groups all suggestion analysis domain logic
  */
 export const SuggestionAnalyzer = {
-    aggregateInsightMetrics,
-    findExceedingMetrics,
+    findQualifyingMetrics,
     hasValidThresholds,
 }

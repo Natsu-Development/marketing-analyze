@@ -18,7 +18,6 @@ const toDomain = (doc: any): AdSetInsight => {
         campaignName: plainDoc.campaignName,
         adsetId: plainDoc.adsetId,
         adsetName: plainDoc.adsetName,
-        date: plainDoc.date,
         impressions: plainDoc.impressions,
         clicks: plainDoc.clicks,
         amountSpent: plainDoc.amountSpent,
@@ -46,12 +45,12 @@ const saveBatch = async (insights: AdSetInsight[]): Promise<void> => {
     if (insights.length === 0) return
 
     // Use bulkWrite with upsert to prevent duplicates
+    // Each sync replaces the previous aggregated data for the adset
     const operations = insights.map((insight) => ({
         updateOne: {
             filter: {
                 adAccountId: insight.adAccountId,
                 adsetId: insight.adsetId,
-                date: insight.date,
             },
             update: {
                 $set: {
@@ -90,12 +89,12 @@ const saveBatch = async (insights: AdSetInsight[]): Promise<void> => {
 }
 
 const findByAdAccountId = async (adAccountId: string): Promise<AdSetInsight[]> => {
-    const docs = await AdSetInsightDataModel.find({ adAccountId }).sort({ date: -1 })
+    const docs = await AdSetInsightDataModel.find({ adAccountId }).sort({ updatedAt: -1 })
     return docs.map(toDomain)
 }
 
 const findByAdsetId = async (adsetId: string): Promise<AdSetInsight[]> => {
-    const docs = await AdSetInsightDataModel.find({ adsetId }).sort({ date: -1 })
+    const docs = await AdSetInsightDataModel.find({ adsetId }).sort({ updatedAt: -1 })
     return docs.map(toDomain)
 }
 

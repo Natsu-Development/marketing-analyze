@@ -57,14 +57,6 @@ export function validateCsvResult(result: CsvResult): {
         if (adAccountIds.size > 1) {
             validationErrors.push('Processed insights belong to multiple ad accounts')
         }
-
-        // Check date range consistency
-        const dates = result.insights.map((i) => i.date.getTime()).sort()
-        const dateRange = dates[dates.length - 1] - dates[0]
-        const maxExpectedRange = 90 * 24 * 60 * 60 * 1000 // 90 days in ms
-        if (dateRange > maxExpectedRange) {
-            validationErrors.push('Date range exceeds expected maximum (90 days)')
-        }
     }
 
     return {

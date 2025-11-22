@@ -10,6 +10,7 @@ export interface AdsetProcessingResult {
     readonly processed: boolean
     readonly created: boolean
     readonly updated: boolean
+    readonly suggestion?: any
     readonly error?: string
 }
 

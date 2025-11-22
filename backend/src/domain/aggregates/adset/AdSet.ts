@@ -111,7 +111,7 @@ export function getAgeInDays(adset: AdSet): number | null {
  * - Must be ACTIVE status
  * - Must have daily budget defined
  *
- * Note: Scale timing eligibility (initScaleDay/recurScaleDay) should be checked separately
+ * Note: Scale timing eligibility (initScaleDay) should be checked separately
  * using AdAccountSettingDomain functions when config is available
  */
 export function isEligibleForAnalysis(adset: AdSet): boolean {
