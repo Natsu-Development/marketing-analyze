@@ -17,6 +17,10 @@ import {
     FetchAdSetsParams,
     UpdateAdsetBudgetParams,
     UpdateAdsetBudgetResponse,
+    FetchCampaignsParams,
+    FacebookCampaign,
+    UpdateCampaignBudgetParams,
+    UpdateCampaignBudgetResponse,
 } from '../../../application/ports/IFacebookClient'
 import { AdAccount } from '../../../domain'
 import { appConfig } from '../../../config/env'
@@ -291,6 +295,56 @@ const updateAdsetBudget = async (params: UpdateAdsetBudgetParams): Promise<Updat
 }
 
 // ============================================================================
+// Campaign operations
+// ============================================================================
+
+/**
+ * Fetch campaigns for an ad account
+ * Returns all campaigns with budget and timing information
+ */
+const fetchCampaigns = async (params: FetchCampaignsParams): Promise<FacebookCampaign[]> => {
+    try {
+        const adAccountIdWithPrefix = params.adAccountId.startsWith('act_')
+            ? params.adAccountId
+            : `act_${params.adAccountId}`
+
+        const queryParams = new URLSearchParams({
+            access_token: params.accessToken,
+            fields: 'id,name,status,daily_budget,lifetime_budget,start_time,stop_time,updated_time',
+            filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE'] }]),
+            limit: '500',
+        })
+
+        const url = `${baseUrl}/${adAccountIdWithPrefix}/campaigns?${queryParams.toString()}`
+        const response = await axios.get(url)
+
+        return response.data.data as FacebookCampaign[]
+    } catch (error: any) {
+        return handleError('fetchCampaigns', error)
+    }
+}
+
+/**
+ * Update campaign daily budget
+ * Updates the daily_budget field for a campaign via Facebook Marketing API
+ */
+const updateCampaignBudget = async (params: UpdateCampaignBudgetParams): Promise<UpdateCampaignBudgetResponse> => {
+    try {
+        const budgetValue = params.dailyBudget
+
+        const url = `${baseUrl}/${params.campaignId}`
+        await axios.post(url, {
+            daily_budget: budgetValue,
+            access_token: params.accessToken,
+        })
+
+        return { success: true }
+    } catch (error: any) {
+        return handleError('updateCampaignBudget', error)
+    }
+}
+
+// ============================================================================
 // Export
 // ============================================================================
 
@@ -305,4 +359,6 @@ export const facebookClient: IFacebookClient = {
     getReportCSV,
     fetchAdSets,
     updateAdsetBudget,
+    fetchCampaigns,
+    updateCampaignBudget,
 }

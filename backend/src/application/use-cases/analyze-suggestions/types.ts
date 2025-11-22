@@ -1,28 +1,54 @@
 /**
  * Types for Analyze Suggestions Use Case
- * Application layer DTOs for service responses
  */
 
+import { Suggestion, ExceedingMetric } from '../../../domain'
+import { AdAccountSetting } from '../../../domain/aggregates/ad-account-setting'
+
 /**
- * Result of processing a single adset
+ * Internal analysis result (used by adset/campaign analyzers)
  */
-export interface AdsetProcessingResult {
-    readonly processed: boolean
-    readonly created: boolean
-    readonly updated: boolean
-    readonly suggestion?: any
-    readonly error?: string
+export interface AnalysisResultInternal {
+    readonly success: boolean
+    readonly suggestionsCreated: number
+    readonly createdSuggestions: Suggestion[]
+    readonly errorMessages?: readonly string[]
 }
 
 /**
- * Analysis execution summary
- * Reports results of suggestion analysis workflow
+ * Public analysis result (returned by execute)
  */
 export interface AnalysisResult {
     readonly success: boolean
-    readonly adsetsProcessed: number
     readonly suggestionsCreated: number
-    readonly suggestionsUpdated: number
-    readonly errors: number
     readonly errorMessages?: readonly string[]
+}
+
+/**
+ * Processing result for single entity
+ */
+export interface ProcessingResult {
+    processed: boolean
+    created: boolean
+    updated: boolean
+    suggestion?: Suggestion
+    error?: string
+}
+
+/**
+ * Suggestion input params
+ */
+export interface SuggestionParams {
+    type: 'adset' | 'campaign'
+    entityId: string
+    entityName: string
+    campaignName?: string
+    accountId: string
+    adAccountId: string
+    adAccountName: string
+    currency: string
+    budget: number
+    lastScaledAt?: Date | null
+    exceedingMetrics: ExceedingMetric[]
+    config: AdAccountSetting
 }

@@ -13,6 +13,7 @@ export { adsetInsightDataRepository } from '../infrastructure/database/mongodb/r
 export { adSetRepository } from '../infrastructure/database/mongodb/repositories/AdSetRepository'
 export { adAccountSettingRepository } from '../infrastructure/database/mongodb/repositories/AdAccountSettingRepository'
 export { suggestionRepository } from '../infrastructure/database/mongodb/repositories/SuggestionRepository'
+export { campaignRepository } from '../infrastructure/database/mongodb/repositories/CampaignRepository'
 
 export const facebookConfig = {
     appId: appConfig.facebook.appId,

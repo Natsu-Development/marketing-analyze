@@ -18,9 +18,11 @@ export interface IExceedingMetricDocument {
  * Suggestion document interface
  */
 export interface ISuggestionDocument extends Document {
+    type: 'adset' | 'campaign'
     accountId: string
     adAccountId: string
     adAccountName: string
+    campaignId?: string  // For campaign suggestions
     campaignName: string
     adsetId: string
     adsetName: string
@@ -68,6 +70,12 @@ const ExceedingMetricSchema = new Schema<IExceedingMetricDocument>(
  */
 const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
     {
+        type: {
+            type: String,
+            required: true,
+            enum: ['adset', 'campaign'],
+            default: 'adset',
+        },
         accountId: {
             type: String,
             required: true,
@@ -79,6 +87,10 @@ const SuggestionSchemaInstance = new Schema<ISuggestionDocument>(
         adAccountName: {
             type: String,
             required: true,
+        },
+        campaignId: {
+            type: String,
+            required: false,
         },
         campaignName: {
             type: String,
@@ -159,5 +171,12 @@ SuggestionSchemaInstance.index({ status: 1 })
 // Compound index for adset + status historical queries
 // This index also covers adsetId-only queries via prefix matching
 SuggestionSchemaInstance.index({ adsetId: 1, status: 1, createdAt: -1 })
+
+// Campaign suggestion indexes
+// Compound index for campaign + status historical queries
+SuggestionSchemaInstance.index({ campaignId: 1, status: 1, createdAt: -1 })
+
+// Type + status index for filtering suggestions by type
+SuggestionSchemaInstance.index({ type: 1, status: 1 })
 
 export const SuggestionSchema = model<ISuggestionDocument>('Suggestion', SuggestionSchemaInstance)

@@ -42,6 +42,7 @@ const EnvSchema = z.object({
     // Cron
     AD_INSIGHTS_CRON_SCHEDULE: z.string().default('0 2 * * *'),
     ADSET_SYNC_CRON_SCHEDULE: z.string().default('0 1 * * *'),
+    CAMPAIGN_SYNC_CRON_SCHEDULE: z.string().default('0 1 * * 1'), // Weekly Monday 1 AM
 
     // Telegram
     TELEGRAM_BOT_TOKEN: z.string().optional(),
@@ -99,6 +100,7 @@ export const appConfig = {
     cron: {
         adInsightsSchedule: env.AD_INSIGHTS_CRON_SCHEDULE,
         adsetSyncSchedule: env.ADSET_SYNC_CRON_SCHEDULE,
+        campaignSyncSchedule: env.CAMPAIGN_SYNC_CRON_SCHEDULE,
     },
     telegram: {
         botToken: env.TELEGRAM_BOT_TOKEN,

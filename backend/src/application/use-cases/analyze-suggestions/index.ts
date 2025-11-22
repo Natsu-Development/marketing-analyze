@@ -1,6 +1,6 @@
 /**
  * Barrel export for Analyze Suggestions Use Case
- * KISS: Only public API exported, internal modules remain private
+ * Unified analysis for both adsets and campaigns
  */
 
 export * from './analyze-suggestions'

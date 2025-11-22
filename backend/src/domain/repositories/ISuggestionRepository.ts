@@ -3,7 +3,7 @@
  * Defines contract for persistence operations on Suggestion entities
  */
 
-import { Suggestion } from '../aggregates/suggestion'
+import { Suggestion, SuggestionType } from '../aggregates/suggestion'
 
 export interface PaginatedSuggestions {
     suggestions: Suggestion[]
@@ -66,4 +66,35 @@ export interface ISuggestionRepository {
      * @param offset - Number of suggestions to skip (optional)
      */
     findByStatus(status: 'pending' | 'approved' | 'rejected', limit?: number, offset?: number): Promise<PaginatedSuggestions>
+
+    /**
+     * Find pending suggestions by campaignId
+     * Precondition: campaignId must be non-empty string
+     * Postcondition: Returns array of pending campaign suggestions sorted by createdAt descending
+     */
+    findPendingByCampaignId(campaignId: string): Promise<Suggestion[]>
+
+    /**
+     * Find suggestions by campaignId and status with pagination
+     * Precondition: campaignId must be non-empty string, status must be valid
+     * Postcondition: Returns paginated suggestions sorted by createdAt descending
+     */
+    findByCampaignIdAndStatus(
+        campaignId: string,
+        status: 'pending' | 'approved' | 'rejected',
+        limit?: number,
+        offset?: number
+    ): Promise<PaginatedSuggestions>
+
+    /**
+     * Find suggestions by type and status with pagination
+     * Precondition: type must be 'adset' or 'campaign', status must be valid
+     * Postcondition: Returns paginated suggestions sorted by createdAt descending
+     */
+    findByTypeAndStatus(
+        type: SuggestionType,
+        status: 'pending' | 'approved' | 'rejected',
+        limit?: number,
+        offset?: number
+    ): Promise<PaginatedSuggestions>
 }

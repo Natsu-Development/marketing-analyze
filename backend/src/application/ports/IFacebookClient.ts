@@ -69,6 +69,33 @@ export interface UpdateAdsetBudgetResponse {
     success: boolean
 }
 
+// Campaign Types
+export interface FetchCampaignsParams {
+    accessToken: string
+    adAccountId: string
+}
+
+export interface FacebookCampaign {
+    id: string
+    name: string
+    status: string
+    daily_budget?: string
+    lifetime_budget?: string
+    start_time?: string
+    stop_time?: string
+    updated_time?: string
+}
+
+export interface UpdateCampaignBudgetParams {
+    accessToken: string
+    campaignId: string
+    dailyBudget: number
+}
+
+export interface UpdateCampaignBudgetResponse {
+    success: boolean
+}
+
 /**
  * Unified Facebook Client Interface
  */
@@ -88,4 +115,8 @@ export interface IFacebookClient {
     // AdSet operations
     fetchAdSets(params: FetchAdSetsParams): Promise<any[]>
     updateAdsetBudget(params: UpdateAdsetBudgetParams): Promise<UpdateAdsetBudgetResponse>
+
+    // Campaign operations
+    fetchCampaigns(params: FetchCampaignsParams): Promise<FacebookCampaign[]>
+    updateCampaignBudget(params: UpdateCampaignBudgetParams): Promise<UpdateCampaignBudgetResponse>
 }

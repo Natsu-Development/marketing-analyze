@@ -12,6 +12,7 @@ export * from './aggregates/adset-insights'
 export * from './aggregates/adset'
 export * from './aggregates/ad-account-setting'
 export * from './aggregates/suggestion'
+export * from './aggregates/campaign'
 
 // ========== VALUE OBJECTS (Immutable Objects without Identity) ==========
 export * from './value-objects/AdAccount'
@@ -24,6 +25,7 @@ export * from './repositories/IAccountRepository'
 export * from './repositories/IAdSetRepository'
 export * from './repositories/IAdAccountSettingRepository'
 export * from './repositories/ISuggestionRepository'
+export * from './repositories/ICampaignRepository'
 
 // ========== DOMAIN OBJECTS (Grouped Business Logic) ==========
 export { AccountDomain } from './aggregates/account'
@@ -32,4 +34,5 @@ export { AdSetInsightDomain } from './aggregates/adset-insights'
 export { ExportResultDomain } from './aggregates/adset-insights'
 export { AdAccountSettingDomain } from './aggregates/ad-account-setting'
 export { SuggestionDomain } from './aggregates/suggestion'
+export { CampaignDomain } from './aggregates/campaign'
 export { SuggestionAnalyzer } from './services/SuggestionAnalyzer'
