@@ -3,7 +3,7 @@
  * Uses plain functional approach following existing repository patterns
  */
 
-import { ISuggestionRepository, Suggestion, ExceedingMetric, PaginatedSuggestions } from '../../../../domain'
+import { ISuggestionRepository, Suggestion, ExceedingMetric, PaginatedSuggestions, SuggestionType } from '../../../../domain'
 import { SuggestionSchema } from '../schemas/SuggestionSchema'
 
 // Convert Mongoose document to plain domain object with backward compatibility
@@ -13,9 +13,11 @@ const toDomain = (doc: any): Suggestion => {
 
     return {
         id: plainDoc._id.toString(),
+        type: plainDoc.type || 'adset', // Default to 'adset' for backward compatibility
         accountId: plainDoc.accountId,
         adAccountId: plainDoc.adAccountId,
         adAccountName: plainDoc.adAccountName,
+        campaignId: plainDoc.campaignId,
         campaignName: plainDoc.campaignName,
         adsetId: plainDoc.adsetId,
         adsetName: plainDoc.adsetName,
@@ -37,9 +39,11 @@ const toDomain = (doc: any): Suggestion => {
 
 // Convert domain object to database format
 const fromDomain = (suggestion: Suggestion) => ({
+    type: suggestion.type,
     accountId: suggestion.accountId,
     adAccountId: suggestion.adAccountId,
     adAccountName: suggestion.adAccountName,
+    campaignId: suggestion.campaignId,
     campaignName: suggestion.campaignName,
     adsetId: suggestion.adsetId,
     adsetName: suggestion.adsetName,
@@ -188,6 +192,86 @@ const findByStatus = async (
     }
 }
 
+/**
+ * Find pending suggestions by campaignId
+ */
+const findPendingByCampaignId = async (campaignId: string): Promise<Suggestion[]> => {
+    const docs = await SuggestionSchema.find({
+        campaignId,
+        type: 'campaign',
+        status: 'pending'
+    }).sort({ createdAt: -1 })
+    return docs.map(toDomain)
+}
+
+/**
+ * Find suggestions by campaignId and status with pagination
+ */
+const findByCampaignIdAndStatus = async (
+    campaignId: string,
+    status: 'pending' | 'approved' | 'rejected',
+    limit?: number,
+    offset?: number
+): Promise<PaginatedSuggestions> => {
+    const query = SuggestionSchema.find({
+        campaignId,
+        type: 'campaign',
+        status
+    }).sort({ createdAt: -1 })
+
+    if (offset !== undefined && offset > 0) {
+        query.skip(offset)
+    }
+    if (limit !== undefined && limit > 0) {
+        query.limit(limit)
+    }
+
+    const [docs, total] = await Promise.all([
+        query.exec(),
+        SuggestionSchema.countDocuments({ campaignId, type: 'campaign', status })
+    ])
+
+    return {
+        suggestions: docs.map(toDomain),
+        total
+    }
+}
+
+/**
+ * Find suggestions by type and status with pagination
+ */
+const findByTypeAndStatus = async (
+    type: SuggestionType,
+    status: 'pending' | 'approved' | 'rejected',
+    limit?: number,
+    offset?: number
+): Promise<PaginatedSuggestions> => {
+    // For backward compatibility, include 'applied' when searching for 'approved'
+    const statusFilter = status === 'approved'
+        ? { $in: ['approved', 'applied'] }
+        : status
+
+    const filter = { type, status: statusFilter }
+    const query = SuggestionSchema.find(filter).sort({ createdAt: -1 })
+
+    if (offset !== undefined && offset > 0) {
+        query.skip(offset)
+    }
+    if (limit !== undefined && limit > 0) {
+        query.limit(limit)
+    }
+
+    const [docs, total] = await Promise.all([
+        query.exec(),
+        SuggestionSchema.countDocuments(filter)
+    ])
+
+    return {
+        suggestions: docs.map(toDomain),
+        total
+    }
+}
+
 export const suggestionRepository: ISuggestionRepository = {
     save,
     findById,
@@ -196,4 +280,7 @@ export const suggestionRepository: ISuggestionRepository = {
     deleteBulk,
     findByAdsetIdAndStatus,
     findByStatus,
+    findPendingByCampaignId,
+    findByCampaignIdAndStatus,
+    findByTypeAndStatus,
 }

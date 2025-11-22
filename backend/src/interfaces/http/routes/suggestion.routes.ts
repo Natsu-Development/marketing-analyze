@@ -13,15 +13,19 @@ import { jsonSuccess, jsonError } from '../helpers/response-helpers'
  * Suggestion routes
  *
  * Routes:
- * - GET    ?status=applied          - Get suggestions by status, sorted by exceeding count
+ * - GET    ?status=applied&type=adset  - Get suggestions by status/type, sorted by exceeding count
+ * - GET    /campaign/history?campaign_id=x - Get campaign suggestion history
  * - POST   /analyze                 - Manually trigger suggestion analysis
  * - POST   /:suggestionId/approve   - Approve suggestion and update Facebook budget
  * - POST   /:suggestionId/reject    - Reject suggestion
  */
 export const suggestionRoutes = Router()
 
-// Get suggestions by status (sorted by exceeding count)
+// Get suggestions by status/type (sorted by exceeding count)
 suggestionRoutes.get('/', suggestionController.getSuggestionsByStatus)
+
+// Get campaign suggestion history
+suggestionRoutes.get('/campaign/history', suggestionController.getCampaignHistory)
 
 // Analyze suggestions
 suggestionRoutes.post('/analyze', async (_req, res) => {
@@ -33,7 +37,6 @@ suggestionRoutes.post('/analyze', async (_req, res) => {
             return jsonSuccess(res, {
                 message: 'Suggestion analysis completed successfully',
                 suggestionsCreated: result.suggestionsCreated,
-                adsetsProcessed: result.adsetsProcessed,
             })
         } else {
             return jsonError(res, `Analysis completed with errors: ${result.errorMessages?.join(', ')}`, 500)

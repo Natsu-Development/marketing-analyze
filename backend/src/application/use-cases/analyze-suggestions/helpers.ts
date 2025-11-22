@@ -1,41 +1,46 @@
 /**
- * Helper functions for analyze suggestions workflow
- * All supporting logic separated from main orchestration
+ * Shared Helper Functions for Suggestion Analysis
  */
 
-import { AdSetDomain, AdAccountSettingDomain, SuggestionAnalyzer, SuggestionDomain } from '../../../domain'
-import { AdSet } from '../../../domain/aggregates/adset'
+import { SuggestionAnalyzer, SuggestionDomain } from '../../../domain'
 import { AdAccountSetting } from '../../../domain/aggregates/ad-account-setting'
-import { ExceedingMetric } from '../../../domain/aggregates/suggestion'
-import {
-    adAccountSettingRepository,
-    adsetInsightDataRepository,
-    suggestionRepository,
-} from '../../../config/dependencies'
+import { ExceedingMetric, Suggestion } from '../../../domain/aggregates/suggestion'
+import { adAccountSettingRepository, suggestionRepository } from '../../../config/dependencies'
 import { logger } from '../../../infrastructure/shared/logger'
-import { AdsetProcessingResult } from './types'
+import { SuggestionParams } from './types'
 
 /**
- * Group adsets by ad account ID
+ * Generic group by ad account ID
  */
-export function groupAdsetsByAccount(adsets: AdSet[]): Map<string, AdSet[]> {
-    const grouped = new Map<string, AdSet[]>()
-    for (const adset of adsets) {
-        const existing = grouped.get(adset.adAccountId) || []
-        existing.push(adset)
-        grouped.set(adset.adAccountId, existing)
+export function groupByAdAccount<T extends { adAccountId: string }>(items: T[]): Map<string, T[]> {
+    const grouped = new Map<string, T[]>()
+    for (const item of items) {
+        const existing = grouped.get(item.adAccountId) || []
+        existing.push(item)
+        grouped.set(item.adAccountId, existing)
     }
     return grouped
 }
 
 /**
- * Validate account has valid threshold configuration
+ * Validate account threshold configuration
  */
-export async function validateAccountConfig(adAccountId: string): Promise<AdAccountSetting | null> {
+export async function validateAccountConfig(
+    adAccountId: string,
+    requireAllThresholds: boolean = false
+): Promise<AdAccountSetting | null> {
     const config = await adAccountSettingRepository.findByAdAccountId(adAccountId)
+    if (!config) {
+        logger.debug(`Skipping ${adAccountId}: no threshold configuration`)
+        return null
+    }
 
-    if (!config || !SuggestionAnalyzer.hasValidThresholds(config)) {
-        logger.debug(`Skipping ${adAccountId}: no valid threshold configuration`)
+    const isValid = requireAllThresholds
+        ? SuggestionAnalyzer.hasAllThresholds(config)
+        : SuggestionAnalyzer.hasValidThresholds(config)
+
+    if (!isValid) {
+        logger.debug(`Skipping ${adAccountId}: invalid threshold configuration`)
         return null
     }
 
@@ -43,170 +48,91 @@ export async function validateAccountConfig(adAccountId: string): Promise<AdAcco
 }
 
 /**
- * Check if adset meets initial scale timing requirement
- * Only checks initScaleDay threshold (no recurring scale)
+ * Analyze metrics - returns qualifying metrics if ALL conditions met
  */
-export function checkScaleTiming(adset: AdSet, config: AdAccountSetting): boolean {
-    const adsetAge = AdSetDomain.getAgeInDays(adset)
-
-    // Check if adset meets initial scale threshold
-    const meetsInitialThreshold = AdAccountSettingDomain.meetsInitialScaleThreshold(adsetAge, adset.lastScaledAt, config)
-
-    if (!meetsInitialThreshold) {
-        logger.debug(
-            `Skipping ${adset.adsetId}: initial scale timing not met (age: ${adsetAge} days, required: ${config.initScaleDay} days, lastScaledAt: ${adset.lastScaledAt?.toISOString() || 'never'})`
-        )
-        return false
-    }
-
-    return true
-}
-
-/**
- * Analyze adset metrics and check if ALL conditions are met
- * Uses the latest aggregated insight record from Facebook (time_increment: 'all_days')
- *
- * Returns qualifying metrics only if ALL configured conditions are satisfied
- */
-export async function analyzeAdsetMetrics(
-    adsetId: string,
-    config: AdAccountSetting
-): Promise<ExceedingMetric[] | null> {
-    const insights = await adsetInsightDataRepository.findByAdsetId(adsetId)
-
-    if (insights.length === 0) {
-        logger.debug(`Skipping ${adsetId}: no insight data`)
-        return null
-    }
-
-    // Use only the latest aggregated record (already sorted by updatedAt desc)
-    // Facebook provides aggregated data with time_increment: 'all_days'
-    const latestInsight = insights[0]
-
-    // Map insight fields to aggregated metrics format
-    const aggregated = {
-        impressions: latestInsight.impressions || 0,
-        clicks: latestInsight.clicks || 0,
-        amountSpent: latestInsight.amountSpent || 0,
-        cpm: latestInsight.cpm || 0,
-        cpc: latestInsight.cpc || 0,
-        ctr: latestInsight.ctr || 0,
-        reach: latestInsight.reach || 0,
-        frequency: latestInsight.frequency || 0,
-        inlineLinkCtr: latestInsight.inlineLinkCtr || 0,
-        costPerInlineLinkClick: latestInsight.costPerInlineLinkClick || 0,
-        purchaseRoas: latestInsight.purchaseRoas || 0,
-        purchases: latestInsight.purchases || 0,
-        costPerPurchase: latestInsight.costPerPurchase || 0,
-    }
-
-    const { qualifyingMetrics, allConditionsMet } = SuggestionAnalyzer.findQualifyingMetrics(aggregated, config)
-
-    // Only return metrics if ALL configured conditions are met
+export function analyzeMetrics(
+    metrics: Record<string, number>,
+    config: AdAccountSetting,
+    entityId: string
+): ExceedingMetric[] | null {
+    const { qualifyingMetrics, allConditionsMet } = SuggestionAnalyzer.findQualifyingMetrics(metrics as any, config)
     if (!allConditionsMet) {
-        logger.debug(`Skipping ${adsetId}: not all conditions met`)
+        logger.debug(`Skipping ${entityId}: not all conditions met`)
         return null
     }
-
     return qualifyingMetrics
 }
 
 /**
- * Create a new suggestion (no longer sends Telegram notification)
+ * Create a new suggestion
  */
-export async function createSuggestion(
-    adset: AdSet,
-    exceedingMetrics: ExceedingMetric[],
-    config: AdAccountSetting,
-    accountId: string,
-    adAccountName: string
-): Promise<any> {
-    const suggestion = SuggestionDomain.createSuggestion({
-        accountId,
-        adAccountId: adset.adAccountId,
-        adAccountName,
-        campaignName: adset.campaignName,
-        adsetId: adset.adsetId,
-        adsetName: adset.adsetName,
-        currency: adset.currency,
-        budget: adset.dailyBudget!,
-        scalePercent: config.scalePercent,
-        note: config.note,
-        metrics: exceedingMetrics,
-        recentScaleAt: adset.lastScaledAt ?? null,
-    })
+export async function createSuggestion(params: SuggestionParams): Promise<Suggestion> {
+    const { type, entityId, entityName, campaignName, accountId, adAccountId, adAccountName, currency, budget, lastScaledAt, exceedingMetrics, config } = params
 
-    const savedSuggestion = await suggestionRepository.save(suggestion)
+    const suggestion = type === 'campaign'
+        ? SuggestionDomain.createCampaignSuggestion({
+            accountId, adAccountId, adAccountName,
+            campaignId: entityId,
+            campaignName: entityName,
+            currency, budget,
+            scalePercent: config.scalePercent,
+            note: config.note,
+            metrics: exceedingMetrics,
+            recentScaleAt: lastScaledAt ?? null,
+        })
+        : SuggestionDomain.createSuggestion({
+            accountId, adAccountId, adAccountName,
+            campaignName: campaignName || '',
+            adsetId: entityId,
+            adsetName: entityName,
+            currency, budget,
+            scalePercent: config.scalePercent,
+            note: config.note,
+            metrics: exceedingMetrics,
+            recentScaleAt: lastScaledAt ?? null,
+        })
 
-    logger.info(`Created suggestion for ${adset.adsetName}: budget ${adset.dailyBudget} → ${savedSuggestion.budgetAfterScale}`)
-
-    return savedSuggestion
+    const saved = await suggestionRepository.save(suggestion)
+    logger.info(`Created ${type} suggestion for ${entityName}: budget ${budget} → ${saved.budgetAfterScale}`)
+    return saved
 }
 
 /**
- * Update pending suggestion and cleanup duplicates (no longer sends Telegram notification)
+ * Update existing pending suggestion and cleanup duplicates
  */
 export async function updateSuggestion(
-    pendingSuggestions: any[],
-    adset: AdSet,
-    exceedingMetrics: ExceedingMetric[],
-    config: AdAccountSetting
-): Promise<any> {
+    pendingSuggestions: Suggestion[],
+    params: SuggestionParams
+): Promise<Suggestion> {
+    const { type, entityId, entityName, budget, lastScaledAt, exceedingMetrics, config } = params
     const mostRecent = pendingSuggestions[0]
-    const suggestion = SuggestionDomain.updatePendingSuggestion(mostRecent, {
-        budget: adset.dailyBudget!,
+
+    const updated = SuggestionDomain.updatePendingSuggestion(mostRecent, {
+        budget,
         scalePercent: config.scalePercent,
         note: config.note,
         metrics: exceedingMetrics,
-        recentScaleAt: adset.lastScaledAt ?? null,
+        recentScaleAt: lastScaledAt ?? null,
     })
 
-    await suggestionRepository.save(suggestion)
+    await suggestionRepository.save(updated)
+    logger.info(`Updated ${type} suggestion for ${entityName}: ${mostRecent.budget} → ${budget}`)
 
-    logger.info(`Updated pending suggestion for ${adset.adsetName}: ${mostRecent.budget} → ${adset.dailyBudget}`)
-
-    // Cleanup duplicates if any
+    // Cleanup duplicates
     if (pendingSuggestions.length > 1) {
         const duplicateIds = pendingSuggestions.slice(1).map(s => s.id!).filter(Boolean)
-        const deletedCount = await suggestionRepository.deleteBulk(duplicateIds)
-        logger.warn(`Deleted ${deletedCount} duplicate pending suggestions for ${adset.adsetId}`)
+        await suggestionRepository.deleteBulk(duplicateIds)
+        logger.warn(`Deleted ${duplicateIds.length} duplicate ${type} suggestions for ${entityId}`)
     }
 
-    return suggestion
+    return updated
 }
 
 /**
- * Process a single adset through the analysis pipeline
- * Returns suggestion if created/updated for batch notification
+ * Find pending suggestions by entity
  */
-export async function processSingleAdset(
-    adset: AdSet,
-    config: AdAccountSetting,
-    accountId: string,
-    adAccountName: string
-): Promise<AdsetProcessingResult> {
-    try {
-        if (!checkScaleTiming(adset, config)) {
-            return { processed: false, created: false, updated: false }
-        }
-
-        const exceedingMetrics = await analyzeAdsetMetrics(adset.adsetId, config)
-        if (!exceedingMetrics) {
-            return { processed: false, created: false, updated: false }
-        }
-
-        const pendingSuggestions = await suggestionRepository.findPendingByAdsetId(adset.adsetId)
-
-        if (pendingSuggestions.length === 0) {
-            const suggestion = await createSuggestion(adset, exceedingMetrics, config, accountId, adAccountName)
-            return { processed: true, created: true, updated: false, suggestion }
-        }
-
-        const suggestion = await updateSuggestion(pendingSuggestions, adset, exceedingMetrics, config)
-        return { processed: true, created: false, updated: true, suggestion }
-    } catch (error) {
-        const errorMsg = `Error processing adset ${adset.adsetId}: ${(error as Error).message}`
-        logger.error(errorMsg)
-        return { processed: true, created: false, updated: false, error: errorMsg }
-    }
+export async function findPendingSuggestions(type: 'adset' | 'campaign', entityId: string): Promise<Suggestion[]> {
+    return type === 'campaign'
+        ? suggestionRepository.findPendingByCampaignId(entityId)
+        : suggestionRepository.findPendingByAdsetId(entityId)
 }

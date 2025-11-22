@@ -22,13 +22,20 @@ export interface ExceedingMetric {
 export type SuggestionStatus = 'pending' | 'approved' | 'rejected'
 
 /**
+ * Suggestion type to distinguish adset vs campaign suggestions
+ */
+export type SuggestionType = 'adset' | 'campaign'
+
+/**
  * Suggestion aggregate entity
  */
 export interface Suggestion {
     readonly id?: string
+    readonly type: SuggestionType
     readonly accountId: string
     readonly adAccountId: string
     readonly adAccountName: string
+    readonly campaignId?: string  // For campaign suggestions
     readonly campaignName: string
     readonly adsetId: string
     readonly adsetName: string
@@ -61,7 +68,7 @@ function generateAdsetLink(adAccountId: string, adsetId: string): string {
 }
 
 /**
- * Create a new Suggestion entity with default values
+ * Create a new adset Suggestion entity with default values
  * Pure function that creates suggestion from provided data
  */
 export function createSuggestion(props: {
@@ -97,6 +104,7 @@ export function createSuggestion(props: {
     const budgetAfterScale = props.budget * (1 + scalePercent / 100)
 
     return {
+        type: 'adset',
         accountId: props.accountId,
         adAccountId: props.adAccountId,
         adAccountName: props.adAccountName,
@@ -104,6 +112,73 @@ export function createSuggestion(props: {
         adsetId: props.adsetId,
         adsetName: props.adsetName,
         adsetLink: generateAdsetLink(props.adAccountId, props.adsetId),
+        currency: props.currency,
+        budget: props.budget,
+        budgetAfterScale,
+        scalePercent: props.scalePercent,
+        note: props.note,
+        metrics: props.metrics,
+        metricsExceededCount: props.metrics.length,
+        status: 'pending',
+        recentScaleAt: props.recentScaleAt,
+        createdAt: now,
+        updatedAt: now,
+    }
+}
+
+/**
+ * Generate Facebook Ads Manager link for campaign
+ */
+function generateCampaignLink(adAccountId: string, campaignId: string): string {
+    return `https://business.facebook.com/adsmanager/manage/campaigns?act=${adAccountId}&selected_campaign_ids=${campaignId}`
+}
+
+/**
+ * Create a new campaign Suggestion entity
+ * Pure function that creates campaign-level suggestion from provided data
+ */
+export function createCampaignSuggestion(props: {
+    accountId: string
+    adAccountId: string
+    adAccountName: string
+    campaignId: string
+    campaignName: string
+    currency: string
+    budget: number
+    scalePercent?: number
+    note?: string
+    metrics: ReadonlyArray<ExceedingMetric>
+    recentScaleAt: Date | null
+}): Suggestion {
+    const now = new Date()
+
+    // Validate all metric names
+    for (const metric of props.metrics) {
+        if (!isValidMetricName(metric.metricName)) {
+            throw new Error(`Invalid metric name: ${metric.metricName}`)
+        }
+    }
+
+    // Validate budget
+    if (props.budget <= 0) {
+        throw new Error('Budget must be greater than 0')
+    }
+
+    // Calculate scaled budget
+    const scalePercent = props.scalePercent || 0
+    const budgetAfterScale = props.budget * (1 + scalePercent / 100)
+
+    return {
+        type: 'campaign',
+        accountId: props.accountId,
+        adAccountId: props.adAccountId,
+        adAccountName: props.adAccountName,
+        campaignId: props.campaignId,
+        campaignName: props.campaignName,
+        // For campaign suggestions, use campaignName for display and generate campaign link
+        adsetId: props.campaignId,  // Use campaignId as adsetId for consistency
+        adsetName: props.campaignName,  // Use campaignName as adsetName for display
+        adsetLink: generateCampaignLink(props.adAccountId, props.campaignId),
         currency: props.currency,
         budget: props.budget,
         budgetAfterScale,
@@ -207,6 +282,7 @@ export function rejectSuggestion(suggestion: Suggestion): Suggestion {
  */
 export const SuggestionDomain = {
     createSuggestion,
+    createCampaignSuggestion,
     updatePendingSuggestion,
     approveSuggestion,
     rejectSuggestion,
