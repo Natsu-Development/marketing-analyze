@@ -2,7 +2,7 @@
  * Campaign Suggestion Analysis
  */
 
-import { Campaign, CampaignDomain } from '../../../domain'
+import { Campaign, CampaignDomain, AdAccountSettingDomain } from '../../../domain'
 import { AdAccountSetting } from '../../../domain/aggregates/ad-account-setting'
 import { Suggestion } from '../../../domain/aggregates/suggestion'
 import { accountRepository, campaignRepository, adsetInsightDataRepository } from '../../../config/dependencies'
@@ -80,6 +80,12 @@ async function processCampaign(
     adAccountName: string
 ): Promise<ProcessingResult> {
     try {
+        // Check timing (same as adset)
+        const age = CampaignDomain.getAgeInDays(campaign)
+        if (!AdAccountSettingDomain.meetsInitialScaleThreshold(age, campaign.lastScaledAt ?? undefined, config)) {
+            return { processed: false, created: false, updated: false }
+        }
+
         // Get aggregated metrics
         const aggregated = await adsetInsightDataRepository.aggregateByCampaignId(campaign.campaignId)
         if (!aggregated) return { processed: false, created: false, updated: false }
@@ -97,6 +103,7 @@ async function processCampaign(
             purchaseRoas: aggregated.purchaseRoas || 0,
             purchases: aggregated.purchases || 0,
             costPerPurchase: aggregated.purchases > 0 ? aggregated.amountSpent / aggregated.purchases : 0,
+            cpc: aggregated.clicks > 0 ? aggregated.amountSpent / aggregated.clicks : 0
         }
 
         // Analyze

@@ -13,23 +13,23 @@ import { jsonSuccess, jsonError } from '../helpers/response-helpers'
  * Suggestion routes
  *
  * Routes:
- * - GET    ?status=pending&type=adset     - Get suggestions by status with optional type filter
- * - GET    /adset/:adsetId/history        - Get adset suggestion history
- * - GET    /campaign/:campaignId/history  - Get campaign suggestion history
- * - POST   /analyze                       - Manually trigger suggestion analysis
- * - POST   /:suggestionId/approve         - Approve suggestion and update Facebook budget
- * - POST   /:suggestionId/reject          - Reject suggestion
+ * - GET    ?status=pending&type=adset            - Get suggestions (status & type required)
+ * - GET    /adset/:adsetId?status=approved       - Get adset history (status required)
+ * - GET    /campaign/:campaignId?status=approved - Get campaign history (status required)
+ * - POST   /analyze                              - Manually trigger suggestion analysis
+ * - POST   /:suggestionId/approve                - Approve suggestion
+ * - POST   /:suggestionId/reject                 - Reject suggestion
  */
 export const suggestionRoutes = Router()
 
-// Get suggestions by status with optional type filter
-suggestionRoutes.get('/', suggestionController.getSuggestionsByStatus)
+// Get suggestions by status and type (both required)
+suggestionRoutes.get('/', suggestionController.getSuggestions)
 
-// Get adset suggestion history
-suggestionRoutes.get('/adset/:adsetId/history', suggestionController.getAdsetHistory)
+// Get adset suggestion history by status (required)
+suggestionRoutes.get('/adset/:adsetId', suggestionController.getAdsetHistory)
 
-// Get campaign suggestion history
-suggestionRoutes.get('/campaign/:campaignId/history', suggestionController.getCampaignHistory)
+// Get campaign suggestion history by status (required)
+suggestionRoutes.get('/campaign/:campaignId', suggestionController.getCampaignHistory)
 
 // Analyze suggestions
 suggestionRoutes.post('/analyze', async (_req, res) => {

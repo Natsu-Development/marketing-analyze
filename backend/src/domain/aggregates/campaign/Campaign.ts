@@ -98,6 +98,18 @@ export function isEligibleForAnalysis(campaign: Campaign): boolean {
 }
 
 /**
+ * Calculate campaign age in days from startTime
+ */
+export function getAgeInDays(campaign: Campaign): number | null {
+    if (!campaign.startTime) {
+        return null
+    }
+    const now = new Date()
+    const ageMs = now.getTime() - campaign.startTime.getTime()
+    return ageMs / (1000 * 60 * 60 * 24)
+}
+
+/**
  * Generate Facebook Ads Manager link
  */
 export function generateLink(adAccountId: string, campaignId: string): string {
@@ -111,5 +123,6 @@ export const CampaignDomain = {
     isActive,
     hasBudget,
     isEligibleForAnalysis,
+    getAgeInDays,
     generateLink,
 }

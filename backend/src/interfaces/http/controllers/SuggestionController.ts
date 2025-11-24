@@ -17,25 +17,20 @@ const SuggestionIdParamSchema = z.object({
     suggestionId: z.string().min(1, 'Suggestion ID is required'),
 })
 
-// Shared pagination schema
-const PaginationSchema = z.object({
-    limit: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
-    offset: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
-})
-
 const StatusSchema = z.enum(['pending', 'approved', 'rejected'], {
     errorMap: () => ({ message: 'Status must be one of: pending, approved, rejected' }),
 })
 
-const SuggestionStatusQuerySchema = PaginationSchema.extend({
-    status: StatusSchema,
-    type: z.enum(['adset', 'campaign'], {
-        errorMap: () => ({ message: 'Type must be one of: adset, campaign' }),
-    }).optional(),
+const TypeSchema = z.enum(['adset', 'campaign'], {
+    errorMap: () => ({ message: 'Type must be one of: adset, campaign' }),
 })
 
-const HistoryQuerySchema = PaginationSchema.extend({
-    status: StatusSchema.optional(),
+// Shared query schema for all suggestion endpoints
+const SuggestionQuerySchema = z.object({
+    status: StatusSchema,
+    type: TypeSchema,
+    limit: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
+    offset: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
 })
 
 // ============================================================================
@@ -106,15 +101,12 @@ export async function rejectSuggestion(req: Request, res: Response): Promise<voi
 
 /**
  * GET /api/suggestions?status=pending&type=adset&limit=20&offset=0
- * Retrieves suggestions by status with optional type filter
+ * Retrieves suggestions by status and type (both required)
  */
-export async function getSuggestionsByStatus(req: Request, res: Response): Promise<void> {
+export async function getSuggestions(req: Request, res: Response): Promise<void> {
     try {
-        const { status, type, limit, offset } = SuggestionStatusQuerySchema.parse(req.query)
-
-        const result = type
-            ? await suggestionRepository.findByTypeAndStatus(type, status, limit, offset)
-            : await suggestionRepository.findByStatus(status, limit, offset)
+        const { status, type, limit, offset } = SuggestionQuerySchema.parse(req.query)
+        const result = await suggestionRepository.findByTypeAndStatus(type, status, limit, offset)
 
         return jsonSuccess(res, {
             status, type, limit, offset,
@@ -131,15 +123,14 @@ export async function getSuggestionsByStatus(req: Request, res: Response): Promi
 }
 
 /**
- * GET /api/suggestions/adset/:adsetId/history?status=approved&limit=20&offset=0
- * Retrieves adset suggestion history
+ * GET /api/suggestions/adset/:adsetId?status=approved&type=adset&limit=20&offset=0
+ * Retrieves adset suggestion history by status and type (both required)
  */
 export async function getAdsetHistory(req: Request, res: Response): Promise<void> {
     try {
         const { adsetId } = z.object({ adsetId: z.string().min(1) }).parse(req.params)
-        const { status, limit, offset } = HistoryQuerySchema.parse(req.query)
-
-        const result = await suggestionRepository.findByAdsetIdPaginated(adsetId, status, limit, offset)
+        const { status, limit, offset } = SuggestionQuerySchema.omit({ type: true }).parse(req.query)
+        const result = await suggestionRepository.findByAdsetIdAndStatus(adsetId, status, limit, offset)
 
         return jsonSuccess(res, {
             adsetId, status, limit, offset,
@@ -156,17 +147,14 @@ export async function getAdsetHistory(req: Request, res: Response): Promise<void
 }
 
 /**
- * GET /api/suggestions/campaign/:campaignId/history?status=approved&limit=20&offset=0
- * Retrieves campaign suggestion history
+ * GET /api/suggestions/campaign/:campaignId?status=approved&type=campaign&limit=20&offset=0
+ * Retrieves campaign suggestion history by status and type (both required)
  */
 export async function getCampaignHistory(req: Request, res: Response): Promise<void> {
     try {
         const { campaignId } = z.object({ campaignId: z.string().min(1) }).parse(req.params)
-        const { status, limit, offset } = HistoryQuerySchema.parse(req.query)
-
-        const result = status
-            ? await suggestionRepository.findByCampaignIdAndStatus(campaignId, status, limit, offset)
-            : await suggestionRepository.findByCampaignId(campaignId, limit, offset)
+        const { status, limit, offset } = SuggestionQuerySchema.omit({ type: true }).parse(req.query)
+        const result = await suggestionRepository.findByCampaignIdAndStatus(campaignId, status, limit, offset)
 
         return jsonSuccess(res, {
             campaignId, status, limit, offset,
