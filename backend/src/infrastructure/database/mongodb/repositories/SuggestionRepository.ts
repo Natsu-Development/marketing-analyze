@@ -6,14 +6,12 @@
 import { ISuggestionRepository, Suggestion, ExceedingMetric, PaginatedSuggestions, SuggestionType } from '../../../../domain'
 import { SuggestionSchema } from '../schemas/SuggestionSchema'
 
-// Convert Mongoose document to plain domain object with backward compatibility
 const toDomain = (doc: any): Suggestion => {
-    // Convert Mongoose document to plain object to avoid document pollution
     const plainDoc = doc.toObject ? doc.toObject() : doc
 
     return {
         id: plainDoc._id.toString(),
-        type: plainDoc.type || 'adset', // Default to 'adset' for backward compatibility
+        type: plainDoc.type,
         accountId: plainDoc.accountId,
         adAccountId: plainDoc.adAccountId,
         adAccountName: plainDoc.adAccountName,
@@ -23,14 +21,13 @@ const toDomain = (doc: any): Suggestion => {
         adsetName: plainDoc.adsetName,
         adsetLink: plainDoc.adsetLink,
         currency: plainDoc.currency,
-        // Handle both old and new field names for backward compatibility
-        budget: plainDoc.budget ?? plainDoc.dailyBudget,
-        budgetAfterScale: plainDoc.budgetAfterScale ?? plainDoc.budgetScaled,
+        budget: plainDoc.budget,
+        budgetAfterScale: plainDoc.budgetAfterScale,
         scalePercent: plainDoc.scalePercent,
         note: plainDoc.note,
         metrics: plainDoc.metrics as ReadonlyArray<ExceedingMetric>,
         metricsExceededCount: plainDoc.metricsExceededCount,
-        status: plainDoc.status === 'applied' ? 'approved' : plainDoc.status, // Map old 'applied' to 'approved'
+        status: plainDoc.status,
         recentScaleAt: plainDoc.recentScaleAt ?? null,
         createdAt: plainDoc.createdAt,
         updatedAt: plainDoc.updatedAt,
@@ -98,7 +95,7 @@ const findById = async (id: string): Promise<Suggestion | null> => {
 const findByAdsetId = async (adsetId: string): Promise<Suggestion[]> => {
     const docs = await SuggestionSchema.find({
         adsetId,
-        status: { $in: ['approved', 'rejected', 'applied'] } // Include 'applied' for backward compatibility
+        status: { $in: ['approved', 'rejected'] }
     }).sort({ createdAt: -1 })
     return docs.map(toDomain)
 }
@@ -129,13 +126,13 @@ const deleteBulk = async (ids: string[]): Promise<number> => {
  */
 const findByAdsetIdAndStatus = async (
     adsetId: string,
-    status: 'approved' | 'rejected',
+    status: 'pending' | 'approved' | 'rejected',
     limit?: number,
     offset?: number
 ): Promise<PaginatedSuggestions> => {
-    const query = SuggestionSchema.find({ adsetId, status }).sort({ createdAt: -1 })
+    const filter = { adsetId, status }
+    const query = SuggestionSchema.find(filter).sort({ createdAt: -1 })
 
-    // Apply pagination if parameters provided
     if (offset !== undefined && offset > 0) {
         query.skip(offset)
     }
@@ -143,10 +140,9 @@ const findByAdsetIdAndStatus = async (
         query.limit(limit)
     }
 
-    // Execute query and get total count in parallel
     const [docs, total] = await Promise.all([
         query.exec(),
-        SuggestionSchema.countDocuments({ adsetId, status })
+        SuggestionSchema.countDocuments(filter)
     ])
 
     return {
@@ -157,22 +153,15 @@ const findByAdsetIdAndStatus = async (
 
 /**
  * Find all suggestions by status, sorted by exceeding count (descending)
- * Supports pagination with limit and offset
  */
 const findByStatus = async (
     status: 'pending' | 'approved' | 'rejected',
     limit?: number,
     offset?: number
 ): Promise<PaginatedSuggestions> => {
-    // For backward compatibility, include 'applied' when searching for 'approved'
-    const statusFilter = status === 'approved'
-        ? { $in: ['approved', 'applied'] }
-        : status
+    const filter = { status }
+    const query = SuggestionSchema.find(filter).sort({ metricsExceededCount: -1 })
 
-    const query = SuggestionSchema.find({ status: statusFilter })
-        .sort({ metricsExceededCount: -1 })
-
-    // Apply pagination if limit is provided
     if (offset !== undefined && offset > 0) {
         query.skip(offset)
     }
@@ -180,10 +169,9 @@ const findByStatus = async (
         query.limit(limit)
     }
 
-    // Execute query and get total count in parallel
     const [docs, total] = await Promise.all([
         query.exec(),
-        SuggestionSchema.countDocuments({ status: statusFilter })
+        SuggestionSchema.countDocuments(filter)
     ])
 
     return {
@@ -246,12 +234,70 @@ const findByTypeAndStatus = async (
     limit?: number,
     offset?: number
 ): Promise<PaginatedSuggestions> => {
-    // For backward compatibility, include 'applied' when searching for 'approved'
-    const statusFilter = status === 'approved'
-        ? { $in: ['approved', 'applied'] }
-        : status
+    const filter = { type, status }
+    const query = SuggestionSchema.find(filter).sort({ createdAt: -1 })
 
-    const filter = { type, status: statusFilter }
+    if (offset !== undefined && offset > 0) {
+        query.skip(offset)
+    }
+    if (limit !== undefined && limit > 0) {
+        query.limit(limit)
+    }
+
+    const [docs, total] = await Promise.all([
+        query.exec(),
+        SuggestionSchema.countDocuments(filter)
+    ])
+
+    return {
+        suggestions: docs.map(toDomain),
+        total
+    }
+}
+
+/**
+ * Find all campaign suggestions by campaignId (all statuses) with pagination
+ */
+const findByCampaignId = async (
+    campaignId: string,
+    limit?: number,
+    offset?: number
+): Promise<PaginatedSuggestions> => {
+    const filter = { campaignId, type: 'campaign' }
+    const query = SuggestionSchema.find(filter).sort({ createdAt: -1 })
+
+    if (offset !== undefined && offset > 0) {
+        query.skip(offset)
+    }
+    if (limit !== undefined && limit > 0) {
+        query.limit(limit)
+    }
+
+    const [docs, total] = await Promise.all([
+        query.exec(),
+        SuggestionSchema.countDocuments(filter)
+    ])
+
+    return {
+        suggestions: docs.map(toDomain),
+        total
+    }
+}
+
+/**
+ * Find all adset suggestions by adsetId (all statuses or filtered) with pagination
+ */
+const findByAdsetIdPaginated = async (
+    adsetId: string,
+    status?: 'pending' | 'approved' | 'rejected',
+    limit?: number,
+    offset?: number
+): Promise<PaginatedSuggestions> => {
+    const filter: Record<string, any> = { adsetId }
+    if (status) {
+        filter.status = status
+    }
+
     const query = SuggestionSchema.find(filter).sort({ createdAt: -1 })
 
     if (offset !== undefined && offset > 0) {
@@ -283,4 +329,6 @@ export const suggestionRepository: ISuggestionRepository = {
     findPendingByCampaignId,
     findByCampaignIdAndStatus,
     findByTypeAndStatus,
+    findByCampaignId,
+    findByAdsetIdPaginated,
 }

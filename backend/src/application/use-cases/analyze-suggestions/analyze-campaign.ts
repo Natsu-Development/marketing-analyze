@@ -83,13 +83,12 @@ async function processCampaign(
         // Get aggregated metrics
         const aggregated = await adsetInsightDataRepository.aggregateByCampaignId(campaign.campaignId)
         if (!aggregated) return { processed: false, created: false, updated: false }
-
+        
         const metrics = {
             impressions: aggregated.impressions || 0,
             clicks: aggregated.clicks || 0,
             amountSpent: aggregated.amountSpent || 0,
             cpm: aggregated.cpm || 0,
-            cpc: 0,
             ctr: aggregated.ctr || 0,
             reach: aggregated.reach || 0,
             frequency: aggregated.frequency || 0,

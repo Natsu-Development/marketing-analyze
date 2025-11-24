@@ -48,12 +48,12 @@ export interface ISuggestionRepository {
 
     /**
      * Find suggestions by adset ID and status with pagination
-     * Precondition: adsetId must be non-empty string, status must be 'approved' or 'rejected'
+     * Precondition: adsetId must be non-empty string, status must be valid
      * Postcondition: Returns paginated suggestions sorted by createdAt descending
      */
     findByAdsetIdAndStatus(
         adsetId: string,
-        status: 'approved' | 'rejected',
+        status: 'pending' | 'approved' | 'rejected',
         limit?: number,
         offset?: number
     ): Promise<PaginatedSuggestions>
@@ -94,6 +94,29 @@ export interface ISuggestionRepository {
     findByTypeAndStatus(
         type: SuggestionType,
         status: 'pending' | 'approved' | 'rejected',
+        limit?: number,
+        offset?: number
+    ): Promise<PaginatedSuggestions>
+
+    /**
+     * Find all campaign suggestions by campaignId (all statuses) with pagination
+     * Precondition: campaignId must be non-empty string
+     * Postcondition: Returns paginated suggestions sorted by createdAt descending
+     */
+    findByCampaignId(
+        campaignId: string,
+        limit?: number,
+        offset?: number
+    ): Promise<PaginatedSuggestions>
+
+    /**
+     * Find all adset suggestions by adsetId (all statuses) with pagination
+     * Precondition: adsetId must be non-empty string
+     * Postcondition: Returns paginated suggestions sorted by createdAt descending
+     */
+    findByAdsetIdPaginated(
+        adsetId: string,
+        status?: 'pending' | 'approved' | 'rejected',
         limit?: number,
         offset?: number
     ): Promise<PaginatedSuggestions>
