@@ -106,10 +106,23 @@ export function hasValidThresholds(config: AdAccountSetting): boolean {
 }
 
 /**
+ * Validate if ad account setting has ALL 6 metric thresholds configured
+ * Required for campaign suggestions - all thresholds must be set
+ * Returns true only if all 6 metrics have non-zero threshold values
+ */
+export function hasAllThresholds(config: AdAccountSetting): boolean {
+    return METRIC_FIELDS.every((metric) => {
+        const value = config[metric]
+        return value !== undefined && value !== null && value > 0
+    })
+}
+
+/**
  * SuggestionAnalyzer Domain Service
  * Groups all suggestion analysis domain logic
  */
 export const SuggestionAnalyzer = {
     findQualifyingMetrics,
     hasValidThresholds,
+    hasAllThresholds,
 }

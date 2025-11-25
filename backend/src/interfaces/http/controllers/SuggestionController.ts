@@ -17,13 +17,29 @@ const SuggestionIdParamSchema = z.object({
     suggestionId: z.string().min(1, 'Suggestion ID is required'),
 })
 
-const SuggestionStatusQuerySchema = z.object({
-    status: z.enum(['pending', 'approved', 'rejected'], {
-        errorMap: () => ({ message: 'Status must be one of: pending, approved, rejected' }),
-    }).optional(),
-    adsetId: z.string().min(1).optional(),
+const StatusSchema = z.enum(['pending', 'approved', 'rejected'], {
+    errorMap: () => ({ message: 'Status must be one of: pending, approved, rejected' }),
+})
+
+const TypeSchema = z.enum(['adset', 'campaign'], {
+    errorMap: () => ({ message: 'Type must be one of: adset, campaign' }),
+})
+
+// Pagination query schema
+const PaginationSchema = z.object({
     limit: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
     offset: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
+})
+
+// Query schema for listing suggestions (requires status and type)
+const SuggestionQuerySchema = PaginationSchema.extend({
+    status: StatusSchema,
+    type: TypeSchema,
+})
+
+// Query schema for history endpoints (requires status only, type is implicit)
+const HistoryQuerySchema = PaginationSchema.extend({
+    status: StatusSchema,
 })
 
 // ============================================================================
@@ -93,51 +109,66 @@ export async function rejectSuggestion(req: Request, res: Response): Promise<voi
 }
 
 /**
- * GET /api/suggestions?status=pending&adsetId=123&limit=20&offset=0
- * Retrieves suggestions with optional filtering by status and/or adsetId
- * KISS: Simplified query logic with early returns
+ * GET /api/suggestions?status=pending&type=adset&limit=20&offset=0
+ * Retrieves suggestions by status and type (both required)
  */
-export async function getSuggestionsByStatus(req: Request, res: Response): Promise<void> {
+export async function getSuggestions(req: Request, res: Response): Promise<void> {
     try {
-        const { status, adsetId, limit, offset } = SuggestionStatusQuerySchema.parse(req.query)
-
-        // Helper: Apply manual pagination
-        const applyPagination = (suggestions: any[]) => ({
-            suggestions: suggestions.slice(offset || 0, (offset || 0) + (limit || suggestions.length)),
-            total: suggestions.length,
-        })
-
-        // Require at least one filter
-        if (!status && !adsetId) {
-            return jsonError(res, 'VALIDATION_ERROR', 400, 'At least one filter (status or adsetId) is required')
-        }
-
-        // Query based on filters
-        let result
-
-        if (adsetId && status === 'pending') {
-            // Special case: pending + adsetId
-            const suggestions = await suggestionRepository.findPendingByAdsetId(adsetId)
-            result = applyPagination(suggestions)
-        } else if (adsetId && status && (status === 'approved' || status === 'rejected')) {
-            // Both filters: adsetId + status (approved/rejected only)
-            result = await suggestionRepository.findByAdsetIdAndStatus(adsetId, status, limit, offset)
-        } else if (adsetId) {
-            // AdsetId only: returns approved + rejected (excludes pending)
-            const suggestions = await suggestionRepository.findByAdsetId(adsetId)
-            result = applyPagination(suggestions)
-        } else {
-            // Status only
-            result = await suggestionRepository.findByStatus(status!, limit, offset)
-        }
+        const { status, type, limit, offset } = SuggestionQuerySchema.parse(req.query)
+        const result = await suggestionRepository.findByTypeAndStatus(type, status, limit, offset)
 
         return jsonSuccess(res, {
-            status,
-            adsetId,
+            status, type, limit, offset,
             count: result.suggestions.length,
             total: result.total,
-            limit,
-            offset,
+            suggestions: result.suggestions,
+        })
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error)
+        }
+        return handleInternalError(res, error)
+    }
+}
+
+/**
+ * GET /api/suggestions/adset/:adsetId?status=approved&limit=20&offset=0
+ * Retrieves adset suggestion history by status
+ */
+export async function getAdsetHistory(req: Request, res: Response): Promise<void> {
+    try {
+        const { adsetId } = z.object({ adsetId: z.string().min(1) }).parse(req.params)
+        const { status, limit, offset } = HistoryQuerySchema.parse(req.query)
+        const result = await suggestionRepository.findByEntityAndStatus('adset', adsetId, status, limit, offset)
+
+        return jsonSuccess(res, {
+            adsetId, status, limit, offset,
+            count: result.suggestions.length,
+            total: result.total,
+            suggestions: result.suggestions,
+        })
+    } catch (error: any) {
+        if (error instanceof z.ZodError) {
+            return handleValidationError(res, error)
+        }
+        return handleInternalError(res, error)
+    }
+}
+
+/**
+ * GET /api/suggestions/campaign/:campaignId?status=approved&limit=20&offset=0
+ * Retrieves campaign suggestion history by status
+ */
+export async function getCampaignHistory(req: Request, res: Response): Promise<void> {
+    try {
+        const { campaignId } = z.object({ campaignId: z.string().min(1) }).parse(req.params)
+        const { status, limit, offset } = HistoryQuerySchema.parse(req.query)
+        const result = await suggestionRepository.findByEntityAndStatus('campaign', campaignId, status, limit, offset)
+
+        return jsonSuccess(res, {
+            campaignId, status, limit, offset,
+            count: result.suggestions.length,
+            total: result.total,
             suggestions: result.suggestions,
         })
     } catch (error: any) {
