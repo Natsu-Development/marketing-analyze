@@ -81,7 +81,7 @@ async function executeAdsetApproval(
     }
 
     // Save approved suggestion
-    const result = await suggestionRepository.save(approvedSuggestion)
+    const result = await suggestionRepository.saveAdsetSuggestion(approvedSuggestion)
 
     logger.info(`Approved adset suggestion ${suggestion.id} and updated adset ${suggestion.adsetId} budget to ${suggestion.budgetAfterScale}`)
 
@@ -130,7 +130,7 @@ async function executeCampaignApproval(
     }
 
     // Save approved suggestion
-    const result = await suggestionRepository.save(approvedSuggestion)
+    const result = await suggestionRepository.saveCampaignSuggestion(approvedSuggestion)
 
     logger.info(`Approved campaign suggestion ${suggestion.id} and updated campaign ${campaignId} budget to ${suggestion.budgetAfterScale}`)
 

@@ -94,7 +94,7 @@ export function hasBudget(campaign: Campaign): boolean {
  * Must be ACTIVE, have campaign-level budget, and have daily budget
  */
 export function isEligibleForAnalysis(campaign: Campaign): boolean {
-    return isActive(campaign) && hasBudget(campaign) && campaign.dailyBudget != null
+    return isActive(campaign) && hasBudget(campaign)
 }
 
 /**

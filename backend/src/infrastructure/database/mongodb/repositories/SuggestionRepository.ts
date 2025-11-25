@@ -53,6 +53,10 @@ const fromDomain = (suggestion: Suggestion) => ({
     recentScaleAt: suggestion.recentScaleAt,
 })
 
+// Build entity filter based on type
+const buildEntityFilter = (type: SuggestionType, entityId: string) =>
+    type === 'campaign' ? { campaignId: entityId } : { adsetId: entityId }
+
 // Helper for paginated queries
 const paginatedQuery = async (
     filter: Record<string, any>,
@@ -70,9 +74,20 @@ const paginatedQuery = async (
     return { suggestions: docs.map(toDomain), total }
 }
 
-const save = async (suggestion: Suggestion): Promise<Suggestion> => {
+const saveAdsetSuggestion = async (suggestion: Suggestion): Promise<Suggestion> => {
+    const filter = { adAccountId: suggestion.adAccountId, adsetId: suggestion.adsetId, type: 'adset', status: 'pending' }
     const result = await SuggestionSchema.findOneAndUpdate(
-        { adAccountId: suggestion.adAccountId, adsetId: suggestion.adsetId, createdAt: suggestion.createdAt },
+        filter,
+        fromDomain(suggestion),
+        { upsert: true, new: true, runValidators: true }
+    )
+    return toDomain(result)
+}
+
+const saveCampaignSuggestion = async (suggestion: Suggestion): Promise<Suggestion> => {
+    const filter = { adAccountId: suggestion.adAccountId, campaignId: suggestion.campaignId, type: 'campaign', status: 'pending' }
+    const result = await SuggestionSchema.findOneAndUpdate(
+        filter,
         fromDomain(suggestion),
         { upsert: true, new: true, runValidators: true }
     )
@@ -89,13 +104,9 @@ const deleteBulk = async (ids: string[]): Promise<number> => {
     return result.deletedCount || 0
 }
 
-const findPendingByAdsetId = async (adsetId: string): Promise<Suggestion[]> => {
-    const docs = await SuggestionSchema.find({ adsetId, status: 'pending' }).sort({ createdAt: -1 })
-    return docs.map(toDomain)
-}
-
-const findPendingByCampaignId = async (campaignId: string): Promise<Suggestion[]> => {
-    const docs = await SuggestionSchema.find({ campaignId, type: 'campaign', status: 'pending' }).sort({ createdAt: -1 })
+const findPending = async (type: SuggestionType, entityId: string): Promise<Suggestion[]> => {
+    const filter = { ...buildEntityFilter(type, entityId), type, status: 'pending' }
+    const docs = await SuggestionSchema.find(filter).sort({ createdAt: -1 })
     return docs.map(toDomain)
 }
 
@@ -106,27 +117,20 @@ const findByTypeAndStatus = async (
     offset?: number
 ): Promise<PaginatedSuggestions> => paginatedQuery({ type, status }, limit, offset)
 
-const findByAdsetIdAndStatus = async (
-    adsetId: string,
+const findByEntityAndStatus = async (
+    type: SuggestionType,
+    entityId: string,
     status: 'pending' | 'approved' | 'rejected',
     limit?: number,
     offset?: number
-): Promise<PaginatedSuggestions> => paginatedQuery({ adsetId, status }, limit, offset)
-
-const findByCampaignIdAndStatus = async (
-    campaignId: string,
-    status: 'pending' | 'approved' | 'rejected',
-    limit?: number,
-    offset?: number
-): Promise<PaginatedSuggestions> => paginatedQuery({ campaignId, type: 'campaign', status }, limit, offset)
+): Promise<PaginatedSuggestions> => paginatedQuery({ ...buildEntityFilter(type, entityId), type, status }, limit, offset)
 
 export const suggestionRepository: ISuggestionRepository = {
-    save,
+    saveAdsetSuggestion,
+    saveCampaignSuggestion,
     findById,
     deleteBulk,
-    findPendingByAdsetId,
-    findPendingByCampaignId,
+    findPending,
     findByTypeAndStatus,
-    findByAdsetIdAndStatus,
-    findByCampaignIdAndStatus,
+    findByEntityAndStatus,
 }

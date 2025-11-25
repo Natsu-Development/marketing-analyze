@@ -25,12 +25,21 @@ const TypeSchema = z.enum(['adset', 'campaign'], {
     errorMap: () => ({ message: 'Type must be one of: adset, campaign' }),
 })
 
-// Shared query schema for all suggestion endpoints
-const SuggestionQuerySchema = z.object({
-    status: StatusSchema,
-    type: TypeSchema,
+// Pagination query schema
+const PaginationSchema = z.object({
     limit: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
     offset: z.string().optional().transform((val) => (val ? parseInt(val, 10) : undefined)),
+})
+
+// Query schema for listing suggestions (requires status and type)
+const SuggestionQuerySchema = PaginationSchema.extend({
+    status: StatusSchema,
+    type: TypeSchema,
+})
+
+// Query schema for history endpoints (requires status only, type is implicit)
+const HistoryQuerySchema = PaginationSchema.extend({
+    status: StatusSchema,
 })
 
 // ============================================================================
@@ -123,14 +132,14 @@ export async function getSuggestions(req: Request, res: Response): Promise<void>
 }
 
 /**
- * GET /api/suggestions/adset/:adsetId?status=approved&type=adset&limit=20&offset=0
- * Retrieves adset suggestion history by status and type (both required)
+ * GET /api/suggestions/adset/:adsetId?status=approved&limit=20&offset=0
+ * Retrieves adset suggestion history by status
  */
 export async function getAdsetHistory(req: Request, res: Response): Promise<void> {
     try {
         const { adsetId } = z.object({ adsetId: z.string().min(1) }).parse(req.params)
-        const { status, limit, offset } = SuggestionQuerySchema.omit({ type: true }).parse(req.query)
-        const result = await suggestionRepository.findByAdsetIdAndStatus(adsetId, status, limit, offset)
+        const { status, limit, offset } = HistoryQuerySchema.parse(req.query)
+        const result = await suggestionRepository.findByEntityAndStatus('adset', adsetId, status, limit, offset)
 
         return jsonSuccess(res, {
             adsetId, status, limit, offset,
@@ -147,14 +156,14 @@ export async function getAdsetHistory(req: Request, res: Response): Promise<void
 }
 
 /**
- * GET /api/suggestions/campaign/:campaignId?status=approved&type=campaign&limit=20&offset=0
- * Retrieves campaign suggestion history by status and type (both required)
+ * GET /api/suggestions/campaign/:campaignId?status=approved&limit=20&offset=0
+ * Retrieves campaign suggestion history by status
  */
 export async function getCampaignHistory(req: Request, res: Response): Promise<void> {
     try {
         const { campaignId } = z.object({ campaignId: z.string().min(1) }).parse(req.params)
-        const { status, limit, offset } = SuggestionQuerySchema.omit({ type: true }).parse(req.query)
-        const result = await suggestionRepository.findByCampaignIdAndStatus(campaignId, status, limit, offset)
+        const { status, limit, offset } = HistoryQuerySchema.parse(req.query)
+        const result = await suggestionRepository.findByEntityAndStatus('campaign', campaignId, status, limit, offset)
 
         return jsonSuccess(res, {
             campaignId, status, limit, offset,

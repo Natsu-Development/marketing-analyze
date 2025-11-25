@@ -175,9 +175,9 @@ export function createCampaignSuggestion(props: {
         adAccountName: props.adAccountName,
         campaignId: props.campaignId,
         campaignName: props.campaignName,
-        // For campaign suggestions, use campaignName for display and generate campaign link
-        adsetId: props.campaignId,  // Use campaignId as adsetId for consistency
-        adsetName: props.campaignName,  // Use campaignName as adsetName for display
+        // For campaign suggestions, keep adset fields empty to avoid confusion
+        adsetId: '',
+        adsetName: '',
         adsetLink: generateCampaignLink(props.adAccountId, props.campaignId),
         currency: props.currency,
         budget: props.budget,

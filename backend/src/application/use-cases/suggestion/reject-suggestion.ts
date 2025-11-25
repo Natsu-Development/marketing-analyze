@@ -30,7 +30,9 @@ export async function execute(input: RejectSuggestionInput): Promise<RejectSugge
     const rejectedSuggestion = SuggestionDomain.rejectSuggestion(suggestion)
 
     // 3. Save rejected suggestion
-    const result = await suggestionRepository.save(rejectedSuggestion)
+    const result = suggestion.type === 'campaign'
+        ? await suggestionRepository.saveCampaignSuggestion(rejectedSuggestion)
+        : await suggestionRepository.saveAdsetSuggestion(rejectedSuggestion)
 
     logger.info(`Rejected suggestion ${suggestionId}`)
 

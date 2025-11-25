@@ -92,7 +92,9 @@ export async function createSuggestion(params: SuggestionParams): Promise<Sugges
             recentScaleAt: lastScaledAt ?? null,
         })
 
-    const saved = await suggestionRepository.save(suggestion)
+    const saved = type === 'campaign'
+        ? await suggestionRepository.saveCampaignSuggestion(suggestion)
+        : await suggestionRepository.saveAdsetSuggestion(suggestion)
     logger.info(`Created ${type} suggestion for ${entityName}: budget ${budget} → ${saved.budgetAfterScale}`)
     return saved
 }
@@ -115,7 +117,9 @@ export async function updateSuggestion(
         recentScaleAt: lastScaledAt ?? null,
     })
 
-    await suggestionRepository.save(updated)
+    type === 'campaign'
+        ? await suggestionRepository.saveCampaignSuggestion(updated)
+        : await suggestionRepository.saveAdsetSuggestion(updated)
     logger.info(`Updated ${type} suggestion for ${entityName}: ${mostRecent.budget} → ${budget}`)
 
     // Cleanup duplicates
@@ -132,7 +136,5 @@ export async function updateSuggestion(
  * Find pending suggestions by entity
  */
 export async function findPendingSuggestions(type: 'adset' | 'campaign', entityId: string): Promise<Suggestion[]> {
-    return type === 'campaign'
-        ? suggestionRepository.findPendingByCampaignId(entityId)
-        : suggestionRepository.findPendingByAdsetId(entityId)
+    return suggestionRepository.findPending(type, entityId)
 }
